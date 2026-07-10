@@ -9,11 +9,19 @@ import { PiCarLight } from "react-icons/pi";
 import { PiCarProfileLight } from "react-icons/pi";
 import { FiCheck } from "react-icons/fi";
 import { FiShield, FiCheckCircle, FiClock, FiGlobe } from "react-icons/fi";
+import {
+  FaWhatsapp,
+  FaPhoneAlt,
+  FaEnvelope,
+  FaMapMarkerAlt,
+} from "react-icons/fa";
 
 import {
   HiOutlineDocumentText,
   HiOutlineDocumentDuplicate,
 } from "react-icons/hi2";
+import { title } from "process";
+import { icons } from "lucide-react";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -263,7 +271,64 @@ const testimonials = [
   },
 ];
 
+// CHANGED: contact info array — data-driven
+const contactInfo = [
+  {
+    id: 1,
+    icon: <FaWhatsapp />,
+    label: "Whatsapp. Fastest Reply",
+    value: "+92 30012357987",
+    bgColor: "#25A249",
+  },
+  {
+    id: 2,
+    icon: <FaPhoneAlt />,
+    label: "Direct Phone",
+    value: "+92 2197357984",
+    bgColor: "#C30010",
+  },
+  {
+    id: 3,
+    icon: <FaEnvelope />,
+    label: "Email",
+    value: "sales@jcexpert.com",
+    bgColor: "#287EC9",
+  },
+  {
+    id: 4,
+    icon: <FaMapMarkerAlt />,
+    label: "Office Address",
+    value: "Site Area, Peshawar, Pakistan",
+    bgColor: "#1B4F8C",
+  },
+];
+
 const whatsApp = [{}];
+
+// CHANGED: form fields array — 2 columns, data-driven
+const formFields = [
+  {
+    id: "fullName",
+    label: "Full Name",
+    type: "text",
+    placeholder: "Your Name",
+  },
+  {
+    id: "country",
+    label: "Country",
+    type: "text",
+    placeholder: "Destination Country",
+  },
+  { id: "email", label: "Email", type: "email", placeholder: "you@gmail.com" },
+  {
+    id: "phone",
+    label: "Phone / Whatsapp",
+    type: "text",
+    placeholder: "+ xx xxx xxxxxx",
+  },
+];
+
+const vehicleOptions = ["Sedan", "SUV", "Hybrid", "Truck", "Luxury", "Kei Car"];
 
 export default function Page() {
   const [activeFilter, setActiveFilter] = useState("All Stock");
@@ -669,7 +734,74 @@ export default function Page() {
           </span>
         </h2>
 
-        <section></section>
+        <section className={styles.contactList}>
+          {contactInfo.map((item) => {
+            console.log("item", item);
+            return (
+              <section key={item.id} className={styles.contactCard}>
+                <span
+                  className={styles.contactIcon}
+                  style={{ backgroundColor: item.bgColor }}
+                >
+                  {item.icon}
+                </span>
+
+                <section>
+                  <p className={styles.contactLabel}>{item.label}</p>
+                  <p className={styles.contactLabel}>{item.value}</p>
+                </section>
+              </section>
+            );
+          })}
+        </section>
+      </section>
+      <section className={styles.quoteForm}>
+        <h2 className={styles.quoteTitle}>Request a quote</h2>
+
+        <section className={styles.formGrid}>
+          <section className={styles.formGroup}>
+            <label>Full Name</label>
+            <input type="text" placeholder="Your Name" />
+          </section>
+
+          <section className={styles.formGroup}>
+            <label>Country</label>
+            <input type="text" placeholder="Destination Country" />
+          </section>
+
+          <section className={styles.formGroup}>
+            <label>Email</label>
+            <input type="email" placeholder="you@gmail.com" />
+          </section>
+
+          <section className={styles.formGroup}>
+            <label>Phone / Whatsapp</label>
+            <input type="text" placeholder="+ xx xxx xxxxxx" />
+          </section>
+        </section>
+
+        <section className={styles.formGroup}>
+          <label>Vehicle Interest</label>
+
+          <select>
+            <option>Sedan</option>
+            <option>SUV</option>
+            <option>Hybrid</option>
+            <option>Truck</option>
+            <option>Luxury</option>
+          </select>
+        </section>
+
+        <section className={styles.formGroup}>
+          <label>Message</label>
+
+          <textarea
+            rows={5}
+            placeholder="Tell us your budget, preferred make/model, year range..."
+          ></textarea>
+        </section>
+
+        <button className={styles.submitBtn}>SEND INQUIRY →</button>
       </section>
     </main>
   );
