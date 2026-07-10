@@ -1,0 +1,102 @@
+.nav {
+  display: flex;
+  width: 100%;
+  background: linear-gradient(
+    to left,
+    rgba(19, 45, 69, 1),
+    rgba(36, 105, 166, 1)
+  );
+
+  padding-left: 12px;
+  padding-top: 10px;
+  gap: 12px;
+  color: white;
+}
+
+.number {
+  display: flex;
+  /* align-items: center; */
+  /* text-align: center; */
+  width: 89%;
+  height: 26px;
+  gap: 12px;
+  color: white;
+}
+.language {
+  margin-left: -30px;
+}
+
+.language p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #fff;
+}
+
+/* Har span ke baad line aayegi — last ko chhod ke */
+.language p span:not(:last-child)::after {
+  content: "";
+  display: inline-block;
+  width: 1px;
+  height: 20px;
+  background-color: #ffffff;
+  opacity: 1;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.logo {
+  display: flex;
+  background-color: rgba(247, 247, 248, 1);
+}
+
+.navbar {
+  width: 100%;
+  display: flex;
+
+  /* background-color:  rgba(247, 247, 248, 1); */
+}
+
+.list {
+  display: flex;
+  gap: 49px;
+  list-style: none;
+  padding-left: 150px;
+  padding-top: 27px;
+}
+
+.btn {
+  display: flex;
+  gap: 10px;
+  margin-right: 10px;
+  align-items: center;
+  text-align: center;
+}
+
+.btn1 {
+  width: 142px;
+  height: 51px;
+  border: 1px solid rgba(78, 77, 89, 1);
+  border-radius: 4px;
+  background-color: white;
+  font-size: 15px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-style: Regular;
+  font-weight: 400px;
+  line-height: 100%;
+  align-items: center;
+  text-align: center;
+}
+
+.btn2 {
+  width: 142px;
+  height: 51px;
+  color: #fff;
+  border: 1px solid rgba(195, 0, 16, 1);
+  border-radius: 4px;
+  background-color: rgba(195, 0, 16, 1);
+  align-items: center;
+  text-align: center;
+  padding: 17px 17px 16px 21px;
+}

@@ -1,0 +1,160 @@
+.container1{
+     display: flex;
+    width: 100%;  
+}
+
+.left {
+    width: 57%;
+    height: 897px;
+    background: linear-gradient(to left, #070C10, #19354D);
+    padding-top: 66px;
+}
+
+.tf{
+     display: flex;
+    gap: 11px;
+    align-items: center;
+    color: white;
+    margin-left:124px;
+}
+
+.line{
+    display: inline-block;
+    width: 37px;
+    height: 3px;
+     background-color: white;
+   border-radius: 2px;
+   align-items: center;
+}
+
+
+.box{
+    display: flex;
+    flex-direction: column;
+    color: white;
+    margin-top: 105px;
+    margin-left:90px;
+    gap: 63px;
+}
+
+
+.box p{
+    width: 482px;
+    height: 88px;
+    font-family:  Helvetica;
+    font-style: Regular;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0%;
+}
+
+.box1{
+    display: flex;
+    /* justify-content: center; */
+    align-items: center;
+    gap: 130px;
+    margin-left: 98px;
+    margin-top: 277px;
+    color: white;
+}
+
+.box1 p{
+    text-align: center;
+   
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: oblique;
+    font-size: 18px;
+    letter-spacing: 0%;
+    font-weight: 400;
+    line-height: 100%;
+
+}
+
+.box2{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+   
+}
+
+.right{
+    margin-top:175px;
+  margin-left: 81px;
+}
+
+.r1 {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.r1 p{
+    width: 423px;
+    height: 143;
+    font-size: 18px;
+    font-style: Regular;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 100%;
+}
+/* 
+/* .boxes{
+    /* display: flex;
+    background-color: aquamarine;
+     width: 434px;
+    height: 58px;
+    border-radius: 4px; */
+
+.boxes1{
+        display: flex;
+        justify-content: space-between; 
+        margin-top: -70px;
+     width: 434px;
+    height: 58px;
+    border-radius: 4px;
+    text-align: center;
+    align-items: center;
+
+}
+
+.boxes1 input{
+    width: 59px;
+    height: 58px;
+    border: 1px solid gray;
+     text-align: center;
+  font-size: 20px;
+
+}
+
+.btn{
+
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 32px;
+   margin-top: 15px;
+
+}
+
+.butn{
+     margin-top: 10px;
+  width: 100%;
+ height: 54px;
+ border: 1px solid rgba(40, 126, 201, 1) ;
+ border-radius: 6px;
+    background-color: rgba(40, 126, 201, 1);
+    color: white;
+
+}
+
+.ac{
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-left: 100px;
+}
+
+.ac1{
+    margin-left: 40px;
+}

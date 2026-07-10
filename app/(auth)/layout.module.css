@@ -1,0 +1,48 @@
+.box{
+    background-color: #0A1722;
+    display: flex;
+}
+
+.box nav{
+    display: flex;
+   width: 100%;
+}
+
+.right {
+    width: 91%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+.list {
+    display: flex;
+    gap: 18px;
+}
+
+.list li {
+    list-style: none;
+}
+
+.list button {
+    width: 117px;
+    font-family: Helvetica, sans-serif;
+    font-style: Regular;
+    background-color: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    /* padding: 7px 16px; */
+    padding: 7px 14px 5px 13px;
+    font-size: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    
+}
+
+.authBtn:hover {
+    background-color: rgb(27, 128, 199);
+    border-color: #628ff0;
+    color: white;
+}

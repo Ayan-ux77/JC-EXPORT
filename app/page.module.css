@@ -1,0 +1,848 @@
+/* ================= PAGE WRAPPER ================= */
+/* CHANGED: `.a` class JSX mein use ho rahi thi lekin kahin defined nahi thi —
+   ye orphan class thi. Ab properly define ki, overflow-x:hidden safety net ke sath
+   taake future mein koi aur hardcoded margin horizontal scroll na banaye */
+.page {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* ================= HERO ================= */
+.heroSection {
+  width: 100%;
+  height: 660px;
+  color: white;
+  background: linear-gradient(to left, rgba(7, 12, 16, 1), rgba(25, 53, 77, 1));
+}
+
+.heroBadge {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin-left: 570px;
+  gap: 10px;
+}
+
+.heroBadge span {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 100%;
+  margin-top: 31px;
+}
+.badgeLineBlue11 {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: white;
+  background-color: white;
+  width: 37px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.badgeLineBlue12 {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: white;
+  background-color: red;
+  width: 37px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.badgeLine {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  background-color: white;
+  width: 37px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.badgeLineBlue {
+  display: inline-block;
+  width: 37px;
+  height: 3px;
+  background-color: rgba(40, 126, 201, 1);
+  border-radius: 4px;
+}
+
+.heroContent {
+  width: 752px;
+  height: 191px;
+  display: flex;
+  flex-direction: column;
+  margin-left: 324px;
+  margin-top: 24px;
+}
+
+.heroContent h1 {
+  font-family: "Hiragino Mincho Pro", "Hiragino Mincho ProN", serif;
+  font-weight: 600;
+  font-size: 70px;
+  line-height: 100%;
+  letter-spacing: 0%;
+}
+
+.heroContent h2 {
+  width: 268px;
+  height: 74px;
+  font-size: 60px;
+  margin-top: 25px;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0%;
+  color: rgba(40, 126, 201, 1);
+}
+
+.heroDivider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  background-color: rgba(195, 0, 16, 1);
+  width: 315px;
+  height: 3px;
+  border-radius: 2px;
+  margin-left: 290px;
+}
+
+.heroDescription {
+  font-family: Arial, Helvetica, sans-serif;
+  font-style: normal;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0%;
+  margin-top: 30px;
+}
+
+.heroActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+  color: #fff;
+  align-items: center;
+  text-align: center;
+}
+
+.primaryBtn {
+  width: 165px;
+  height: 50px;
+  color: #fff;
+  border: 1px solid rgba(40, 126, 201, 1);
+  border-radius: 4px;
+  background-color: rgba(40, 126, 201, 1);
+  font-size: 15px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 100%;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+}
+
+.secondaryBtn {
+  width: 142px;
+  height: 51px;
+  color: #fff;
+  border: 1px solid white;
+  border-radius: 4px;
+  background-color: transparent;
+  align-items: center;
+  text-align: center;
+  padding: 17px 17px 16px 21px;
+  cursor: pointer;
+}
+
+/* ================= STATS ================= */
+/* CHANGED: pehle .block, .border1, .border2, .border3 4 alag classes thi with
+   identical CSS — ab ek hi .statItem class hai, JSX se array.map() render karta hai */
+.statsBar {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  justify-content: space-evenly;
+  text-align: center;
+  align-items: center;
+  color: rgba(255, 255, 255, 1);
+  margin-top: -46px;
+  background: #4e4e521b;
+  backdrop-filter: blur(10px);
+}
+
+.statItem {
+  width: 25%;
+  height: 100%;
+  border-right: 1px solid white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  align-items: center;
+}
+
+.statItem:last-child {
+  border-right: none;
+}
+
+.statLabel {
+  color: black;
+}
+
+/* ================= SEARCH ================= */
+.searchSection {
+  background-color: rgba(247, 247, 248, 1);
+}
+
+.sectionBadge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  width: 264px;
+  height: 43px;
+  padding: 30px;
+  margin-left: -50px;
+  padding-top: 72px;
+}
+.font {
+  font-size: 16px;
+}
+.searchFields {
+  width: 1110px;
+  height: 136px;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 15px 15px;
+  margin-left: 110px;
+  margin-top: 31px;
+}
+
+.searchFields input {
+  width: 400px;
+  height: 29px;
+  padding-left: 20px;
+}
+
+.searchButtonRow {
+  margin-left: 110px;
+}
+
+.searchButton {
+  width: 211px;
+  height: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding-right: 108px;
+  font-size: 16px;
+  border: 1px solid rgba(40, 126, 201, 1);
+  border-radius: 4px;
+  color: #fff;
+  background-color: rgba(40, 126, 201, 1);
+  cursor: pointer;
+}
+
+/* ================= BRANDS ================= */
+/* CHANGED: pehle .Honda, .Toyota, .Mazda... 10 alag identical classes thi —
+   ab ek .brandItem class, JSX array.map() se render hoti hai */
+.brandsGrid {
+  display: grid;
+  grid-template-columns: auto auto auto auto auto;
+  gap: 30px;
+  margin-left: 50px;
+  margin-top: 70px;
+}
+
+.brandItem {
+  width: 170px;
+  height: 188px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+  background-color: #fff;
+}
+
+.brandItem p {
+  margin-top: 15px;
+}
+
+.brandItemSpaced p {
+  margin-top: 40px;
+}
+
+/* ================= INVENTORY ================= */
+.inventorySection {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(238, 238, 238, 1);
+  margin-top: 170px;
+}
+
+.inventoryInner {
+  padding-top: 10px;
+  padding-left: 84px;
+  padding-right: 84px; /* CHANGED: added — right side bhi symmetric padding, taake
+    flex row full-width use kare bina overflow kiye */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inventoryInner h1 {
+  color: rgba(40, 126, 201, 1);
+}
+
+/* CHANGED: pehle margin-left:950px (hardcoded) tha jo horizontal scroll ki wajah
+   ban raha tha. Ab flex row + margin-left:auto — link hamesha right-aligned
+   rahega, content kitna bhi ho, kabhi overflow nahi hoga */
+.inventoryLinkRow {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  margin-left: auto;
+  width: fit-content;
+}
+
+.linkDivider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  background-color: black;
+  width: 150px;
+  height: 1px;
+  border-radius: 2px;
+}
+
+.filterBar {
+  display: flex;
+  padding-top: 10px;
+  gap: 10px;
+  /* CHANGED: added — chhoti screens par buttons wrap honge
+    overflow karne ki bajaye */
+}
+
+.filterBtn {
+  width: 115px;
+  height: 47px;
+  text-align: center;
+  border: none;
+  outline: none;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 500;
+  background-color: #ffffff;
+  cursor: pointer;
+  color: #000;
+  transition: all 0.2s ease;
+}
+
+.filterBtnActive {
+  background-color: rgba(40, 126, 201, 1);
+  color: #ffffff;
+}
+
+/* ================= VEHICLE CARDS ================= */
+/* CHANGED: .M1/.M2/.M3/.M4/.M5 jaise brand-specific names hata kar generic
+   semantic names diye — ye component kisi bhi car ke liye reuse hoga */
+.vehicleGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 1300px;
+
+  margin: 0 auto;
+}
+
+.vehicleCard img {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-width: 414px;
+  max-height: 266px;
+  object-fit: cover;
+}
+
+.vehicleCard {
+  width: 100%;
+  max-width: 414px;
+  min-width: 0; /* CHANGED */
+  justify-self: center;
+}
+
+.vehicleCardBody {
+  width: 100%; /* CHANGED */
+  min-width: 0;
+  /* height: 100px; */
+  /* CHANGED */
+  margin-top: -3px;
+  padding: 8px;
+  background-color: #fff;
+}
+
+.vehicleCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vehicleBrand {
+  color: rgba(40, 126, 201, 1);
+}
+
+.vehicleTitleRow {
+  display: flex;
+  flex-direction: column;
+  margin-top: 30px;
+}
+
+.vehicleDivider {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  background-color: grey;
+  /* width: 100%; /* CHANGED */
+  height: 1px;
+  border-radius: 100px;
+}
+
+.vehicleSpecs {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.vehicleSpecs p {
+  width: 54px;
+  height: 14px;
+  margin-top: 10px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: gray;
+  font-size: 10px;
+  line-height: 100%;
+}
+
+.vehiclePriceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+}
+
+.vehiclePriceLabel {
+  color: black;
+  font-size: 12px;
+  margin-top: 10px;
+  margin-left: -20px;
+}
+
+.vehiclePriceRow .vehiclePriceValue {
+  color: rgba(195, 0, 16, 1);
+}
+.vehicleViewDetail {
+  color: rgba(40, 126, 201, 1);
+  cursor: pointer;
+}
+
+.services {
+  background-color: white;
+}
+
+.services1 {
+  margin-top: 100px;
+  padding-top: 50px;
+  padding-left: 87px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.export {
+  padding-top: 30px;
+  padding-left: 75px;
+}
+
+.processGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 1300px;
+  height: 354px;
+  margin: 40px;
+  margin-left: -10;
+}
+
+.processCard {
+  min-width: 0;
+  background-color: #f4f4f4;
+  padding: 24px;
+  border-top: 4px solid rgba(40, 126, 201, 1);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.processCardRed {
+  border-top-color: rgba(195, 0, 16, 1); /* red variant */
+}
+
+.processStep {
+  font-style: italic;
+  font-size: 20px;
+}
+
+.processCardRed .processStep {
+  /* red variant follows card accent */
+}
+
+.processIcon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 22px;
+  color: #111;
+}
+.processTitle {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.processDescription {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  color: #888;
+  line-height: 1.6;
+  margin: 0;
+}
+/* 
+.Export1 {
+  width: 100%;
+  background-color: #eeeeee;
+  margin-top: 90px;
+} */
+
+/* .building {
+  margin-top: 100px;
+  padding-top: 100px;
+  padding-left: 700px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+} */
+
+.buildingImage {
+  width: 577px;
+  height: 874px;
+  object-fit: cover;
+  margin-left: 30px;
+  margin-top: -40px; /* image ko crop karega bina distort/stretch kiye agar aspect ratio match na kare */
+}
+
+.aboutSection {
+  display: flex;
+  gap: 60px;
+  max-width: 1300px;
+  margin: 0 auto;
+  background-color: #eeeeee;
+  padding: 80px 24px;
+  align-items: flex-start;
+}
+
+.aboutImageWrapper {
+  position: relative;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.aboutContent {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.aboutHeading {
+  font-family: Georgia, serif;
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #111;
+  margin: 0;
+}
+
+.aboutHeading .fraunces {
+  color: rgba(40, 126, 201, 1);
+  font-style: italic;
+}
+
+.aboutIntro {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: #333;
+  margin: 0;
+}
+
+.aboutDescription {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #888;
+  margin: 0;
+}
+
+.aboutFeatureGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 40px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.aboutFeatureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.aboutFeatureIcon {
+  color: rgba(40, 126, 201, 1);
+  font-size: 16px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.aboutFeatureItem span {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  color: #444;
+  line-height: 1.5;
+}
+
+.aboutCta {
+  width: fit-content;
+  padding: 16px 28px;
+  background-color: rgba(40, 126, 201, 1);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.trustBar {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  background-color: rgba(10, 20, 33, 1);
+}
+
+.trustItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.trustIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: rgba(40, 126, 201, 0.2);
+  color: rgba(40, 126, 201, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.trustIconRed {
+  background-color: rgba(195, 0, 16, 0.2);
+  color: rgba(195, 0, 16, 1);
+}
+
+.trustTitle {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.trustSubtitle {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.sectionDivider {
+  display: block;
+  height: 0.5px;
+  background-color: grey;
+}
+
+.testimonialsSection {
+  background-color: rgba(10, 20, 33, 1);
+  padding: 60px 24px 100px;
+}
+bad .sectionBadge {
+  margin-top: -40px;
+}
+
+.testimonialsHeading {
+  font-family: Georgia, serif;
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #fff;
+  max-width: 1300px;
+  margin: 20px auto 50px;
+}
+
+.testimonialsHeading .fraunces {
+  color: rgba(40, 126, 201, 1);
+  font-style: italic;
+}
+
+.testimonialsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.testimonialCard {
+  min-width: 0;
+  background-color: rgba(20, 30, 45, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.testimonialCardHighlighted {
+  border: 1px solid rgba(40, 126, 201, 1);
+}
+
+.testimonialTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.testimonialStars {
+  color: #f5b400;
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+
+.testimonialQuoteMark {
+  color: rgba(40, 126, 201, 1);
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.testimonialQuote {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+}
+
+.testimonialAuthorRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.testimonialAvatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: rgba(40, 126, 201, 1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.testimonialAvatarRed {
+  background-color: rgba(195, 0, 16, 1);
+}
+
+.testimonialName {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.testimonialRole {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.contactForm {
+  width: 100%;
+  margin-left: 100px;
+  background-color: white;
+}
+
+.contact {
+  font-family: Georgia, serif;
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: black;
+  max-width: 1300px;
+  margin: 20px auto 50px;
+}
