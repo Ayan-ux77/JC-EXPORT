@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { vehicles } from "@/data/vehicles";
 import styles from "./page.module.css";
 import { Lateef } from "next/font/google";
 import { Fraunces } from "next/font/google";
@@ -80,77 +82,6 @@ const filters = [
   "Luxury",
 ];
 
-const vehicles = [
-  {
-    id: 1,
-    image: "/cards/1.png",
-    brand: "Mazda",
-    year: 2018,
-    title: "MAZDA AXELA WHITE",
-    mileage: "104,000 km",
-    engine: "4.6L VB",
-    fuel: "Petrol",
-    price: "3200",
-  },
-  {
-    id: 2,
-    image: "/cards/2.png",
-    brand: "Toyota",
-    year: 2020,
-    title: "TOYOTA COROLLA BLACK",
-
-    mileage: "45,000 km",
-    engine: "1.8L",
-    fuel: "Hybrid",
-    price: "4100",
-  },
-  {
-    id: 3,
-    image: "/cards/3.png",
-    brand: "Honda",
-    year: 2019,
-    title: "HONDA CIVIC SILVER",
-    mileage: "60,000 km",
-    engine: "2.0L",
-    fuel: "Petrol",
-    price: "3700",
-  },
-  {
-    id: 4,
-    image: "/cards/4.png",
-    brand: "Mazda",
-    year: 2018,
-    title: "MAZDA AXELA WHITE",
-    mileage: "104,000 km",
-    engine: "4.6L VB",
-    fuel: "Petrol",
-    price: "3200",
-  },
-  {
-    id: 5,
-    image: "/cards/5.png",
-    brand: "Toyota",
-    year: 2020,
-    title: "TOYOTA COROLLA BLACK",
-    mileage: "45,000 km",
-    engine: "1.8L",
-    fuel: "Hybrid",
-    price: "4100",
-  },
-  {
-    id: 6,
-    image: "/cards/3.png",
-    brand: "Honda",
-    year: 2019,
-    title: "HONDA CIVIC SILVER",
-    mileage: "60,000 km",
-    engine: null,
-    fuel: "Petrol",
-    price: "3700",
-  },
-];
-
-// CHANGED: process steps array — icon, top border color, aur content sab data-driven
 const processSteps = [
   {
     id: 1,
@@ -335,7 +266,7 @@ export default function Page() {
 
   return (
     <main className={styles.page}>
-      {/* ================= HERO ================= */}
+      {/* Hero Section */}
       <section className={styles.heroSection}>
         <section className={styles.heroBadge}>
           <span className={styles.badgeLine}></span>
@@ -344,7 +275,7 @@ export default function Page() {
 
         <section className={styles.heroContent}>
           <h1>Japanese Excellence,</h1>
-          <span className={styles.heroDivider}></span>
+          <span className={styles.heroDivider1}></span>
           <h2 className={fraunces.className}>Delivered </h2>
           <h2 className={fraunces.className}>
             Worldwide <span>.</span>
@@ -368,7 +299,7 @@ export default function Page() {
         </section>
       </section>
 
-      {/* ================= STATS ================= */}
+      {/*  STATS */}
       <section className={styles.statsBar}>
         {stats.map((stat) => (
           <section key={stat.id} className={styles.statItem}>
@@ -513,14 +444,18 @@ export default function Page() {
                     <section className={styles.vehiclePriceRow}>
                       <section>
                         <p className={styles.vehiclePriceLabel}>FOB Price</p>
+
                         <h1 className={styles.vehiclePriceValue}>
                           $ {vehicle.price}
                         </h1>
                       </section>
 
-                      <span className={styles.vehicleViewDetail}>
+                      <Link
+                        href={`/inventory/${vehicle.slug}`}
+                        className={styles.vehicleViewDetail}
+                      >
                         View Detail &rarr;
-                      </span>
+                      </Link>
                     </section>
                   </section>
                 </section>
