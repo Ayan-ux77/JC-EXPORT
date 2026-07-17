@@ -383,12 +383,8 @@ export default function Page() {
               </span>
             </h1>
 
-            {/* CHANGED: margin-left:950px hata diya — ab flex + margin-left:auto se
-                right-align hota hai. Yehi horizontal scroll bug ki asal wajah thi,
-                kyunke fixed pixel margin content barhne par overflow kar gayi thi */}
             <section className={styles.inventoryLinkRow}>
-              <p>View all 240 Vehicle &rarr;</p>
-              <span className={styles.linkDivider}></span>
+              <Link href="/inventory">View all 246 Vehicles &rarr;</Link>
             </section>
 
             <section className={styles.filterBar}>
@@ -407,7 +403,7 @@ export default function Page() {
             </section>
 
             <section className={styles.vehicleGrid}>
-              {vehicles.map((vehicle) => (
+              {vehicles.slice(0, 6).map((vehicle) => (
                 <section key={vehicle.id} className={styles.vehicleCard}>
                   <img src={vehicle.image} alt={vehicle.title} />
 
@@ -451,7 +447,10 @@ export default function Page() {
                       </section>
 
                       <Link
-                        href={`/inventory/${vehicle.slug}`}
+                        href={{
+                          pathname: `/inventory/${vehicle.slug}`,
+                          query: JSON.stringify(vehicle),
+                        }}
                         className={styles.vehicleViewDetail}
                       >
                         View Detail &rarr;

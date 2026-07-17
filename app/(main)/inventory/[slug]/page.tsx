@@ -1,3 +1,5 @@
+// "use client";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { vehicles } from "@/data/vehicles";
@@ -17,7 +19,9 @@ type PageProps = {
 };
 
 export default async function VehicleDetailsPage({ params }: PageProps) {
-  console.log("params", params);
+  const paramcheck = await params;
+
+  console.log("paramscheck", paramcheck);
 
   const { slug } = await params;
 
