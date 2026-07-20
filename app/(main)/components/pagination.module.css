@@ -1,0 +1,74 @@
+.pagination {
+  width: 100%;
+  margin: 55px 0 80px;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+
+.pageItem,
+.previousItem,
+.nextItem,
+.breakItem {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pageLink,
+.previousLink,
+.nextLink,
+.breakLink {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border: 1px solid #d6dce2;
+  border-radius: 4px;
+  background-color: #ffffff;
+
+  color: #287ec9;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.pageLink:hover,
+.previousLink:hover,
+.nextLink:hover,
+.breakLink:hover {
+  border-color: #287ec9;
+  background-color: #f3f8fd;
+}
+
+/* @media (max-width: 600px) {
+  .pagination {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .pageLink,
+  .previousLink,
+  .nextLink,
+  .breakLink {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+} */

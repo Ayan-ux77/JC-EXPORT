@@ -4,6 +4,8 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import { Fraunces } from "next/font/google";
 import { vehicles } from "@/data/vehicles";
+import { Pagination } from "../components/pagination";
+import { useState } from "react";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -35,7 +37,22 @@ const auctionGrades = [
   { id: 4, name: "Grade 3.5 & below", checked: false },
 ];
 
-export default function listing() {
+export default function Listing() {
+  const itemsPerPage = 9;
+
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  const currentVehicles = vehicles.slice(startIndex, endIndex);
+
+  const pageCount = Math.ceil(vehicles.length / itemsPerPage);
+
+  const handlePageChange = (event: { selected: number }) => {
+    setCurrentPage(event.selected);
+  };
+
   return (
     <section className={styles.body1}>
       <section className={styles.heroSection}>
@@ -58,10 +75,22 @@ export default function listing() {
       </section>
 
       <section className={styles.searchBar}>
-        <p>Showing 1 9 of 412 results</p>
+        <p>
+          Showing {vehicles.length === 0 ? 0 : startIndex + 1}–
+          {Math.min(endIndex, vehicles.length)} of {vehicles.length} results
+        </p>
+
         <section className={styles.bar}>
-          <input type="number" placeholder="NewstFirst" />
-          <button className={styles.btn}>Compare</button>
+          <select className={styles.sortSelect}>
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+          </select>
+
+          <button type="button" className={styles.btn}>
+            Compare
+          </button>
         </section>
       </section>
 
@@ -78,7 +107,7 @@ export default function listing() {
             {makes.map((type) => (
               <section key={type.id} className={styles.filterRow}>
                 <section className={styles.filterLeft}>
-                  <input type="checkbox" id={`body-${type.id}`} />
+                  <input type="checkbox" id={`make-${type.id}`} />
 
                   <label htmlFor={`body-${type.id}`}>{type.name}</label>
                 </section>
@@ -150,7 +179,7 @@ export default function listing() {
       </section>
 
       <section className={styles.vehicleGrid}>
-        {vehicles.slice(0, 9).map((vehicle) => (
+        {currentVehicles.map((vehicle) => (
           <section key={vehicle.id} className={styles.vehicleCard}>
             <img
               src={vehicle.image}
@@ -203,6 +232,7 @@ export default function listing() {
             </section>
           </section>
         ))}
+        <Pagination pageCount={pageCount} onPageChange={handlePageChange} />
       </section>
     </section>
   );
