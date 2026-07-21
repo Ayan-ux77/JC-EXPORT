@@ -253,3 +253,16 @@
   text-decoration: none;
   font-size: 13px;
 }
+
+.sortSelect {
+  width: 152px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #d5d4d4;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}

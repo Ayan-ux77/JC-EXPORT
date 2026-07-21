@@ -5,30 +5,13 @@ import styles from "./page.module.css";
 import { Fraunces } from "next/font/google";
 import { vehicles } from "@/data/vehicles";
 import { Pagination } from "../components/pagination";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
   style: ["italic"],
   weight: ["500"],
 });
-
-const makes = [
-  { id: 1, name: "Toyota", count: 142, checked: true },
-  { id: 2, name: "Honda", count: 87, checked: false },
-  { id: 3, name: "Nissan", count: 68, checked: false },
-  { id: 4, name: "Mazda", count: 45, checked: false },
-  { id: 5, name: "Subaru", count: 34, checked: false },
-  { id: 6, name: "Suzuki", count: 21, checked: false },
-];
-
-const bodyTypes = [
-  { id: 1, name: "Sedan", count: 118 },
-  { id: 2, name: "SUV", count: 94 },
-  { id: 3, name: "Hatchback", count: 76 },
-  { id: 4, name: "Van", count: 52 },
-  { id: 5, name: "Truck", count: 48 },
-];
 
 const auctionGrades = [
   { id: 1, name: "Grade 5 (Excellent)", checked: true },
@@ -39,7 +22,13 @@ const auctionGrades = [
 
 export default function Listing() {
   const itemsPerPage = 9;
+  const [makes, setMakes] = useState<
+    { id: number; name: string; count: number }[]
+  >([]);
 
+  const [bodyTypes, setBodyTypes] = useState<
+    { id: number; name: string; count: number }[]
+  >([]);
   const [currentPage, setCurrentPage] = useState(0);
 
   const startIndex = currentPage * itemsPerPage;
@@ -53,6 +42,57 @@ export default function Listing() {
     setCurrentPage(event.selected);
   };
 
+  useEffect(() => {
+    const makesCount = vehicles.reduce<Record<string, number>>(
+      (acc, vehicle) => {
+        const brand = vehicle.brand;
+        acc[brand] = (acc[brand] || 0) + 1;
+
+        return acc;
+      },
+      {},
+    );
+
+    // console.log("vehicleArray", vehiclesArray);
+
+    const vehicleMakes = Object.entries(makesCount).map(
+      ([brand, count], index) => ({
+        id: index + 1,
+        name: brand,
+        count: count,
+      }),
+    );
+
+    setMakes(vehicleMakes);
+  }, []);
+
+  useEffect(() => {
+    const bodyTypeCount = vehicles.reduce<Record<string, number>>(
+      (acc, vehicle) => {
+        const bodyType = vehicle.bodyType;
+
+        acc[bodyType] = (acc[bodyType] || 0) + 1;
+
+        return acc;
+      },
+      {},
+    );
+
+    console.log("Body Type Count Object:", bodyTypeCount);
+
+    const vehicleBodyTypes = Object.entries(bodyTypeCount).map(
+      ([bodyType, count], index) => ({
+        id: index + 1,
+        name: bodyType,
+        count: count,
+      }),
+    );
+
+    console.log("Final Body Types Array:", vehicleBodyTypes);
+    console.table(vehicleBodyTypes);
+
+    setBodyTypes(vehicleBodyTypes);
+  }, []);
   return (
     <section className={styles.body1}>
       <section className={styles.heroSection}>
@@ -104,31 +144,33 @@ export default function Listing() {
           <section className={styles.filterSection}>
             <p className={styles.filterTitle}>Make</p>
 
-            {makes.map((type) => (
-              <section key={type.id} className={styles.filterRow}>
+            {makes.map((make) => (
+              <section key={make.id} className={styles.filterRow}>
                 <section className={styles.filterLeft}>
-                  <input type="checkbox" id={`make-${type.id}`} />
+                  <input type="checkbox" id={`make-${make.id}`} />
 
-                  <label htmlFor={`body-${type.id}`}>{type.name}</label>
+                  <label htmlFor={`make-${make.id}`}>{make.name}</label>
                 </section>
 
-                <span className={styles.filterCount}>{type.count}</span>
+                <span className={styles.filterCount}>{make.count}</span>
               </section>
             ))}
           </section>
           <span className={styles.divider12}></span>
           <section className={styles.filterSection}>
-            <p className={styles.filterTitle}>BodyType</p>
+            <p className={styles.filterTitle}>Body Type</p>
 
-            {bodyTypes.map((type) => (
-              <section key={type.id} className={styles.filterRow}>
+            {bodyTypes.map((bodyType) => (
+              <section key={bodyType.id} className={styles.filterRow}>
                 <section className={styles.filterLeft}>
-                  <input type="checkbox" id={`body-${type.id}`} />
+                  <input type="checkbox" id={`body-type-${bodyType.id}`} />
 
-                  <label htmlFor={`body-${type.id}`}>{type.name}</label>
+                  <label htmlFor={`body-type-${bodyType.id}`}>
+                    {bodyType.name}
+                  </label>
                 </section>
 
-                <span className={styles.filterCount}>{type.count}</span>
+                <span className={styles.filterCount}>{bodyType.count}</span>
               </section>
             ))}
           </section>
