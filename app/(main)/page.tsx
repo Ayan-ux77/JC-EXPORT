@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 import { vehicles } from "@/data/vehicles";
-import { FeaturedInventory } from "./components/featured-inventory";
+import { FeaturedVehicles } from "./components/featured-vehicles";
 import styles from "./page.module.css";
 
 const bodyFont = Lato({
@@ -220,8 +220,8 @@ export default function HomePage() {
             </ul>
 
             <div className={styles.heroActions}>
-              <Link href="/inventory" className={styles.primaryButton}>
-                Browse inventory <ArrowRight aria-hidden="true" />
+              <Link href="/vehicles" className={styles.primaryButton}>
+                Browse vehicles <ArrowRight aria-hidden="true" />
               </Link>
               <Link href="#contact" className={styles.secondaryButton}>
                 Get an export quote
@@ -247,12 +247,12 @@ export default function HomePage() {
             <p className={styles.kicker}>Search current stock</p>
             <h2 id="vehicle-search-title">Find the right used vehicle</h2>
           </div>
-          <Link href="/inventory" className={styles.textLink}>
+          <Link href="/vehicles" className={styles.textLink}>
             Advanced search <SlidersHorizontal aria-hidden="true" />
           </Link>
         </div>
 
-        <form className={styles.searchForm} action="/inventory">
+        <form className={styles.searchForm} action="/vehicles">
           <label>
             <span>Make</span>
             <select name="make" defaultValue="">
@@ -328,7 +328,7 @@ export default function HomePage() {
           {brands.map((brand) => (
             <Link
               key={brand.name}
-              href={`/inventory?brand=${brand.name.toLowerCase()}`}
+              href={`/vehicles?brand=${brand.name.toLowerCase()}`}
               className={styles.brandItem}
               aria-label={`Browse ${brand.name} vehicles`}
             >
@@ -346,23 +346,23 @@ export default function HomePage() {
       </section>
 
       <section
-        id="inventory"
-        className={styles.inventorySection}
-        aria-labelledby="inventory-title"
+        id="vehicles"
+        className={styles.vehiclesSection}
+        aria-labelledby="vehicles-title"
       >
         <div className={styles.sectionIntroRow}>
           <div>
-            <p className={styles.kicker}>Featured inventory</p>
-            <h2 id="inventory-title">
+            <p className={styles.kicker}>Featured vehicles</p>
+            <h2 id="vehicles-title">
               Hand-picked vehicles, <em>auction fresh.</em>
             </h2>
           </div>
-          <Link href="/inventory" className={styles.textLink}>
+          <Link href="/vehicles" className={styles.textLink}>
             View all vehicles <ArrowRight aria-hidden="true" />
           </Link>
         </div>
 
-        <FeaturedInventory vehicles={vehicles.slice(0, 6)} />
+        <FeaturedVehicles vehicles={vehicles.slice(0, 6)} />
       </section>
 
       <section id="services" className={styles.processSection} aria-labelledby="process-title">

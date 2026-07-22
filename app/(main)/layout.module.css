@@ -76,12 +76,8 @@
 
 .logoLink {
   display: inline-flex;
+  align-items: center;
   flex: 0 0 auto;
-}
-
-.logoImage {
-  width: 172px;
-  height: auto;
 }
 
 .desktopNav {
@@ -141,7 +137,7 @@
   margin-right: 4px;
 }
 
-.inventoryButton,
+.vehiclesButton,
 .quoteButton {
   min-height: 43px;
   display: inline-flex;
@@ -159,7 +155,7 @@
   transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease;
 }
 
-.inventoryButton:hover {
+.vehiclesButton:hover {
   border-color: #287ec9;
   color: #1764a6;
 }
@@ -279,7 +275,7 @@
 
 @media (max-width: 1180px) {
   .signInLink,
-  .inventoryButton {
+  .vehiclesButton {
     display: none;
   }
 }
@@ -290,9 +286,6 @@
     justify-content: space-between;
   }
 
-  .logoImage {
-    width: 158px;
-  }
 
   .desktopNav,
   .headerActions {

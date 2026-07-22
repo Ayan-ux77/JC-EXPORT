@@ -8,6 +8,14 @@
    width: 100%;
 }
 
+.logoLink {
+    min-width: 150px;
+    display: inline-flex;
+    align-items: center;
+    padding: 14px 18px;
+    text-decoration: none;
+}
+
 .right {
     width: 91%;
     display: flex;

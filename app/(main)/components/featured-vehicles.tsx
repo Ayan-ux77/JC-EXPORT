@@ -8,7 +8,7 @@ import { ArrowUpRight, BadgeCheck, Fuel, Gauge } from "lucide-react";
 import type { Vehicle } from "@/data/vehicles";
 import styles from "../page.module.css";
 
-type FeaturedInventoryProps = {
+type FeaturedVehiclesProps = {
   vehicles: Vehicle[];
 };
 
@@ -32,7 +32,7 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-export function FeaturedInventory({ vehicles }: FeaturedInventoryProps) {
+export function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
   const [activeFilter, setActiveFilter] = useState(filters[0].label);
 
   const visibleVehicles = useMemo(() => {
@@ -41,7 +41,7 @@ export function FeaturedInventory({ vehicles }: FeaturedInventoryProps) {
   }, [activeFilter, vehicles]);
 
   return (
-    <div className={styles.inventoryBrowser}>
+    <div className={styles.vehiclesBrowser}>
       <div className={styles.filterBar} aria-label="Filter featured vehicles">
         {filters.map((filter) => (
           <button
@@ -60,7 +60,7 @@ export function FeaturedInventory({ vehicles }: FeaturedInventoryProps) {
         {visibleVehicles.map((vehicle) => (
           <article key={vehicle.id} className={styles.vehicleCard}>
             <Link
-              href={`/inventory/${vehicle.slug}`}
+              href={`/vehicles/${vehicle.slug}`}
               className={styles.vehicleImageLink}
               aria-label={`View ${vehicle.title}`}
             >
@@ -82,7 +82,7 @@ export function FeaturedInventory({ vehicles }: FeaturedInventoryProps) {
                 <span>{vehicle.year}</span>
               </div>
               <h3>
-                <Link href={`/inventory/${vehicle.slug}`}>{vehicle.title}</Link>
+                <Link href={`/vehicles/${vehicle.slug}`}>{vehicle.title}</Link>
               </h3>
 
               <div className={styles.vehicleSpecs}>
@@ -100,7 +100,7 @@ export function FeaturedInventory({ vehicles }: FeaturedInventoryProps) {
                   <strong>{priceFormatter.format(vehicle.price)}</strong>
                 </div>
                 <Link
-                  href={`/inventory/${vehicle.slug}`}
+                  href={`/vehicles/${vehicle.slug}`}
                   aria-label={`View details for ${vehicle.title}`}
                   title="View vehicle details"
                 >
@@ -115,7 +115,7 @@ export function FeaturedInventory({ vehicles }: FeaturedInventoryProps) {
       {visibleVehicles.length === 0 && (
         <div className={styles.emptyState}>
           <strong>No featured vehicles in this category today.</strong>
-          <Link href="/inventory">Browse the complete inventory</Link>
+          <Link href="/vehicles">Browse all vehicles</Link>
         </div>
       )}
     </div>

@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Mail, Menu, Phone } from "lucide-react";
 import {
@@ -9,12 +8,14 @@ import {
   FaYoutube,
 } from "react-icons/fa";
 
+import { BrandLogo } from "@/app/components/brand-logo";
+
 import "../globals.css";
 import styles from "./layout.module.css";
 
 const navigation = [
   { label: "Home", href: "/" },
-  { label: "Inventory", href: "/inventory" },
+  { label: "Vehicles", href: "/vehicles" },
   { label: "How it works", href: "/#services" },
   { label: "About", href: "/#about" },
   { label: "Contact", href: "/#contact" },
@@ -24,8 +25,8 @@ const footerColumns = [
   {
     title: "Explore",
     links: [
-      { label: "Current inventory", href: "/inventory" },
-      { label: "Featured vehicles", href: "/#inventory" },
+      { label: "Current vehicles", href: "/vehicles" },
+      { label: "Featured vehicles", href: "/#vehicles" },
       { label: "Auction sourcing", href: "/#contact" },
       { label: "Request a vehicle", href: "/#contact" },
     ],
@@ -74,13 +75,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
         <div className={styles.mainNav}>
           <Link href="/" className={styles.logoLink} aria-label="JC Export home">
-            <Image
-              src="/Home/image 1.png"
-              alt="JC Export"
-              width={205}
-              height={72}
-              className={styles.logoImage}
-            />
+            <BrandLogo />
           </Link>
 
           <nav className={styles.desktopNav} aria-label="Primary navigation">
@@ -97,7 +92,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             <Link href="/sign-in" className={styles.signInLink}>
               Sign in
             </Link>
-            <Link href="/inventory" className={styles.inventoryButton}>
+            <Link href="/vehicles" className={styles.vehiclesButton}>
               Browse stock
             </Link>
             <Link href="/#contact" className={styles.quoteButton}>
@@ -130,7 +125,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
             <Link href="/" aria-label="JC Export home">
-              <Image src="/logo1.png" alt="JC Export" width={170} height={45} />
+              <BrandLogo tone="on-dark" size="footer" />
             </Link>
             <p>
               Japan-sourced used vehicle export with clear condition evidence,

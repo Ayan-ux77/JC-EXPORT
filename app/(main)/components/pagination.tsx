@@ -5,13 +5,15 @@ import styles from "./pagination.module.css";
 
 type PaginationProps = {
   pageCount: number;
+  currentPage: number;
   onPageChange: (event: { selected: number }) => void;
 };
 
-export function Pagination({ pageCount, onPageChange }: PaginationProps) {
+export function Pagination({ pageCount, currentPage, onPageChange }: PaginationProps) {
   return (
     <ReactPaginate
       pageCount={pageCount}
+      forcePage={currentPage}
       onPageChange={onPageChange}
       previousLabel="← Prev"
       nextLabel="Next →"

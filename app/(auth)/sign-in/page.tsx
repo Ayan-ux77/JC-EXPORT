@@ -2,7 +2,6 @@
 "use client";
 import styles from "./sign-in.module.css"
 import { Fraunces } from "next/font/google"
-import Image from "next/image"
 import { GoLock } from "react-icons/go";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
@@ -39,7 +38,7 @@ export default function SignIn() {
 
           <p>
             Sign in to track your shipments, view inspection reports, and
-            manage your inventory orders — all in one place.
+            manage your vehicle orders — all in one place.
           </p>
         </section>
 

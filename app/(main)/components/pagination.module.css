@@ -1,11 +1,12 @@
 .pagination {
   width: 100%;
-  margin: 55px 0 80px;
+  margin: 46px 0 0;
   padding: 0;
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   list-style: none;
 }
 
@@ -14,38 +15,30 @@
 .nextItem,
 .breakItem {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
 .pageLink,
 .previousLink,
 .nextLink,
 .breakLink {
-  min-width: 34px;
-  height: 34px;
-  padding: 0 10px;
-
+  min-width: 36px;
+  height: 36px;
   display: flex;
-  justify-content: center;
   align-items: center;
-
-  border: 1px solid #d6dce2;
-  border-radius: 4px;
-  background-color: #ffffff;
-
-  color: #287ec9;
+  justify-content: center;
+  border: 1px solid #d2dbe0;
+  border-radius: 3px;
+  padding: 0 10px;
+  background: #ffffff;
+  color: #4e5c66;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 11px;
+  font-weight: 700;
   text-decoration: none;
-
   cursor: pointer;
-
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
 }
 
 .pageLink:hover,
@@ -53,22 +46,32 @@
 .nextLink:hover,
 .breakLink:hover {
   border-color: #287ec9;
-  background-color: #f3f8fd;
+  color: #1764a6;
 }
 
-/* @media (max-width: 600px) {
+.activePage .pageLink {
+  border-color: #0a1722;
+  background: #0a1722;
+  color: #ffffff;
+}
+
+.disabledPage .previousLink,
+.disabledPage .nextLink {
+  color: #aab3b9;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
   .pagination {
-    gap: 6px;
-    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .pageLink,
   .previousLink,
   .nextLink,
   .breakLink {
-    min-width: 32px;
-    height: 32px;
+    min-width: 34px;
+    height: 34px;
     padding: 0 8px;
-    font-size: 12px;
   }
-} */
+}

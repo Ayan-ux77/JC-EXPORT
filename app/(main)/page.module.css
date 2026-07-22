@@ -396,7 +396,7 @@
 }
 
 .brandsSection,
-.inventorySection,
+.vehiclesSection,
 .processSection,
 .aboutSection,
 .contactSection {
@@ -464,11 +464,11 @@
   object-fit: contain;
 }
 
-.inventorySection {
+.vehiclesSection {
   padding: 90px 0 104px;
 }
 
-.inventorySection::before {
+.vehiclesSection::before {
   content: "";
   position: absolute;
   z-index: -1;
@@ -480,12 +480,12 @@
   background: var(--soft);
 }
 
-.inventorySection {
+.vehiclesSection {
   position: relative;
   z-index: 0;
 }
 
-.inventoryBrowser {
+.vehiclesBrowser {
   margin-top: 44px;
 }
 
@@ -1304,7 +1304,7 @@ a.contactItem:hover {
   }
 
   .brandsSection,
-  .inventorySection,
+  .vehiclesSection,
   .processSection,
   .aboutSection,
   .contactSection {
@@ -1312,7 +1312,7 @@ a.contactItem:hover {
   }
 
   .brandsSection,
-  .inventorySection,
+  .vehiclesSection,
   .processSection,
   .testimonialsSection,
   .contactSection {

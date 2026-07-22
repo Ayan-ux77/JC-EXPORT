@@ -1,6 +1,6 @@
 import styles from "./layout.module.css";
-import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/app/components/brand-logo";
 
 export default function AuthLayout({
   children,
@@ -11,13 +11,8 @@ export default function AuthLayout({
     <>
       <header className={styles.box}>
         <nav className={styles.nav}>
-          <Link href="/">
-            <Image
-              src="/logo.png"
-              alt="JC Export Logo"
-              width={121}
-              height={45}
-            />
+          <Link href="/" className={styles.logoLink} aria-label="JC Export home">
+            <BrandLogo tone="on-dark" size="compact" />
           </Link>
 
           <div className={styles.right}>
@@ -26,7 +21,7 @@ export default function AuthLayout({
                 <button>MARKETING ▼</button>
               </li>
               <li>
-                <button>INVENTORY ▼</button>
+                <button>VEHICLES ▼</button>
               </li>
               <li>
                 <button className={styles.authBtn}>AUTHENTICATION ▼</button>

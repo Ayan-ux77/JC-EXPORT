@@ -1,0 +1,81 @@
+.logo {
+  --logo-ink: #101820;
+  --logo-blue: #236ba7;
+  --logo-red: #b70f1b;
+  --logo-size: 43px;
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  padding: 0 0 9px;
+  color: var(--logo-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: var(--logo-size);
+  font-weight: 700;
+  line-height: 0.82;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.logo::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 48px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--logo-red);
+}
+
+.logo[data-tone="on-dark"] {
+  --logo-ink: #ffffff;
+  --logo-blue: #68afe8;
+  --logo-red: #e02b38;
+}
+
+.logo[data-size="compact"] {
+  --logo-size: 32px;
+  padding-bottom: 7px;
+}
+
+.logo[data-size="compact"]::after {
+  width: 36px;
+  height: 3px;
+}
+
+.logo[data-size="footer"] {
+  --logo-size: 36px;
+  padding-bottom: 8px;
+}
+
+.logo[data-size="footer"]::after {
+  width: 41px;
+  height: 3px;
+}
+
+.j {
+  color: var(--logo-blue);
+  font-style: italic;
+  font-weight: 600;
+}
+
+.c {
+  color: var(--logo-ink);
+  font-weight: 600;
+}
+
+.export {
+  margin-left: 2px;
+  color: var(--logo-ink);
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .logo[data-size="default"] {
+    --logo-size: 37px;
+  }
+
+  .logo[data-size="default"]::after {
+    width: 42px;
+  }
+}
