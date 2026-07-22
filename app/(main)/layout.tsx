@@ -41,7 +41,7 @@ export default function MainLayout({ children }) {
             <ul className={styles.list}>
               <Link href="/"> Home </Link>
               <Link href="#">About</Link>
-              <Link href="#">Inventory</Link>
+              <Link href="/inventory">Inventory</Link>
               <Link href="#">Services</Link>
               <Link href="#">Contact</Link>
               <Link href="/sign-in">Sign in</Link>

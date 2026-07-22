@@ -117,7 +117,7 @@ export default function Listing() {
             selectedBodyType.toLowerCase() === vehicle.bodyType.toLowerCase(),
         );
 
-      return matchesMake && matchesBodyType && matchesSearch;
+      return matchesMake && matchesBodyType;
     });
   }, [selectedMakes, selectedBodyTypes, searchTerm]);
 
