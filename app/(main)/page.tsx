@@ -1,741 +1,606 @@
-"use client";
-
+import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { Fraunces, Lato } from "next/font/google";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Check,
+  ClipboardCheck,
+  Clock3,
+  FileCheck2,
+  Fuel,
+  Globe2,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Search,
+  ShieldCheck,
+  Ship,
+  SlidersHorizontal,
+} from "lucide-react";
+
 import { vehicles } from "@/data/vehicles";
+import { FeaturedInventory } from "./components/featured-inventory";
 import styles from "./page.module.css";
-import { Lateef } from "next/font/google";
-import { Fraunces } from "next/font/google";
-import { CiSearch } from "react-icons/ci";
-import { PiCarLight } from "react-icons/pi";
-import { PiCarProfileLight } from "react-icons/pi";
-import { FiCheck } from "react-icons/fi";
-import { FiShield, FiCheckCircle, FiClock, FiGlobe } from "react-icons/fi";
-import {
-  FaWhatsapp,
-  FaPhoneAlt,
-  FaEnvelope,
-  FaMapMarkerAlt,
-} from "react-icons/fa";
 
-import {
-  HiOutlineDocumentText,
-  HiOutlineDocumentDuplicate,
-} from "react-icons/hi2";
-import { title } from "process";
-import { icons } from "lucide-react";
-
-const fraunces = Fraunces({
+const bodyFont = Lato({
   subsets: ["latin"],
-  style: ["italic"],
-  weight: ["300"],
+  weight: ["400", "700", "900"],
+  variable: "--font-body",
 });
 
-const lateef = Lateef({
+const displayFont = Fraunces({
   subsets: ["latin"],
-  weight: ["400"],
+  style: ["normal", "italic"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
 });
 
-// CHANGED: stats ab array hai — pehle 4 identical blocks hardcoded the
+export const metadata: Metadata = {
+  title: "Japanese Used Cars for Export | JC Export",
+  description:
+    "Browse inspected Japanese used vehicles with clear FOB pricing, export documentation, and worldwide shipping support.",
+};
+
 const stats = [
-  { id: 1, value: "15", suffix: "+", label: "Year Exporting" },
-  { id: 2, value: "4200", suffix: "+", label: "Vehicles Shipped" },
-  { id: 3, value: "32", suffix: "", label: "Countries Served" },
-  {
-    id: 4,
-    value: "98",
-    suffix: "%",
-    label: "Client Retention",
-    suffixColor: "red",
-  },
+  { value: "15+", label: "Years exporting" },
+  { value: "4,200+", label: "Vehicles shipped" },
+  { value: "32", label: "Countries served" },
+  { value: "98%", label: "Returning clients" },
 ];
 
-// CHANGED: brand logos ab array hai — pehle 10 identical section blocks the
+const heroProof = [
+  "Auction sheet reviewed",
+  "Mileage and chassis checked",
+  "FOB price shown clearly",
+];
+
 const brands = [
-  { id: 1, name: "Honda", logo: "/home/honda-svgrepo-com 2.svg" },
-  { id: 2, name: "Toyota", logo: "/home/toyota-svgrepo-com 2.svg" },
-  { id: 3, name: "Mazda", logo: "/home/mazda-svgrepo-com 2.svg" },
-  { id: 4, name: "nissan", logo: "/home/nissan.svg" },
-  { id: 5, name: "Isuzu", logo: "/home/isuzu-2 2.svg" },
-  { id: 6, name: "BMW", logo: "/home/bmw-logo-svgrepo-com 3.svg" },
-  { id: 7, name: " Mitsubishi", logo: "/home/mitsubishi-svgrepo-com 2.svg" },
-  { id: 8, name: "subaru", logo: "/home/subaru-alt-svgrepo-com 2.svg" },
-  { id: 9, name: "Daihatsu", logo: "/home/Vector.svg", extraSpacing: true },
-  { id: 10, name: "Suzuki", logo: "/home/Vector (1).svg", extraSpacing: true },
-];
-
-// CHANGED: search fields ab array hai — pehle 4 identical input blocks the
-const searchFields = [
-  { label: "Make", placeholder: "All Make" },
-  { label: "BODY TYPE", placeholder: "All TYPE" },
-  { label: "Year", placeholder: "All Make" },
-  { label: "Max Price (USD)", placeholder: "All No Limit" },
-];
-
-const filters = [
-  "All Stock",
-  "Sedans",
-  "SUVs",
-  "Hybrids",
-  "Kel Cars",
-  "Trucks",
-  "Luxury",
+  { name: "Honda", logo: "/Home/honda-svgrepo-com 2.svg" },
+  { name: "Toyota", logo: "/Home/toyota-svgrepo-com 2.svg" },
+  { name: "Mazda", logo: "/Home/mazda-svgrepo-com 2.svg" },
+  { name: "Nissan", logo: "/Home/nissan.svg" },
+  { name: "Isuzu", logo: "/Home/isuzu-2 2.svg" },
+  { name: "BMW", logo: "/Home/bmw-logo-svgrepo-com 3.svg" },
+  { name: "Mitsubishi", logo: "/Home/mitsubishi-svgrepo-com 2.svg" },
+  { name: "Subaru", logo: "/Home/subaru-alt-svgrepo-com 2.svg" },
+  { name: "Daihatsu", logo: "/Home/Vector.svg" },
+  { name: "Suzuki", logo: "/Home/Vector (1).svg" },
 ];
 
 const processSteps = [
   {
-    id: 1,
-    step: "01 / 04",
-    icon: <PiCarProfileLight />, // apna icon yahan lagayein
-    title: "Car Export",
+    number: "01",
+    icon: Search,
+    title: "Source",
     description:
-      "Sourced from Japan & UK auctions. Auction grade verification, FOB pricing, and full pre-purchase disclosure on every unit.",
-    accentColor: "blue",
+      "Choose from current stock or tell us the make, model, year, and budget you want sourced from Japan.",
   },
   {
-    id: 2,
-    step: "01 / 04",
-    icon: <CiSearch />,
-    title: "Inspection",
+    number: "02",
+    icon: ClipboardCheck,
+    title: "Verify",
     description:
-      "JEVIC and JAAI certified inspections. Mechanical, structural, mileage, and chassis verification — independent reports for every vehicle.",
-    accentColor: "red",
+      "We review the auction sheet, mileage, chassis details, photos, and condition before you commit.",
   },
   {
-    id: 3,
-    step: "01 / 04",
-    icon: <HiOutlineDocumentText />,
-    title: "Shipping",
+    number: "03",
+    icon: Ship,
+    title: "Ship",
     description:
-      "RoRo and container shipping to 32 countries. Real-time tracking, port-to-port and door-to-door options, marine insurance included.",
-    accentColor: "blue",
+      "Your vehicle is booked by RoRo or container with clear sailing details and shipping updates.",
   },
   {
-    id: 4,
-    step: "01 / 04",
-    icon: <HiOutlineDocumentDuplicate />,
-    title: "Documentation",
+    number: "04",
+    icon: FileCheck2,
+    title: "Clear",
     description:
-      "L, invoice, export certificate, deregistration, and customs paperwork. Country-specific compliance for hassle-free clearance.",
-    accentColor: "red",
+      "The export certificate, invoice, bill of lading, and destination paperwork are prepared for arrival.",
   },
 ];
 
-// CHANGED: checklist items array — data-driven, JSX mein hardcoded nahi
-const aboutFeatures = [
-  "Direct partnerships with USS, TAA, JU auctions",
-  "Multilingual support (EN, UR, JP)",
-  "Marine insurance on all shipments",
-  "Multilingual support (EN, UR, JP)",
-  "In-house clearing & forwarding",
-  "Bonded yard inspection in Peshawar",
-  "Aftersales parts sourcing service",
-  "Bonded yard inspection in Peshawar",
+const companyFeatures = [
+  "Japanese auction and dealer sourcing",
+  "Independent inspection options",
+  "Photo and video condition evidence",
+  "RoRo and container shipping support",
+  "Country-specific export documents",
+  "Support before and after shipment",
 ];
 
-// CHANGED: trust badges array — data-driven
 const trustBadges = [
   {
-    id: 1,
-    icon: <FiShield />,
-    title: "JEVIC Certified",
-    subtitle: "Independent inspection",
-    accentColor: "blue",
+    icon: ShieldCheck,
+    title: "Condition first",
+    subtitle: "Evidence before payment",
   },
   {
-    id: 2,
-    icon: <FiCheckCircle />,
-    title: "FOB Guaranteed",
-    subtitle: "Transparent pricing",
-    accentColor: "red",
+    icon: BadgeCheck,
+    title: "Clear pricing",
+    subtitle: "FOB and shipping separated",
   },
   {
-    id: 3,
-    icon: <FiClock />,
-    title: "15+ Years",
-    subtitle: "Industry experience",
-    accentColor: "blue",
+    icon: Clock3,
+    title: "15+ years",
+    subtitle: "Export experience",
   },
   {
-    id: 4,
-    icon: <FiGlobe />,
-    title: "32 Countries",
-    subtitle: "Global delivery network",
-    accentColor: "red",
+    icon: Globe2,
+    title: "Global support",
+    subtitle: "32 destination markets",
   },
 ];
 
-// CHANGED: testimonials array — data-driven
 const testimonials = [
   {
-    id: 1,
-    rating: 5,
     quote:
-      "Third shipment from JC Export this year. Vehicles arrive exactly as inspected — no hidden damage, no auction-sheet surprises. They handle the documentation end-to-end and I just receive the BL.",
+      "The inspection photos matched the vehicle that arrived. Documentation was ready before the vessel reached port, which made our clearance much easier.",
     name: "Joseph Mwangi",
-    role: "Auto dealer · Nairobi, Kenya",
+    role: "Auto dealer, Nairobi",
     initials: "JM",
-    accentColor: "blue",
-    highlighted: false,
   },
   {
-    id: 2,
-    rating: 5,
     quote:
-      "Bought a Land Cruiser through JC last March. The pre-shipment video walkthrough was thorough, and they answered every question on WhatsApp within minutes. Felt like buying from a friend, not a stranger.",
+      "I received a full walkaround before purchase and regular WhatsApp updates after booking. The process felt clear from the first quote to delivery.",
     name: "Fatima Al-Hashimi",
-    role: "Auto dealer · Nairobi, Kenya",
+    role: "Private buyer, Dubai",
     initials: "FA",
-    accentColor: "red",
-    highlighted: true,
   },
   {
-    id: 3,
-    rating: 5,
     quote:
-      "Imported a fleet of 12 Hiace vans for our logistics business. Pricing was fair, paperwork landed before the ship did, and customs cleared in three days. We're working with them on the next batch.",
+      "We imported multiple vans for our business. The team kept the vehicle list, shipping documents, and arrival schedule organized throughout.",
     name: "Daniel Chirwa",
-    role: "Auto dealer · Nairobi, Kenya",
+    role: "Fleet buyer, Lilongwe",
     initials: "DC",
-    accentColor: "blue",
-    highlighted: false,
   },
 ];
 
-// CHANGED: contact info array — data-driven
 const contactInfo = [
   {
-    id: 1,
-    icon: <FaWhatsapp />,
-    label: "Whatsapp. Fastest Reply",
-    value: "+92 30012357987",
-    bgColor: "#25A249",
+    icon: MessageCircle,
+    label: "WhatsApp",
+    value: "+92 300 123 4567",
+    href: "https://wa.me/923001234567",
   },
   {
-    id: 2,
-    icon: <FaPhoneAlt />,
-    label: "Direct Phone",
-    value: "+92 2197357984",
-    bgColor: "#C30010",
+    icon: Phone,
+    label: "Direct phone",
+    value: "+92 300 123 4567",
+    href: "tel:+923001234567",
   },
   {
-    id: 3,
-    icon: <FaEnvelope />,
+    icon: Mail,
     label: "Email",
-    value: "sales@jcexpert.com",
-    bgColor: "#287EC9",
+    value: "sales@jcexport.com",
+    href: "mailto:sales@jcexport.com",
   },
   {
-    id: 4,
-    icon: <FaMapMarkerAlt />,
-    label: "Office Address",
-    value: "Site Area, Peshawar, Pakistan",
-    bgColor: "#1B4F8C",
+    icon: MapPin,
+    label: "Export support",
+    value: "Japan-sourced vehicles, worldwide delivery",
   },
 ];
 
-const whatsApp = [{}];
-
-// CHANGED: form fields array — 2 columns, data-driven
-const formFields = [
-  {
-    id: "fullName",
-    label: "Full Name",
-    type: "text",
-    placeholder: "Your Name",
-  },
-  {
-    id: "country",
-    label: "Country",
-    type: "text",
-    placeholder: "Destination Country",
-  },
-  { id: "email", label: "Email", type: "email", placeholder: "you@gmail.com" },
-  {
-    id: "phone",
-    label: "Phone / Whatsapp",
-    type: "text",
-    placeholder: "+ xx xxx xxxxxx",
-  },
-];
-
-const vehicleOptions = ["Sedan", "SUV", "Hybrid", "Truck", "Luxury", "Kei Car"];
-
-export default function Page() {
-  const [activeFilter, setActiveFilter] = useState("All Stock");
-
+export default function HomePage() {
   return (
-    <main className={styles.page}>
-      {/* Hero Section */}
-      <section className={styles.heroSection}>
-        <section className={styles.heroBadge}>
-          <span className={styles.badgeLine}></span>
-          <span className={lateef.className}>PREMIUM AUTO EXPORT · JAPAN</span>
-        </section>
+    <main className={`${styles.page} ${bodyFont.variable} ${displayFont.variable}`}>
+      <section className={styles.hero} aria-labelledby="hero-title">
+        <Image
+          src="/home-hero.webp"
+          alt="Used Japanese vehicles prepared for export at a port inspection yard"
+          fill
+          preload
+          sizes="100vw"
+          className={styles.heroImage}
+        />
+        <div className={styles.heroOverlay} />
 
-        <section className={styles.heroContent}>
-          <h1>Japanese Excellence,</h1>
-          <span className={styles.heroDivider1}></span>
-          <h2 className={fraunces.className}>Delivered </h2>
-          <h2 className={fraunces.className}>
-            Worldwide <span>.</span>
-          </h2>
-
-          <p className={styles.heroDescription}>
-            Welcome to Japan Car Export - One of Japan’s fastest growing
-            Japanese used cars exporter. JC Export sources, inspects, and ships
-            premium Japanese vehicles with documentation handled door-to-door.
-            Fifteen years of trust, zero shortcuts.
-          </p>
-
-          <section className={styles.heroActions}>
-            <button type="button" className={styles.primaryBtn}>
-              Explore Inventory &rarr;
-            </button>
-            <button type="button" className={styles.secondaryBtn}>
-              Talk to an Expert
-            </button>
-          </section>
-        </section>
-      </section>
-
-      {/*  STATS */}
-      <section className={styles.statsBar}>
-        {stats.map((stat) => (
-          <section key={stat.id} className={styles.statItem}>
-            <h1>
-              {stat.value}{" "}
-              {stat.suffix && (
-                <span
-                  style={
-                    stat.suffixColor ? { color: stat.suffixColor } : undefined
-                  }
-                >
-                  {stat.suffix}
-                </span>
-              )}
+        <div className={styles.heroInner}>
+          <div className={styles.heroCopy}>
+            <p className={styles.eyebrow}>
+              <span /> Japanese used vehicle specialists
+            </p>
+            <h1 id="hero-title">
+              Verified Japanese used cars, <em>exported worldwide.</em>
             </h1>
-            <p className={styles.statLabel}>{stat.label}</p>
-          </section>
-        ))}
+            <p className={styles.heroDescription}>
+              Source with confidence. We help buyers inspect, document, and ship
+              quality used vehicles from Japan with clear pricing at every step.
+            </p>
+
+            <ul className={styles.heroProof}>
+              {heroProof.map((item) => (
+                <li key={item}>
+                  <Check aria-hidden="true" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <div className={styles.heroActions}>
+              <Link href="/inventory" className={styles.primaryButton}>
+                Browse inventory <ArrowRight aria-hidden="true" />
+              </Link>
+              <Link href="#contact" className={styles.secondaryButton}>
+                Get an export quote
+              </Link>
+            </div>
+          </div>
+
+          <aside className={styles.heroNote} aria-label="Export process summary">
+            <span className={styles.heroNoteLabel}>From Japan to your port</span>
+            <strong>One team. One clear shipment.</strong>
+            <div className={styles.heroNoteRoute}>
+              <span>Source</span>
+              <span>Inspect</span>
+              <span>Ship</span>
+            </div>
+          </aside>
+        </div>
       </section>
 
-      {/* ================= SEARCH ================= */}
-      <section className={styles.searchSection}>
-        <section className={styles.sectionBadge}>
-          <span className={styles.badgeLineBlue}></span>
-          <span
-            className={styles.font}
-            style={{ color: "rgba(40, 126, 201, 1)" }}
-          >
-            FIND YOUR VEHICLE
-          </span>
-        </section>
+      <section className={styles.searchPanel} aria-labelledby="vehicle-search-title">
+        <div className={styles.searchHeading}>
+          <div>
+            <p className={styles.kicker}>Search current stock</p>
+            <h2 id="vehicle-search-title">Find the right used vehicle</h2>
+          </div>
+          <Link href="/inventory" className={styles.textLink}>
+            Advanced search <SlidersHorizontal aria-hidden="true" />
+          </Link>
+        </div>
 
-        <section className={styles.searchFields}>
-          {searchFields.map((field) => (
-            <section key={field.label}>
-              <p>{field.label}</p>
-              <input type="number" placeholder={field.placeholder} />
-            </section>
-          ))}
-        </section>
-
-        <section className={styles.searchButtonRow}>
-          <button type="button" className={styles.searchButton}>
-            <CiSearch />
-            Search
+        <form className={styles.searchForm} action="/inventory">
+          <label>
+            <span>Make</span>
+            <select name="make" defaultValue="">
+              <option value="">All makes</option>
+              {brands.map((brand) => (
+                <option key={brand.name} value={brand.name.toLowerCase()}>
+                  {brand.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Body type</span>
+            <select name="bodyType" defaultValue="">
+              <option value="">All body types</option>
+              <option value="sedan">Sedan</option>
+              <option value="suv">SUV</option>
+              <option value="hatchback">Hatchback</option>
+              <option value="van">Van</option>
+              <option value="truck">Truck</option>
+            </select>
+          </label>
+          <label>
+            <span>Year from</span>
+            <select name="year" defaultValue="">
+              <option value="">Any year</option>
+              <option value="2021">2021</option>
+              <option value="2019">2019</option>
+              <option value="2017">2017</option>
+              <option value="2015">2015</option>
+            </select>
+          </label>
+          <label>
+            <span>Max FOB price</span>
+            <select name="maxPrice" defaultValue="">
+              <option value="">No limit</option>
+              <option value="5000">Up to $5,000</option>
+              <option value="10000">Up to $10,000</option>
+              <option value="20000">Up to $20,000</option>
+              <option value="30000">Up to $30,000</option>
+            </select>
+          </label>
+          <button type="submit" className={styles.searchButton}>
+            <Search aria-hidden="true" /> Search vehicles
           </button>
-        </section>
-
-        <section className={styles.brandsGrid}>
-          {brands.map((brand) => (
-            <section
-              key={brand.id}
-              className={`${styles.brandItem} ${
-                brand.extraSpacing ? styles.brandItemSpaced : ""
-              }`}
-            >
-              <img src={brand.logo} alt={brand.name.trim()} />
-              <p>{brand.name}</p>
-            </section>
-          ))}
-        </section>
-
-        {/* ================= INVENTORY ================= */}
-        <section className={styles.inventorySection}>
-          <section className={styles.inventoryInner}>
-            <section className={styles.sectionBadge}>
-              <span className={styles.badgeLineBlue}></span>
-              <span
-                className={lateef.className}
-                style={{ color: "rgba(40, 126, 201, 1)" }}
-              >
-                FEATURE INVENTORY
-              </span>
-            </section>
-
-            <h1 className={fraunces.className} style={{ color: "black" }}>
-              Hand-picked vehicles,
-              <br />{" "}
-              <span style={{ color: "rgba(40, 126, 201, 1)" }}>
-                auction-fresh.
-              </span>
-            </h1>
-
-            <section className={styles.inventoryLinkRow}>
-              <Link href="/inventory">View all 246 Vehicles &rarr;</Link>
-            </section>
-
-            <section className={styles.filterBar}>
-              {filters.map((filter) => (
-                <button
-                  key={filter}
-                  type="button"
-                  className={`${styles.filterBtn} ${
-                    activeFilter === filter ? styles.filterBtnActive : ""
-                  }`}
-                  onClick={() => setActiveFilter(filter)}
-                >
-                  {filter}
-                </button>
-              ))}
-            </section>
-
-            <section className={styles.vehicleGrid}>
-              {vehicles.slice(0, 6).map((vehicle) => (
-                <section key={vehicle.id} className={styles.vehicleCard}>
-                  <img src={vehicle.image} alt={vehicle.title} />
-
-                  <section className={styles.vehicleCardBody}>
-                    <section className={styles.vehicleCardHeader}>
-                      <span className={styles.vehicleBrand}>
-                        {vehicle.brand}
-                      </span>
-                      <span>{vehicle.year}</span>
-                    </section>
-
-                    <section className={styles.vehicleTitleRow}>
-                      <h3>{vehicle.title}</h3>
-                      <span className={styles.vehicleDivider}></span>
-                    </section>
-
-                    <section className={styles.vehicleSpecs}>
-                      <section>
-                        <h5>{vehicle.mileage}</h5>
-                        <p>MILEAGE</p>
-                      </section>
-                      <section>
-                        <h5>{vehicle.engine}</h5>
-                        <p>ENGINE</p>
-                      </section>
-                      <section>
-                        <h5>{vehicle.fuel}</h5>
-                        <p>FUEL</p>
-                      </section>
-                    </section>
-
-                    <span className={styles.vehicleDivider}></span>
-
-                    <section className={styles.vehiclePriceRow}>
-                      <section>
-                        <p className={styles.vehiclePriceLabel}>FOB Price</p>
-
-                        <h1 className={styles.vehiclePriceValue}>
-                          $ {vehicle.price}
-                        </h1>
-                      </section>
-
-                      <Link
-                        href={{
-                          pathname: `/inventory/${vehicle.slug}`,
-                          query: JSON.stringify(vehicle),
-                        }}
-                        className={styles.vehicleViewDetail}
-                      >
-                        View Detail &rarr;
-                      </Link>
-                    </section>
-                  </section>
-                </section>
-              ))}
-            </section>
-          </section>
-
-          <section className={styles.services}>
-            <section className={styles.services1}>
-              <span className={styles.badgeLineBlue}></span>
-              <span
-                className={lateef.className}
-                style={{ color: "rgba(40, 126, 201, 1)" }}
-              >
-                Our Services
-              </span>
-            </section>
-
-            <section className={styles.export}>
-              <h1 className={fraunces.className} style={{ color: "black" }}>
-                End-to-end exports, 
-                <br />{" "}
-                <span style={{ color: "rgba(40, 126, 201, 1)" }}>
-                    handled.
-                </span>
-              </h1>
-
-              <section className={styles.processGrid}>
-                {processSteps.map((step) => (
-                  <section
-                    key={step.id}
-                    className={`${styles.processCard} ${
-                      step.accentColor === "red" ? styles.processCardRed : ""
-                    }`}
-                  >
-                    <span
-                      className={`${fraunces.className} ${styles.processStep}`}
-                    >
-                      {step.step}
-                    </span>
-
-                    <span className={styles.processIcon}>{step.icon}</span>
-
-                    <h3 className={styles.processTitle}>{step.title}</h3>
-                    <p className={styles.processDescription}>
-                      {step.description}
-                    </p>
-                  </section>
-                ))}
-              </section>
-            </section>
-
-            <section className={styles.aboutSection}>
-              <section className={styles.aboutImageWrapper}>
-                <img
-                  src="/Building.png"
-                  alt="JC Export headquarters building"
-                  className={styles.aboutImage}
-                />
-              </section>
-
-              <section className={styles.aboutContent}>
-                <section className={styles.sectionBadge}>
-                  <span className={styles.badgeLineBlue}></span>
-                  <span
-                    className={lateef.className}
-                    style={{ color: "rgba(40, 126, 201, 1)" }}
-                  >
-                    ABOUT JC EXPORT
-                  </span>
-                </section>
-
-                <h2 className={styles.aboutHeading}>
-                  Built on trust,{" "}
-                  <span
-                    className={fraunces.className}
-                    style={{ color: "rgba(40, 126, 201, 1)" }}
-                  >
-                    shipped with precision
-                  </span>
-                  .
-                </h2>
-
-                <p className={styles.aboutIntro}>
-                  JC Export started in 2008 with a single shipment to Mombasa.
-                  Today we move fleets of Japanese vehicles to 32 countries —
-                  but we still pick up every call ourselves.
-                </p>
-
-                <p className={styles.aboutDescription}>
-                  We work with verified suppliers across Japan, UK, and Korea.
-                  Every vehicle is auction-graded, independently inspected, and
-                  photographed before purchase. No surprises at the port.
-                </p>
-
-                <ul className={styles.aboutFeatureGrid}>
-                  {aboutFeatures.map((feature, index) => (
-                    <li key={index} className={styles.aboutFeatureItem}>
-                      <FiCheck className={styles.aboutFeatureIcon} />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button type="button" className={styles.aboutCta}>
-                  Schedule a call &rarr;
-                </button>
-              </section>
-            </section>
-            <section className={styles.trustBar}>
-              {trustBadges.map((badge) => (
-                <section key={badge.id} className={styles.trustItem}>
-                  <span
-                    className={`${styles.trustIcon} ${
-                      badge.accentColor === "red" ? styles.trustIconRed : ""
-                    }`}
-                  >
-                    {badge.icon}
-                  </span>
-
-                  <h4 className={styles.trustTitle}>{badge.title}</h4>
-                  <p className={styles.trustSubtitle}>{badge.subtitle}</p>
-                </section>
-              ))}
-              {/* <span className={styles.sectionDivider}></span> */}
-            </section>
-            <span className={styles.sectionDivider}></span>
-          </section>
-
-          <section className={styles.testimonialsSection}>
-            <section className={styles.sectionBadge}>
-              <span className={styles.badgeLineBlue11}></span>
-              <span className={lateef.className} style={{ color: "white" }}>
-                CLIENT STORIES
-              </span>
-            </section>
-
-            <h2 className={styles.testimonialsHeading}>
-              What our buyers{" "}
-              <span
-                className={fraunces.className}
-                style={{ color: "rgba(40, 126, 201, 1)" }}
-              >
-                actually, <br />
-                say
-              </span>
-              .
-            </h2>
-
-            <section className={styles.testimonialsGrid}>
-              {testimonials.map((testimonial) => (
-                <section
-                  key={testimonial.id}
-                  className={`${styles.testimonialCard} ${
-                    testimonial.highlighted
-                      ? styles.testimonialCardHighlighted
-                      : ""
-                  }`}
-                >
-                  <section className={styles.testimonialTopRow}>
-                    <span className={styles.testimonialStars}>
-                      {"★".repeat(testimonial.rating)}
-                    </span>
-                    <span className={styles.testimonialQuoteMark}>!!</span>
-                  </section>
-
-                  <p className={styles.testimonialQuote}>{testimonial.quote}</p>
-
-                  <section className={styles.testimonialAuthorRow}>
-                    <span
-                      className={`${styles.testimonialAvatar} ${
-                        testimonial.accentColor === "red"
-                          ? styles.testimonialAvatarRed
-                          : ""
-                      }`}
-                    >
-                      {testimonial.initials}
-                    </span>
-
-                    <section>
-                      <p className={styles.testimonialName}>
-                        {testimonial.name}
-                      </p>
-                      <p className={styles.testimonialRole}>
-                        {testimonial.role}
-                      </p>
-                    </section>
-                  </section>
-                </section>
-              ))}
-            </section>
-          </section>
-        </section>
+        </form>
       </section>
-      <section className={styles.contactForm}>
-        <section className={styles.sectionBadge}>
-          <span className={styles.badgeLineBlue12}></span>
-          <span className={lateef.className} style={{ color: "red" }}>
-            CLIENT STORIES
-          </span>
-        </section>
 
-        <h2 className={styles.contact}>
-          Tell us what youre 
-          <br />{" "}
-          <span
-            className={fraunces.className}
-            style={{ color: "rgba(40, 126, 201, 1)" }}
-          >
-            looking for.
-          </span>
-        </h2>
+      <section className={styles.statsSection} aria-label="JC Export in numbers">
+        <div className={styles.statsGrid}>
+          {stats.map((stat) => (
+            <div key={stat.label} className={styles.statItem}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
-        <section className={styles.contactList}>
-          {contactInfo.map((item) => {
-            console.log("item", item);
+      <section className={styles.brandsSection} aria-labelledby="brands-title">
+        <div className={styles.sectionIntroRow}>
+          <div>
+            <p className={styles.kicker}>Popular Japanese makes</p>
+            <h2 id="brands-title">Start with a brand you trust</h2>
+          </div>
+          <p>
+            Browse our latest stock or ask us to source a specific model from
+            Japan.
+          </p>
+        </div>
+
+        <div className={styles.brandsGrid}>
+          {brands.map((brand) => (
+            <Link
+              key={brand.name}
+              href={`/inventory?brand=${brand.name.toLowerCase()}`}
+              className={styles.brandItem}
+              aria-label={`Browse ${brand.name} vehicles`}
+            >
+              <Image
+                src={brand.logo}
+                alt=""
+                width={82}
+                height={58}
+                className={styles.brandLogo}
+              />
+              <span>{brand.name}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section
+        id="inventory"
+        className={styles.inventorySection}
+        aria-labelledby="inventory-title"
+      >
+        <div className={styles.sectionIntroRow}>
+          <div>
+            <p className={styles.kicker}>Featured inventory</p>
+            <h2 id="inventory-title">
+              Hand-picked vehicles, <em>auction fresh.</em>
+            </h2>
+          </div>
+          <Link href="/inventory" className={styles.textLink}>
+            View all vehicles <ArrowRight aria-hidden="true" />
+          </Link>
+        </div>
+
+        <FeaturedInventory vehicles={vehicles.slice(0, 6)} />
+      </section>
+
+      <section id="services" className={styles.processSection} aria-labelledby="process-title">
+        <div className={styles.sectionIntroRow}>
+          <div>
+            <p className={styles.kicker}>How export works</p>
+            <h2 id="process-title">
+              From Japanese auction to <em>your destination.</em>
+            </h2>
+          </div>
+          <p>
+            A practical four-step process with one point of contact from vehicle
+            selection through shipping documents.
+          </p>
+        </div>
+
+        <div className={styles.processGrid}>
+          {processSteps.map((step) => {
+            const Icon = step.icon;
             return (
-              <section key={item.id} className={styles.contactCard}>
-                <span
-                  className={styles.contactIcon}
-                  style={{ backgroundColor: item.bgColor }}
-                >
-                  {item.icon}
-                </span>
-
-                <section>
-                  <p className={styles.contactLabel}>{item.label}</p>
-                  <p className={styles.contactLabel}>{item.value}</p>
-                </section>
-              </section>
+              <article key={step.number} className={styles.processCard}>
+                <div className={styles.processCardTop}>
+                  <span>{step.number}</span>
+                  <Icon aria-hidden="true" />
+                </div>
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+              </article>
             );
           })}
-        </section>
+        </div>
       </section>
-      <section className={styles.quoteForm}>
-        <h2 className={styles.quoteTitle}>Request a quote</h2>
 
-        <section className={styles.formGrid}>
-          <section className={styles.formGroup}>
-            <label>Full Name</label>
-            <input type="text" placeholder="Your Name" />
-          </section>
+      <section id="about" className={styles.aboutSection} aria-labelledby="about-title">
+        <div className={styles.aboutImageWrap}>
+          <div className={styles.aboutImageMain}>
+            <Image
+              src="/cards/4.png"
+              alt="Used vehicle photographed in Japan before export"
+              fill
+              sizes="(max-width: 900px) 100vw, 48vw"
+              className={styles.aboutImage}
+            />
+          </div>
+          <div className={styles.aboutImageSmall}>
+            <Image
+              src="/cards/1.png"
+              alt="White used hatchback in a Japanese vehicle yard"
+              fill
+              sizes="(max-width: 900px) 50vw, 24vw"
+              className={styles.aboutImage}
+            />
+          </div>
+          <div className={styles.aboutImageSmall}>
+            <Image
+              src="/cards/5.png"
+              alt="Black used sedan photographed before export"
+              fill
+              sizes="(max-width: 900px) 50vw, 24vw"
+              className={styles.aboutImage}
+            />
+          </div>
+          <div className={styles.aboutImageCaption}>
+            <span>Before you buy</span>
+            <strong>See the actual vehicle, not a stock photo.</strong>
+          </div>
+        </div>
 
-          <section className={styles.formGroup}>
-            <label>Country</label>
-            <input type="text" placeholder="Destination Country" />
-          </section>
+        <div className={styles.aboutContent}>
+          <p className={styles.kicker}>Why buyers choose JC Export</p>
+          <h2 id="about-title">
+            More certainty before the car <em>leaves Japan.</em>
+          </h2>
+          <p className={styles.aboutLead}>
+            Used-car exporting depends on evidence. We organize the condition
+            details, costs, and documents you need to make a clear decision.
+          </p>
+          <p className={styles.aboutBody}>
+            Whether you are buying one family vehicle or replenishing dealer
+            stock, the process stays transparent: actual vehicle media, clear
+            pricing, shipping options, and responsive support.
+          </p>
 
-          <section className={styles.formGroup}>
-            <label>Email</label>
-            <input type="email" placeholder="you@gmail.com" />
-          </section>
+          <ul className={styles.featureList}>
+            {companyFeatures.map((feature) => (
+              <li key={feature}>
+                <Check aria-hidden="true" /> {feature}
+              </li>
+            ))}
+          </ul>
 
-          <section className={styles.formGroup}>
-            <label>Phone / Whatsapp</label>
-            <input type="text" placeholder="+ xx xxx xxxxxx" />
-          </section>
-        </section>
+          <Link href="#contact" className={styles.inlineButton}>
+            Talk to an export specialist <ArrowRight aria-hidden="true" />
+          </Link>
+        </div>
+      </section>
 
-        <section className={styles.formGroup}>
-          <label>Vehicle Interest</label>
+      <section className={styles.trustSection} aria-label="Buyer assurances">
+        <div className={styles.trustGrid}>
+          {trustBadges.map((badge) => {
+            const Icon = badge.icon;
+            return (
+              <div key={badge.title} className={styles.trustItem}>
+                <Icon aria-hidden="true" />
+                <div>
+                  <strong>{badge.title}</strong>
+                  <span>{badge.subtitle}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
-          <select>
-            <option>Sedan</option>
-            <option>SUV</option>
-            <option>Hybrid</option>
-            <option>Truck</option>
-            <option>Luxury</option>
-          </select>
-        </section>
+      <section className={styles.testimonialsSection} aria-labelledby="stories-title">
+        <div className={styles.sectionIntroRow}>
+          <div>
+            <p className={styles.kicker}>Buyer stories</p>
+            <h2 id="stories-title">
+              Clear communication, <em>long after payment.</em>
+            </h2>
+          </div>
+          <p>
+            The strongest export relationship is built by keeping the buyer
+            informed before purchase, during shipping, and at arrival.
+          </p>
+        </div>
 
-        <section className={styles.formGroup}>
-          <label>Message</label>
+        <div className={styles.testimonialsGrid}>
+          {testimonials.map((testimonial, index) => (
+            <article key={testimonial.name} className={styles.testimonialCard}>
+              <div className={styles.rating} aria-label="5 out of 5 stars">
+                <span aria-hidden="true">★★★★★</span>
+                <small>Verified buyer</small>
+              </div>
+              <blockquote>&ldquo;{testimonial.quote}&rdquo;</blockquote>
+              <div className={styles.testimonialAuthor}>
+                <span className={index === 1 ? styles.avatarRed : ""}>
+                  {testimonial.initials}
+                </span>
+                <div>
+                  <strong>{testimonial.name}</strong>
+                  <small>{testimonial.role}</small>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
-          <textarea
-            rows={5}
-            placeholder="Tell us your budget, preferred make/model, year range..."
-          ></textarea>
-        </section>
+      <section id="contact" className={styles.contactSection} aria-labelledby="contact-title">
+        <div className={styles.contactDetails}>
+          <p className={styles.kicker}>Start your export request</p>
+          <h2 id="contact-title">
+            Tell us what you are <em>looking for.</em>
+          </h2>
+          <p className={styles.contactLead}>
+            Share your preferred make, model, budget, and destination. We will
+            reply with suitable stock or a sourcing plan.
+          </p>
 
-        <button className={styles.submitBtn}>SEND INQUIRY →</button>
+          <div className={styles.contactList}>
+            {contactInfo.map((item) => {
+              const Icon = item.icon;
+              const content = (
+                <>
+                  <span className={styles.contactIcon}>
+                    <Icon aria-hidden="true" />
+                  </span>
+                  <span>
+                    <small>{item.label}</small>
+                    <strong>{item.value}</strong>
+                  </span>
+                </>
+              );
+
+              return item.href ? (
+                <a key={item.label} href={item.href} className={styles.contactItem}>
+                  {content}
+                </a>
+              ) : (
+                <div key={item.label} className={styles.contactItem}>
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <form className={styles.quoteForm}>
+          <div className={styles.quoteFormHeader}>
+            <span>Export inquiry</span>
+            <Fuel aria-hidden="true" />
+          </div>
+          <div className={styles.formGrid}>
+            <label>
+              <span>Full name</span>
+              <input name="name" type="text" placeholder="Your name" autoComplete="name" />
+            </label>
+            <label>
+              <span>Destination country</span>
+              <input name="country" type="text" placeholder="e.g. Kenya" autoComplete="country-name" />
+            </label>
+            <label>
+              <span>Email</span>
+              <input name="email" type="email" placeholder="you@example.com" autoComplete="email" />
+            </label>
+            <label>
+              <span>Phone / WhatsApp</span>
+              <input name="phone" type="tel" placeholder="+00 000 000 000" autoComplete="tel" />
+            </label>
+          </div>
+          <label>
+            <span>Vehicle interest</span>
+            <select name="vehicle" defaultValue="">
+              <option value="">Select a body type</option>
+              <option value="sedan">Sedan</option>
+              <option value="suv">SUV</option>
+              <option value="hatchback">Hatchback</option>
+              <option value="van">Van</option>
+              <option value="truck">Truck</option>
+            </select>
+          </label>
+          <label>
+            <span>What should we source?</span>
+            <textarea
+              name="message"
+              rows={5}
+              placeholder="Make, model, year range, budget, and any must-have features"
+            />
+          </label>
+          <button type="submit" className={styles.submitButton}>
+            Send inquiry <ArrowRight aria-hidden="true" />
+          </button>
+          <p className={styles.formNote}>
+            We only use your details to respond to this request.
+          </p>
+        </form>
       </section>
     </main>
   );

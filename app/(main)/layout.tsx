@@ -1,168 +1,174 @@
-import "../globals.css";
-import styles from "./layout.module.css";
+import type { ReactNode } from "react";
 import Image from "next/image";
-import { LuPhone } from "react-icons/lu";
-import { CiMail } from "react-icons/ci";
 import Link from "next/link";
+import { ArrowRight, Mail, Menu, Phone } from "lucide-react";
 import {
   FaFacebookF,
   FaInstagram,
-  FaYoutube,
   FaLinkedinIn,
+  FaYoutube,
 } from "react-icons/fa";
 
-export default function MainLayout({ children }) {
+import "../globals.css";
+import styles from "./layout.module.css";
+
+const navigation = [
+  { label: "Home", href: "/" },
+  { label: "Inventory", href: "/inventory" },
+  { label: "How it works", href: "/#services" },
+  { label: "About", href: "/#about" },
+  { label: "Contact", href: "/#contact" },
+];
+
+const footerColumns = [
+  {
+    title: "Explore",
+    links: [
+      { label: "Current inventory", href: "/inventory" },
+      { label: "Featured vehicles", href: "/#inventory" },
+      { label: "Auction sourcing", href: "/#contact" },
+      { label: "Request a vehicle", href: "/#contact" },
+    ],
+  },
+  {
+    title: "Services",
+    links: [
+      { label: "Vehicle sourcing", href: "/#services" },
+      { label: "Inspection support", href: "/#services" },
+      { label: "International shipping", href: "/#services" },
+      { label: "Export documents", href: "/#services" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About JC Export", href: "/#about" },
+      { label: "Contact", href: "/#contact" },
+      { label: "Sign in", href: "/sign-in" },
+      { label: "Privacy", href: "#" },
+    ],
+  },
+];
+
+export default function MainLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <header className={styles.box}>
-        <nav className={styles.nav}>
-          <section className={styles.number}>
-            <p>
-              <LuPhone /> +92 300 1234567
-            </p>
-            <p>
-              <CiMail /> info@jcexport.com
-            </p>
-          </section>
-
-          <section className={styles.language}>
-            <p>
+      <header className={styles.header}>
+        <div className={styles.utilityBar}>
+          <div className={styles.utilityInner}>
+            <div className={styles.utilityContacts}>
+              <a href="tel:+923001234567">
+                <Phone aria-hidden="true" /> +92 300 123 4567
+              </a>
+              <a href="mailto:info@jcexport.com">
+                <Mail aria-hidden="true" /> info@jcexport.com
+              </a>
+            </div>
+            <div className={styles.languages} aria-label="Available languages">
               <span>EN</span>
               <span>اردو</span>
               <span>日本語</span>
-            </p>
-          </section>
-        </nav>
+            </div>
+          </div>
+        </div>
 
-        <section className={styles.logo}>
-          <Image src="/home/image 1.png" alt="logo" width={205} height={72} />
+        <div className={styles.mainNav}>
+          <Link href="/" className={styles.logoLink} aria-label="JC Export home">
+            <Image
+              src="/Home/image 1.png"
+              alt="JC Export"
+              width={205}
+              height={72}
+              className={styles.logoImage}
+            />
+          </Link>
 
-          <section className={styles.navbar}>
-            <ul className={styles.list}>
-              <Link href="/"> Home </Link>
-              <Link href="#">About</Link>
-              <Link href="/inventory">Inventory</Link>
-              <Link href="#">Services</Link>
-              <Link href="#">Contact</Link>
-              <Link href="/sign-in">Sign in</Link>
+          <nav className={styles.desktopNav} aria-label="Primary navigation">
+            <ul>
+              {navigation.map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href}>{item.label}</Link>
+                </li>
+              ))}
             </ul>
-          </section>
+          </nav>
 
-          <section className={styles.btn}>
-            <button className={styles.btn1}>Browse Inventory</button>
-            <button className={styles.btn2}>Get a Quote &rarr;</button>
-          </section>
-        </section>
+          <div className={styles.headerActions}>
+            <Link href="/sign-in" className={styles.signInLink}>
+              Sign in
+            </Link>
+            <Link href="/inventory" className={styles.inventoryButton}>
+              Browse stock
+            </Link>
+            <Link href="/#contact" className={styles.quoteButton}>
+              Get a quote <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
+
+          <details className={styles.mobileMenu}>
+            <summary aria-label="Open navigation menu" title="Open navigation">
+              <Menu aria-hidden="true" />
+            </summary>
+            <nav aria-label="Mobile navigation">
+              {navigation.map((item) => (
+                <Link key={item.label} href={item.href}>
+                  {item.label}
+                </Link>
+              ))}
+              <Link href="/sign-in">Sign in</Link>
+              <Link href="/#contact" className={styles.mobileQuoteLink}>
+                Get a quote <ArrowRight aria-hidden="true" />
+              </Link>
+            </nav>
+          </details>
+        </div>
       </header>
 
-      {/* Render the page content here */}
-      <main>{children}</main>
+      {children}
 
-      <section className={styles.footer}>
-        <section className={styles.footerTop}>
-          {/* LEFT */}
-          <section className={styles.footerLeft}>
-            <Image src="/logo1.png" alt="JC Export" width={170} height={45} />
-
-            <p className={styles.footerDesc}>
-              Premium Japanese vehicle export from Pakistan to the world.
-              Fifteen years, four thousand shipments, zero shortcuts.
+      <footer className={styles.footer}>
+        <div className={styles.footerTop}>
+          <div className={styles.footerBrand}>
+            <Link href="/" aria-label="JC Export home">
+              <Image src="/logo1.png" alt="JC Export" width={170} height={45} />
+            </Link>
+            <p>
+              Japan-sourced used vehicle export with clear condition evidence,
+              documentation, and worldwide shipping support.
             </p>
+            <div className={styles.socialLinks}>
+              <a href="#" aria-label="JC Export on Facebook" title="Facebook">
+                <FaFacebookF aria-hidden="true" />
+              </a>
+              <a href="#" aria-label="JC Export on Instagram" title="Instagram">
+                <FaInstagram aria-hidden="true" />
+              </a>
+              <a href="#" aria-label="JC Export on YouTube" title="YouTube">
+                <FaYoutube aria-hidden="true" />
+              </a>
+              <a href="#" aria-label="JC Export on LinkedIn" title="LinkedIn">
+                <FaLinkedinIn aria-hidden="true" />
+              </a>
+            </div>
+          </div>
 
-            <section className={styles.socialIcons}>
-              <section className={styles.iconBox}>
-                <FaFacebookF />
-              </section>
+          {footerColumns.map((column) => (
+            <nav key={column.title} className={styles.footerColumn} aria-label={column.title}>
+              <h2>{column.title}</h2>
+              {column.links.map((link) => (
+                <Link key={link.label} href={link.href}>
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          ))}
+        </div>
 
-              <section className={styles.iconBox}>
-                <FaInstagram />
-              </section>
-
-              <section className={styles.iconBox}>
-                <FaYoutube />
-              </section>
-
-              <section className={styles.iconBox}>
-                <FaLinkedinIn />
-              </section>
-            </section>
-          </section>
-
-          {/* Explore */}
-          <section className={styles.footerColumn}>
-            <h3>EXPLORE</h3>
-
-            <Link href="#">Inventory</Link>
-            <Link href="#">Auction Sourcing</Link>
-            <Link href="#">Features Cars</Link>
-            <Link href="#">Sold Archive</Link>
-          </section>
-
-          {/* Services */}
-          <section className={styles.footerColumn}>
-            <h3>SERVICES</h3>
-
-            <Link href="#">Export</Link>
-            <Link href="#">Inspection</Link>
-            <Link href="#">Shipping</Link>
-            <Link href="#">Documentation</Link>
-          </section>
-
-          {/* Company */}
-          <section className={styles.footerColumn}>
-            <h3>COMPANY</h3>
-
-            <Link href="#">About us</Link>
-            <Link href="#">Contact</Link>
-            <Link href="#">FAQ</Link>
-            <Link href="#">Term & Privacy</Link>
-          </section>
-        </section>
-
-        <section className={styles.footerLine}></section>
-
-        <section className={styles.footerBottom}>
-          <p>© 2026 JC Export. Peshawar, Pakistan.</p>
-
-          <p>Crafted with precision · Designed for export.</p>
-        </section>
-      </section>
-
-      {/* <footer className={styles.footer1}>
-        <section className={styles.logo1}>
-          <img src="/logo1.png" alt="logo" />
-          <p>
-            Premium Japanese vehicle export from Pakistan to the world. Fifteen
-            years, four thousand shipments, zero shortcuts.
-          </p>
-          <section className={styles.socialIcons}>
-            <section className={styles.iconBox}>
-              <FaFacebookF />
-            </section>
-
-            <section className={styles.iconBox}>
-              <FaInstagram />
-            </section>
-
-            <section className={styles.iconBox}>
-              <FaYoutube />
-            </section>
-
-            <section className={styles.iconBox}>
-              <FaLinkedinIn />
-            </section>
-            <section className={styles.ex}>
-              <h1>Explore</h1>
-              <ul className={styles.list1}>
-                <li>Inventory</li>
-                <li>Auction </li>
-                <li>Features Cars</li>
-                <li>Solid Archive</li>
-              </ul>
-            </section>
-          </section>
-        </section>
-      </footer> */}
+        <div className={styles.footerBottom}>
+          <p>© 2026 JC Export. All rights reserved.</p>
+          <p>Japan-sourced vehicles. Worldwide support.</p>
+        </div>
+      </footer>
     </>
   );
 }
