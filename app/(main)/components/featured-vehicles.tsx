@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowUpRight, BadgeCheck, Fuel, Gauge } from "lucide-react";
 
-import type { Vehicle } from "@/data/vehicles";
+import {
+  formatVehiclePrice,
+  isRemoteVehicleMedia,
+  type Vehicle,
+} from "@/data/vehicles";
 import styles from "../page.module.css";
 
 type FeaturedVehiclesProps = {
@@ -14,7 +18,10 @@ type FeaturedVehiclesProps = {
 
 const filters = [
   { label: "All stock", match: () => true },
-  { label: "Sedans", match: (vehicle: Vehicle) => vehicle.bodyType === "Sedan" },
+  {
+    label: "Sedans",
+    match: (vehicle: Vehicle) => vehicle.bodyType === "Sedan",
+  },
   {
     label: "Hatchbacks",
     match: (vehicle: Vehicle) => vehicle.bodyType === "Hatchback",
@@ -26,17 +33,13 @@ const filters = [
   },
 ];
 
-const priceFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
-
 export function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
   const [activeFilter, setActiveFilter] = useState(filters[0].label);
 
   const visibleVehicles = useMemo(() => {
-    const selectedFilter = filters.find((filter) => filter.label === activeFilter);
+    const selectedFilter = filters.find(
+      (filter) => filter.label === activeFilter,
+    );
     return selectedFilter ? vehicles.filter(selectedFilter.match) : vehicles;
   }, [activeFilter, vehicles]);
 
@@ -70,6 +73,7 @@ export function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
                 fill
                 sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
                 className={styles.vehicleImage}
+                unoptimized={isRemoteVehicleMedia(vehicle.image)}
               />
               <span className={styles.usedBadge}>
                 <BadgeCheck aria-hidden="true" /> Verified used
@@ -97,7 +101,7 @@ export function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
               <div className={styles.vehicleFooter}>
                 <div>
                   <small>FOB price</small>
-                  <strong>{priceFormatter.format(vehicle.price)}</strong>
+                  <strong>{formatVehiclePrice(vehicle)}</strong>
                 </div>
                 <Link
                   href={`/vehicles/${vehicle.slug}`}

@@ -1,31 +1,59 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Check, MessageCircle, Send } from "lucide-react";
+import { Check, Send } from "lucide-react";
 
+import { submitWebsiteInquiry } from "@/data/website-inquiries";
 import styles from "./public-pages.module.css";
 
 export function ContactInquiryForm() {
-  const [opened, setOpened] = useState(false);
+  const [submittedReference, setSubmittedReference] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitting(true);
+    setError("");
     const data = new FormData(event.currentTarget);
-    const message = [
-      "Hello JC Export, I have a question.",
-      `Name: ${data.get("name")}`,
-      `Subject: ${data.get("subject")}`,
-      `Email: ${data.get("email")}`,
-      `Phone: ${data.get("phone")}`,
-      `Message: ${data.get("message")}`,
-    ].join("\n");
-    window.open(
-      `https://wa.me/923001234567?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-    setOpened(true);
+    try {
+      const subject = String(data.get("subject") || "");
+      const result = await submitWebsiteInquiry({
+        inquiryType:
+          subject === "Shipping update" ||
+          subject === "Documentation" ||
+          subject === "Payment question"
+            ? "Shipping / After-sales"
+            : "General Sales Inquiry",
+        name: String(data.get("name") || ""),
+        email: String(data.get("email") || ""),
+        phone: String(data.get("phone") || ""),
+        subject,
+        message: String(data.get("message") || ""),
+        privacyConsent: data.get("privacyConsent") === "on",
+      });
+      setSubmittedReference(result.data.reference);
+      sessionStorage.setItem(
+        `jcexport-inquiry:${result.data.reference}`,
+        result.data.lookup_token,
+      );
+      event.currentTarget.reset();
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "We could not send your inquiry. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
+
+  const whatsappUrl = submittedReference
+    ? `https://wa.me/923001234567?text=${encodeURIComponent(
+        `Hello JC Export, I submitted inquiry ${submittedReference}.`,
+      )}`
+    : "";
 
   return (
     <form className={styles.contactForm} onSubmit={submit}>
@@ -64,14 +92,31 @@ export function ContactInquiryForm() {
           <textarea name="message" required rows={6} placeholder="Tell us how we can help" />
         </label>
       </div>
-      <button type="submit" className={styles.contactSubmit}>
-        <MessageCircle aria-hidden="true" /> Continue in WhatsApp
+      <label className={styles.consentField}>
+        <input name="privacyConsent" type="checkbox" required />
+        <span>I agree to the privacy policy and consent to JC Export using these details to respond to this inquiry.</span>
+      </label>
+      <button
+        type="submit"
+        className={styles.contactSubmit}
+        disabled={submitting || Boolean(submittedReference)}
+      >
+        {submittedReference ? (
+          <><Check aria-hidden="true" /> Inquiry sent</>
+        ) : (
+          <><Send aria-hidden="true" /> {submitting ? "Sending..." : "Send inquiry"}</>
+        )}
       </button>
-      {opened && (
+      {submittedReference && (
         <p className={styles.formOpenedMessage}>
-          <Check aria-hidden="true" /> WhatsApp opened. Send the prepared message to complete your inquiry.
+          <Check aria-hidden="true" /> Inquiry received as {submittedReference}.
+          {" "}
+          <a href={whatsappUrl} target="_blank" rel="noreferrer">
+            Continue in WhatsApp
+          </a>
         </p>
       )}
+      {error && <p className={styles.errorNotice}>{error}</p>}
     </form>
   );
 }

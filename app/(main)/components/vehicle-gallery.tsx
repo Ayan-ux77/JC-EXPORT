@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { Camera, ImageIcon } from "lucide-react";
 
+import { isRemoteVehicleMedia } from "@/data/vehicles";
 import styles from "../vehicles/[slug]/page.module.css";
 
 type VehicleGalleryProps = {
@@ -25,6 +26,7 @@ export function VehicleGallery({ images, title }: VehicleGalleryProps) {
           fill
           sizes="(max-width: 980px) 100vw, 62vw"
           className={styles.mainImage}
+          unoptimized={isRemoteVehicleMedia(currentImage)}
         />
         <span className={styles.photoCount}>
           <Camera aria-hidden="true" /> {uniqueImages.length} verified photo{uniqueImages.length === 1 ? "" : "s"}
@@ -42,7 +44,13 @@ export function VehicleGallery({ images, title }: VehicleGalleryProps) {
               aria-label={`Show vehicle photo ${index + 1}`}
               aria-pressed={index === activeImage}
             >
-              <Image src={image} alt="" fill sizes="120px" />
+              <Image
+                src={image}
+                alt=""
+                fill
+                sizes="120px"
+                unoptimized={isRemoteVehicleMedia(image)}
+              />
             </button>
           ))}
         </div>

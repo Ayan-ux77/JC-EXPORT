@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 
 import { BrandLogo } from "@/app/components/brand-logo";
+import { getCustomerSession } from "@/data/customer-session";
 
 import "../globals.css";
 import styles from "./layout.module.css";
@@ -52,7 +53,11 @@ const footerColumns = [
   },
 ];
 
-export default function MainLayout({ children }: { children: ReactNode }) {
+export default async function MainLayout({ children }: { children: ReactNode }) {
+  const session = await getCustomerSession();
+  const accountHref = session ? "/account" : "/sign-in";
+  const accountLabel = session ? "My account" : "Sign in";
+
   return (
     <>
       <header className={styles.header}>
@@ -90,8 +95,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className={styles.headerActions}>
-            <Link href="/sign-in" className={styles.signInLink}>
-              Sign in
+            <Link href={accountHref} className={styles.signInLink}>
+              {accountLabel}
             </Link>
             <Link href="/vehicles" className={styles.vehiclesButton}>
               Browse stock
@@ -111,7 +116,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                   {item.label}
                 </Link>
               ))}
-              <Link href="/sign-in">Sign in</Link>
+              <Link href={accountHref}>{accountLabel}</Link>
               <Link href="/quote" className={styles.mobileQuoteLink}>
                 Get a quote <ArrowRight aria-hidden="true" />
               </Link>

@@ -23,7 +23,8 @@ import {
   Users,
 } from "lucide-react";
 
-import { vehicles } from "@/data/vehicles";
+import { getVehicle, getVehicles } from "@/data/vehicle-service";
+import { isRemoteVehicleMedia } from "@/data/vehicles";
 import { VehicleGallery } from "../../components/vehicle-gallery";
 import styles from "./page.module.css";
 
@@ -44,19 +45,14 @@ type VehicleDetailsPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-const money = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
-
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const vehicles = await getVehicles();
   return vehicles.map((vehicle) => ({ slug: vehicle.slug }));
 }
 
 export async function generateMetadata({ params }: VehicleDetailsPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const vehicle = vehicles.find((item) => item.slug === slug);
+  const vehicle = await getVehicle(slug);
 
   if (!vehicle) {
     return { title: "Vehicle not found | JC Export" };
@@ -64,19 +60,21 @@ export async function generateMetadata({ params }: VehicleDetailsPageProps): Pro
 
   return {
     title: `${vehicle.year} ${vehicle.brand} ${vehicle.model} | JC Export`,
-    description: `${vehicle.condition} ${vehicle.year} ${vehicle.brand} ${vehicle.model}, ${vehicle.mileage}, ${vehicle.engine}, FOB ${money.format(vehicle.price)}.`,
+    description: `${vehicle.condition} ${vehicle.year} ${vehicle.brand} ${vehicle.model}, ${vehicle.mileage}, ${vehicle.engine}, FOB ${formatMoney(vehicle.price, vehicle.currency)}.`,
   };
 }
 
 export default async function VehicleDetailsPage({ params }: VehicleDetailsPageProps) {
   const { slug } = await params;
-  const vehicle = vehicles.find((item) => item.slug === slug);
+  const vehicle = await getVehicle(slug);
 
   if (!vehicle) {
     notFound();
   }
 
+  const vehicles = await getVehicles();
   const totalPrice = vehicle.price + vehicle.freight + vehicle.insurance;
+  const hasShippingEstimate = vehicle.freight > 0 || vehicle.insurance > 0;
   const relatedVehicles = vehicles
     .filter(
       (item) =>
@@ -133,7 +131,7 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
 
           <aside className={styles.purchasePanel}>
             <div className={styles.statusRow}>
-              <span className={styles.availableBadge}>Available</span>
+              <span className={styles.availableBadge}>{vehicle.availability || "Available"}</span>
               <span>{vehicle.condition}</span>
             </div>
 
@@ -158,7 +156,7 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
             <div className={styles.priceBox}>
               <div>
                 <span>FOB price</span>
-                <strong>{money.format(vehicle.price)}</strong>
+                <strong>{formatMoney(vehicle.price, vehicle.currency)}</strong>
               </div>
               <small>Freight and destination charges quoted separately</small>
             </div>
@@ -189,7 +187,7 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
               <BadgeCheck aria-label="Verified JC Export contact" />
             </div>
 
-            <div className={styles.estimateCard}>
+            {hasShippingEstimate && <div className={styles.estimateCard}>
               <div className={styles.estimateHeader}>
                 <div>
                   <span>Example export estimate</span>
@@ -198,13 +196,13 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
                 <Ship aria-hidden="true" />
               </div>
               <dl>
-                <div><dt>Vehicle FOB</dt><dd>{money.format(vehicle.price)}</dd></div>
-                <div><dt>Ocean freight</dt><dd>{money.format(vehicle.freight)}</dd></div>
-                <div><dt>Marine insurance</dt><dd>{money.format(vehicle.insurance)}</dd></div>
-                <div className={styles.estimateTotal}><dt>Estimated CIF</dt><dd>{money.format(totalPrice)}</dd></div>
+                <div><dt>Vehicle FOB</dt><dd>{formatMoney(vehicle.price, vehicle.currency)}</dd></div>
+                <div><dt>Ocean freight</dt><dd>{formatMoney(vehicle.freight, vehicle.currency)}</dd></div>
+                <div><dt>Marine insurance</dt><dd>{formatMoney(vehicle.insurance, vehicle.currency)}</dd></div>
+                <div className={styles.estimateTotal}><dt>Estimated CIF</dt><dd>{formatMoney(totalPrice, vehicle.currency)}</dd></div>
               </dl>
               <p>Final freight depends on destination port and sailing availability.</p>
-            </div>
+            </div>}
           </aside>
         </section>
 
@@ -234,16 +232,28 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
             <h2 id="condition-title">Inspection details, <em>before commitment.</em></h2>
             <p>{vehicle.description}</p>
             <ul>
-              <li><Check aria-hidden="true" /> Auction grade recorded</li>
-              <li><Check aria-hidden="true" /> Mileage shown in listing</li>
-              <li><Check aria-hidden="true" /> Chassis and stock reference available</li>
-              <li><Check aria-hidden="true" /> Additional inspection can be requested</li>
+              {(vehicle.features?.length
+                ? vehicle.features.slice(0, 4).map((feature) => feature.name)
+                : [
+                    "Auction grade recorded",
+                    "Mileage shown in listing",
+                    "Chassis and stock reference available",
+                    "Additional inspection can be requested",
+                  ]
+              ).map((item) => (
+                <li key={item}><Check aria-hidden="true" /> {item}</li>
+              ))}
+              {vehicle.damages?.map((damage) => (
+                <li key={`${damage.area}-${damage.description}`}>
+                  <Check aria-hidden="true" /> {damage.area}: {damage.description}
+                </li>
+              ))}
             </ul>
           </div>
 
           <div className={styles.gradeCard}>
             <span>Auction grade</span>
-            <strong>{vehicle.auctionGrade}</strong>
+            <strong>{vehicle.auctionGradeLabel || vehicle.auctionGrade}</strong>
             <small>Condition: {vehicle.condition}</small>
             <div>
               <ShieldCheck aria-hidden="true" />
@@ -271,13 +281,14 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
                       alt={relatedVehicle.title}
                       fill
                       sizes="(max-width: 700px) 100vw, 33vw"
+                      unoptimized={isRemoteVehicleMedia(relatedVehicle.image)}
                     />
                   </Link>
                   <div>
                     <span>{relatedVehicle.year} / {relatedVehicle.brand}</span>
                     <h3><Link href={`/vehicles/${relatedVehicle.slug}`}>{relatedVehicle.model}</Link></h3>
                     <p>{relatedVehicle.mileage} · Grade {relatedVehicle.auctionGrade}</p>
-                    <strong>{money.format(relatedVehicle.price)} FOB</strong>
+                    <strong>{formatMoney(relatedVehicle.price, relatedVehicle.currency)} FOB</strong>
                   </div>
                 </article>
               ))}
@@ -287,4 +298,12 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
       </div>
     </main>
   );
+}
+
+function formatMoney(value: number, currency = "USD") {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
 }

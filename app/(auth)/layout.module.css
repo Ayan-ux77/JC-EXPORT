@@ -1,56 +1,61 @@
-.box{
-    background-color: #0A1722;
-    display: flex;
+.box {
+  position: relative;
+  z-index: 10;
+  min-height: 76px;
+  background: #0b1823;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.box nav{
-    display: flex;
-   width: 100%;
+.nav {
+  width: min(100% - 40px, 1280px);
+  min-height: 76px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 }
 
 .logoLink {
-    min-width: 150px;
-    display: inline-flex;
-    align-items: center;
-    padding: 14px 18px;
-    text-decoration: none;
+  display: inline-flex;
+  text-decoration: none;
 }
 
 .right {
-    width: 91%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
-
-
-.list {
-    display: flex;
-    gap: 18px;
+.right a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #dce8ef;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
 }
 
-.list li {
-    list-style: none;
+.right a:hover {
+  color: #ffffff;
 }
 
-.list button {
-    width: 117px;
-    font-family: Helvetica, sans-serif;
-    font-style: Regular;
-    background-color: transparent;
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    /* padding: 7px 16px; */
-    padding: 7px 14px 5px 13px;
-    font-size: 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    
+.right svg {
+  width: 17px;
+  height: 17px;
 }
 
-.authBtn:hover {
-    background-color: rgb(27, 128, 199);
-    border-color: #628ff0;
-    color: white;
+@media (max-width: 640px) {
+  .nav {
+    width: min(100% - 28px, 1280px);
+  }
+
+  .right a:first-child {
+    display: none;
+  }
+
+  .right a {
+    font-size: 13px;
+  }
 }

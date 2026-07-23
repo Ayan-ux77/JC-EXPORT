@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Fraunces, Lato } from "next/font/google";
 import { BadgeCheck, ChevronRight, Globe2, Ship, WalletCards } from "lucide-react";
 
-import { vehicles } from "@/data/vehicles";
+import { getVehicles } from "@/data/vehicle-service";
 import { VehicleBrowser } from "../components/vehicle-browser";
 import styles from "./page.module.css";
 
@@ -37,7 +37,7 @@ function firstValue(value: SearchValue) {
 }
 
 export default async function VehiclesPage({ searchParams }: VehiclesPageProps) {
-  const query = await searchParams;
+  const [query, vehicles] = await Promise.all([searchParams, getVehicles()]);
   const initialMake = firstValue(query.make) ?? firstValue(query.brand) ?? "";
 
   return (

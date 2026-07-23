@@ -465,6 +465,41 @@
   stroke-width: 3;
 }
 
+.successNotice a,
+.formOpenedMessage a {
+  color: inherit;
+  font-weight: 900;
+}
+
+.consentField {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 14px;
+  color: #56646d;
+  font-size: 10px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.consentField input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--blue);
+}
+
+.errorNotice {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--red);
+  background: #fff1f1;
+  color: #9f1f28;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .quoteFormActions {
   min-height: 76px;
   display: flex;
@@ -855,6 +890,11 @@
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
+}
+
+.contactSubmit:disabled {
+  background: #b6c1c8;
+  cursor: not-allowed;
 }
 
 .contactSubmit svg {

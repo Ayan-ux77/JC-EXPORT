@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Fraunces, Lato } from "next/font/google";
 import { BadgeCheck, Check, Clock3, FileCheck2, ShieldCheck, Ship } from "lucide-react";
 
-import { vehicles } from "@/data/vehicles";
+import { getVehicle } from "@/data/vehicle-service";
 import { PublicPageHero } from "../components/public-page-hero";
 import { QuoteRequestForm } from "../components/quote-request-form";
 import styles from "../components/public-pages.module.css";
@@ -34,7 +34,7 @@ type QuotePageProps = {
 export default async function QuotePage({ searchParams }: QuotePageProps) {
   const query = await searchParams;
   const vehicleSlug = Array.isArray(query.vehicle) ? query.vehicle[0] : query.vehicle;
-  const selectedVehicle = vehicles.find((vehicle) => vehicle.slug === vehicleSlug);
+  const selectedVehicle = vehicleSlug ? await getVehicle(vehicleSlug) : undefined;
   const initialVehicle = selectedVehicle
     ? `${selectedVehicle.stock} — ${selectedVehicle.year} ${selectedVehicle.brand} ${selectedVehicle.model}`
     : "";
@@ -59,7 +59,10 @@ export default async function QuotePage({ searchParams }: QuotePageProps) {
         </div>
 
         <div className={styles.quoteLayout}>
-          <QuoteRequestForm initialVehicle={initialVehicle} />
+          <QuoteRequestForm
+            initialVehicle={initialVehicle}
+            initialVehicleId={selectedVehicle?.slug}
+          />
 
           <aside className={styles.quoteAside}>
             <div className={styles.responseCard}>

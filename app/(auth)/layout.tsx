@@ -1,6 +1,9 @@
 import styles from "./layout.module.css";
 import Link from "next/link";
 import { BrandLogo } from "@/app/components/brand-logo";
+import { ArrowLeft, Headphones } from "lucide-react";
+
+import "../globals.css";
 
 export default function AuthLayout({
   children,
@@ -16,20 +19,12 @@ export default function AuthLayout({
           </Link>
 
           <div className={styles.right}>
-            <ul className={styles.list}>
-              <li>
-                <button>MARKETING ▼</button>
-              </li>
-              <li>
-                <button>VEHICLES ▼</button>
-              </li>
-              <li>
-                <button className={styles.authBtn}>AUTHENTICATION ▼</button>
-              </li>
-              <li>
-                <button>DASHBOARD ▼</button>
-              </li>
-            </ul>
+            <Link href="/vehicles">
+              <ArrowLeft aria-hidden="true" /> Browse vehicles
+            </Link>
+            <Link href="/contact">
+              <Headphones aria-hidden="true" /> Contact support
+            </Link>
           </div>
         </nav>
       </header>

@@ -1195,6 +1195,61 @@ a.contactItem:hover {
   text-align: center;
 }
 
+.homeConsent {
+  margin-top: 18px;
+  display: grid !important;
+  grid-template-columns: 18px 1fr;
+  align-items: start;
+  gap: 10px !important;
+  color: #5f6d75;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.homeConsent input {
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0;
+}
+
+.homeConsent span {
+  font-weight: 600 !important;
+  text-transform: none !important;
+}
+
+.submitButton:disabled {
+  opacity: 0.66;
+  cursor: wait;
+  transform: none;
+}
+
+.formSuccess,
+.formError {
+  margin: 14px 0 0;
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #155e42;
+  background: #e9f7f0;
+  border-left: 4px solid #1b8059;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.formError {
+  color: #8f1d20;
+  background: #fff0f0;
+  border-left-color: #c52325;
+}
+
+.formSuccess svg,
+.formError svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
 @media (max-width: 1120px) {
   .heroNote {
     display: none;

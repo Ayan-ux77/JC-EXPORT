@@ -9,7 +9,6 @@ import {
   ClipboardCheck,
   Clock3,
   FileCheck2,
-  Fuel,
   Globe2,
   Mail,
   MapPin,
@@ -21,8 +20,9 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { vehicles } from "@/data/vehicles";
+import { getVehicles } from "@/data/vehicle-service";
 import { FeaturedVehicles } from "./components/featured-vehicles";
+import { HomeInquiryForm } from "./components/home-inquiry-form";
 import styles from "./page.module.css";
 
 const bodyFont = Lato({
@@ -183,9 +183,13 @@ const contactInfo = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const vehicles = await getVehicles({ featuredOnly: true, limit: 6 });
+
   return (
-    <main className={`${styles.page} ${bodyFont.variable} ${displayFont.variable}`}>
+    <main
+      className={`${styles.page} ${bodyFont.variable} ${displayFont.variable}`}
+    >
       <section className={styles.hero} aria-labelledby="hero-title">
         <Image
           src="/home-hero.webp"
@@ -229,8 +233,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          <aside className={styles.heroNote} aria-label="Export process summary">
-            <span className={styles.heroNoteLabel}>From Japan to your port</span>
+          <aside
+            className={styles.heroNote}
+            aria-label="Export process summary"
+          >
+            <span className={styles.heroNoteLabel}>
+              From Japan to your port
+            </span>
             <strong>One team. One clear shipment.</strong>
             <div className={styles.heroNoteRoute}>
               <span>Source</span>
@@ -241,7 +250,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className={styles.searchPanel} aria-labelledby="vehicle-search-title">
+      <section
+        className={styles.searchPanel}
+        aria-labelledby="vehicle-search-title"
+      >
         <div className={styles.searchHeading}>
           <div>
             <p className={styles.kicker}>Search current stock</p>
@@ -301,7 +313,10 @@ export default function HomePage() {
         </form>
       </section>
 
-      <section className={styles.statsSection} aria-label="JC Export in numbers">
+      <section
+        className={styles.statsSection}
+        aria-label="JC Export in numbers"
+      >
         <div className={styles.statsGrid}>
           {stats.map((stat) => (
             <div key={stat.label} className={styles.statItem}>
@@ -362,10 +377,14 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <FeaturedVehicles vehicles={vehicles.slice(0, 6)} />
+        <FeaturedVehicles vehicles={vehicles} />
       </section>
 
-      <section id="services" className={styles.processSection} aria-labelledby="process-title">
+      <section
+        id="services"
+        className={styles.processSection}
+        aria-labelledby="process-title"
+      >
         <div className={styles.sectionIntroRow}>
           <div>
             <p className={styles.kicker}>How export works</p>
@@ -396,7 +415,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="about" className={styles.aboutSection} aria-labelledby="about-title">
+      <section
+        id="about"
+        className={styles.aboutSection}
+        aria-labelledby="about-title"
+      >
         <div className={styles.aboutImageWrap}>
           <div className={styles.aboutImageMain}>
             <Image
@@ -477,7 +500,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className={styles.testimonialsSection} aria-labelledby="stories-title">
+      <section
+        className={styles.testimonialsSection}
+        aria-labelledby="stories-title"
+      >
         <div className={styles.sectionIntroRow}>
           <div>
             <p className={styles.kicker}>Buyer stories</p>
@@ -513,7 +539,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="contact" className={styles.contactSection} aria-labelledby="contact-title">
+      <section
+        id="contact"
+        className={styles.contactSection}
+        aria-labelledby="contact-title"
+      >
         <div className={styles.contactDetails}>
           <p className={styles.kicker}>Start your export request</p>
           <h2 id="contact-title">
@@ -540,7 +570,11 @@ export default function HomePage() {
               );
 
               return item.href ? (
-                <a key={item.label} href={item.href} className={styles.contactItem}>
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className={styles.contactItem}
+                >
                   {content}
                 </a>
               ) : (
@@ -552,55 +586,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <form className={styles.quoteForm}>
-          <div className={styles.quoteFormHeader}>
-            <span>Export inquiry</span>
-            <Fuel aria-hidden="true" />
-          </div>
-          <div className={styles.formGrid}>
-            <label>
-              <span>Full name</span>
-              <input name="name" type="text" placeholder="Your name" autoComplete="name" />
-            </label>
-            <label>
-              <span>Destination country</span>
-              <input name="country" type="text" placeholder="e.g. Kenya" autoComplete="country-name" />
-            </label>
-            <label>
-              <span>Email</span>
-              <input name="email" type="email" placeholder="you@example.com" autoComplete="email" />
-            </label>
-            <label>
-              <span>Phone / WhatsApp</span>
-              <input name="phone" type="tel" placeholder="+00 000 000 000" autoComplete="tel" />
-            </label>
-          </div>
-          <label>
-            <span>Vehicle interest</span>
-            <select name="vehicle" defaultValue="">
-              <option value="">Select a body type</option>
-              <option value="sedan">Sedan</option>
-              <option value="suv">SUV</option>
-              <option value="hatchback">Hatchback</option>
-              <option value="van">Van</option>
-              <option value="truck">Truck</option>
-            </select>
-          </label>
-          <label>
-            <span>What should we source?</span>
-            <textarea
-              name="message"
-              rows={5}
-              placeholder="Make, model, year range, budget, and any must-have features"
-            />
-          </label>
-          <button type="submit" className={styles.submitButton}>
-            Send inquiry <ArrowRight aria-hidden="true" />
-          </button>
-          <p className={styles.formNote}>
-            We only use your details to respond to this request.
-          </p>
-        </form>
+        <HomeInquiryForm />
       </section>
     </main>
   );

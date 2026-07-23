@@ -7,14 +7,16 @@ import {
   Check,
   CircleDollarSign,
   MapPin,
-  MessageCircle,
+  Send,
   Ship,
 } from "lucide-react";
 
+import { submitWebsiteInquiry } from "@/data/website-inquiries";
 import styles from "./public-pages.module.css";
 
 type QuoteRequestFormProps = {
   initialVehicle?: string;
+  initialVehicleId?: string;
 };
 
 type QuoteValues = {
@@ -30,13 +32,20 @@ type QuoteValues = {
   email: string;
   phone: string;
   message: string;
+  privacyConsent: boolean;
+  marketingConsent: boolean;
 };
 
 const steps = ["Vehicle", "Destination", "Contact"];
 
-export function QuoteRequestForm({ initialVehicle = "" }: QuoteRequestFormProps) {
+export function QuoteRequestForm({
+  initialVehicle = "",
+  initialVehicleId = "",
+}: QuoteRequestFormProps) {
   const [step, setStep] = useState(0);
-  const [opened, setOpened] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submittedReference, setSubmittedReference] = useState("");
+  const [error, setError] = useState("");
   const [values, setValues] = useState<QuoteValues>({
     vehicle: initialVehicle,
     make: "",
@@ -50,6 +59,8 @@ export function QuoteRequestForm({ initialVehicle = "" }: QuoteRequestFormProps)
     email: "",
     phone: "",
     message: "",
+    privacyConsent: false,
+    marketingConsent: false,
   });
 
   const canContinue =
@@ -57,29 +68,64 @@ export function QuoteRequestForm({ initialVehicle = "" }: QuoteRequestFormProps)
       ? Boolean(values.vehicle || values.make)
       : step === 1
         ? Boolean(values.country)
-        : Boolean(values.name && (values.phone || values.email));
+        : Boolean(
+            values.name &&
+              (values.phone || values.email) &&
+              values.privacyConsent,
+          );
 
   function update(field: keyof QuoteValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
   }
 
-  function submitRequest() {
-    const lines = [
-      "Hello JC Export, I would like an export quote.",
-      `Vehicle/stock: ${values.vehicle || "Sourcing request"}`,
-      `Preferred vehicle: ${[values.year, values.make, values.model].filter(Boolean).join(" ") || "Not specified"}`,
-      `Budget: ${values.budget || "Not specified"}`,
-      `Destination: ${[values.port, values.country].filter(Boolean).join(", ")}`,
-      `Shipping: ${values.shipping}`,
-      `Name: ${values.name}`,
-      `Email: ${values.email || "Not provided"}`,
-      `Phone: ${values.phone || "Not provided"}`,
-      `Notes: ${values.message || "None"}`,
-    ];
-    const url = `https://wa.me/923001234567?text=${encodeURIComponent(lines.join("\n"))}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-    setOpened(true);
+  async function submitRequest() {
+    setSubmitting(true);
+    setError("");
+    try {
+      const result = await submitWebsiteInquiry({
+        vehicle: initialVehicleId || values.vehicle,
+        make: values.make,
+        model: values.model,
+        year: values.year,
+        budget: values.budget,
+        currency: "USD",
+        country: values.country,
+        port: values.port,
+        shipping: values.shipping,
+        quoteBasis: "CIF",
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        message: values.message,
+        privacyConsent: values.privacyConsent,
+        marketingConsent: values.marketingConsent,
+      });
+      const reference = result.data.reference;
+      setSubmittedReference(reference);
+      sessionStorage.setItem(
+        `jcexport-inquiry:${reference}`,
+        result.data.lookup_token,
+      );
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "We could not send your request. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
+
+  const whatsappUrl = submittedReference
+    ? `https://wa.me/923001234567?text=${encodeURIComponent(
+        [
+          "Hello JC Export, I submitted an export quote request.",
+          `Inquiry reference: ${submittedReference}`,
+          `Vehicle/stock: ${values.vehicle || "Sourcing request"}`,
+        ].join("\n"),
+      )}`
+    : "";
 
   return (
     <div className={styles.quoteFormShell}>
@@ -181,11 +227,45 @@ export function QuoteRequestForm({ initialVehicle = "" }: QuoteRequestFormProps)
             <textarea value={values.message} onChange={(event) => update("message", event.target.value)} rows={4} placeholder="Color, mileage limit, must-have features, timing..." />
           </label>
         </div>
-        {opened && (
+        <label className={styles.consentField}>
+          <input
+            type="checkbox"
+            checked={values.privacyConsent}
+            onChange={(event) =>
+              setValues((current) => ({
+                ...current,
+                privacyConsent: event.target.checked,
+              }))
+            }
+          />
+          <span>I agree to the privacy policy and consent to JC Export using these details to respond to this inquiry.</span>
+        </label>
+        <label className={styles.consentField}>
+          <input
+            type="checkbox"
+            checked={values.marketingConsent}
+            onChange={(event) =>
+              setValues((current) => ({
+                ...current,
+                marketingConsent: event.target.checked,
+              }))
+            }
+          />
+          <span>Send me relevant stock and export updates.</span>
+        </label>
+        {submittedReference && (
           <div className={styles.successNotice}>
-            <Check aria-hidden="true" /> WhatsApp opened with your prepared request. Send the message there to complete it.
+            <Check aria-hidden="true" />
+            <div>
+              Request received. Your reference is <strong>{submittedReference}</strong>.
+              {" "}
+              <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                Continue in WhatsApp
+              </a>
+            </div>
           </div>
         )}
+        {error && <div className={styles.errorNotice}>{error}</div>}
       </div>
 
       <div className={styles.quoteFormActions}>
@@ -199,8 +279,16 @@ export function QuoteRequestForm({ initialVehicle = "" }: QuoteRequestFormProps)
             Continue <ArrowRight aria-hidden="true" />
           </button>
         ) : (
-          <button type="button" disabled={!canContinue} onClick={submitRequest}>
-            <MessageCircle aria-hidden="true" /> Open in WhatsApp
+          <button
+            type="button"
+            disabled={!canContinue || submitting || Boolean(submittedReference)}
+            onClick={submitRequest}
+          >
+            {submittedReference ? (
+              <><Check aria-hidden="true" /> Request sent</>
+            ) : (
+              <><Send aria-hidden="true" /> {submitting ? "Sending..." : "Send quote request"}</>
+            )}
           </button>
         )}
       </div>

@@ -1,5 +1,5 @@
 export type Vehicle = {
-  id: number;
+  id: number | string;
   slug: string;
   image: string;
   images: string[];
@@ -17,6 +17,7 @@ export type Vehicle = {
   fuel: string;
 
   price: number;
+  currency?: string;
 
   transmission: string;
   drivetrain: string;
@@ -34,10 +35,50 @@ export type Vehicle = {
   insurance: number;
 
   auctionGrade: number;
+  auctionGradeLabel?: string;
   condition: string;
 
   description: string;
+  conditionSummary?: string;
+  damageNotes?: string;
+  inspectionResult?: string;
+  availability?: "Available" | "Reserved";
+  publicationStatus?: string;
+  operationalStatus?: string;
+  isFeatured?: boolean;
+  chassis?: string;
+  features?: Array<{
+    category: string;
+    name: string;
+    details?: string;
+    highlighted?: boolean;
+  }>;
+  damages?: Array<{
+    area: string;
+    severity: string;
+    description: string;
+    photo?: string;
+    repairStatus: string;
+  }>;
+  documents?: Array<{
+    type: string;
+    number?: string;
+    file: string;
+    notes?: string;
+  }>;
 };
+
+export function formatVehiclePrice(vehicle: Pick<Vehicle, "price" | "currency">) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: vehicle.currency || "USD",
+    maximumFractionDigits: 0,
+  }).format(vehicle.price);
+}
+
+export function isRemoteVehicleMedia(value: string) {
+  return /^https?:\/\//i.test(value);
+}
 
 export const vehicles: Vehicle[] = [
   {

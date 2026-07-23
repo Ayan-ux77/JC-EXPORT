@@ -19,7 +19,11 @@ import {
   X,
 } from "lucide-react";
 
-import type { Vehicle } from "@/data/vehicles";
+import {
+  formatVehiclePrice,
+  isRemoteVehicleMedia,
+  type Vehicle,
+} from "@/data/vehicles";
 import { Pagination } from "./pagination";
 import styles from "../vehicles/page.module.css";
 
@@ -37,12 +41,6 @@ type VehicleBrowserProps = {
 
 type SortOption = "newest" | "oldest" | "price-low" | "price-high" | "mileage";
 type ViewMode = "grid" | "list";
-
-const priceFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowserProps) {
   const lowestYear = Math.min(...vehicles.map((vehicle) => vehicle.year));
@@ -325,7 +323,7 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
             </div>
           </FilterGroup>
 
-          <FilterGroup title="FOB price (USD)">
+          <FilterGroup title="FOB price">
             <div className={styles.rangeFields}>
               <label>
                 <span>Min</span>
@@ -436,6 +434,7 @@ function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMo
               : "(max-width: 760px) 100vw, (max-width: 1120px) 50vw, 33vw"
           }
           className={styles.vehicleImage}
+          unoptimized={isRemoteVehicleMedia(vehicle.image)}
         />
         <span className={styles.conditionBadge}>
           <BadgeCheck aria-hidden="true" /> {vehicle.condition}
@@ -467,7 +466,7 @@ function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMo
         <div className={styles.vehicleFooter}>
           <div>
             <small>FOB price</small>
-            <strong>{priceFormatter.format(vehicle.price)}</strong>
+            <strong>{formatVehiclePrice(vehicle)}</strong>
           </div>
           <Link href={`/vehicles/${vehicle.slug}`}>
             View vehicle <ArrowUpRight aria-hidden="true" />
