@@ -223,7 +223,7 @@ export default function HomePage() {
               <Link href="/vehicles" className={styles.primaryButton}>
                 Browse vehicles <ArrowRight aria-hidden="true" />
               </Link>
-              <Link href="#contact" className={styles.secondaryButton}>
+              <Link href="/quote" className={styles.secondaryButton}>
                 Get an export quote
               </Link>
             </div>
@@ -454,7 +454,7 @@ export default function HomePage() {
             ))}
           </ul>
 
-          <Link href="#contact" className={styles.inlineButton}>
+          <Link href="/contact" className={styles.inlineButton}>
             Talk to an export specialist <ArrowRight aria-hidden="true" />
           </Link>
         </div>

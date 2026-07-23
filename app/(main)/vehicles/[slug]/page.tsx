@@ -16,7 +16,6 @@ import {
   Gauge,
   MapPin,
   MessageCircle,
-  Phone,
   Route,
   Settings2,
   ShieldCheck,
@@ -165,16 +164,19 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
             </div>
 
             <div className={styles.primaryActions}>
+              <Link
+                href={`/quote?vehicle=${vehicle.slug}`}
+                className={styles.primaryAction}
+              >
+                Request export quote <ArrowRight aria-hidden="true" />
+              </Link>
               <a
                 href={`https://wa.me/923001234567?text=${whatsappText}`}
                 target="_blank"
                 rel="noreferrer"
-                className={styles.primaryAction}
+                className={styles.secondaryAction}
               >
-                <MessageCircle aria-hidden="true" /> Ask about this vehicle
-              </a>
-              <a href="tel:+923001234567" className={styles.secondaryAction}>
-                <Phone aria-hidden="true" /> Call sales
+                <MessageCircle aria-hidden="true" /> Ask a question
               </a>
             </div>
 

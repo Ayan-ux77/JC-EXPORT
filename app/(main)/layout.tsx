@@ -16,9 +16,9 @@ import styles from "./layout.module.css";
 const navigation = [
   { label: "Home", href: "/" },
   { label: "Vehicles", href: "/vehicles" },
-  { label: "How it works", href: "/#services" },
-  { label: "About", href: "/#about" },
-  { label: "Contact", href: "/#contact" },
+  { label: "Services", href: "/services" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 const footerColumns = [
@@ -27,26 +27,27 @@ const footerColumns = [
     links: [
       { label: "Current vehicles", href: "/vehicles" },
       { label: "Featured vehicles", href: "/#vehicles" },
-      { label: "Auction sourcing", href: "/#contact" },
-      { label: "Request a vehicle", href: "/#contact" },
+      { label: "Request a quote", href: "/quote" },
+      { label: "Shipping & payment", href: "/shipping-and-payment" },
     ],
   },
   {
     title: "Services",
     links: [
-      { label: "Vehicle sourcing", href: "/#services" },
-      { label: "Inspection support", href: "/#services" },
-      { label: "International shipping", href: "/#services" },
-      { label: "Export documents", href: "/#services" },
+      { label: "Vehicle sourcing", href: "/services#sourcing" },
+      { label: "Inspection support", href: "/services#inspection" },
+      { label: "International shipping", href: "/services#shipping" },
+      { label: "Export documents", href: "/services#documents" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "About JC Export", href: "/#about" },
-      { label: "Contact", href: "/#contact" },
-      { label: "Sign in", href: "/sign-in" },
-      { label: "Privacy", href: "#" },
+      { label: "About JC Export", href: "/about" },
+      { label: "Contact", href: "/contact" },
+      { label: "Buyer FAQ", href: "/faq" },
+      { label: "Terms", href: "/terms" },
+      { label: "Privacy", href: "/privacy" },
     ],
   },
 ];
@@ -95,7 +96,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             <Link href="/vehicles" className={styles.vehiclesButton}>
               Browse stock
             </Link>
-            <Link href="/#contact" className={styles.quoteButton}>
+            <Link href="/quote" className={styles.quoteButton}>
               Get a quote <ArrowRight aria-hidden="true" />
             </Link>
           </div>
@@ -111,7 +112,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                 </Link>
               ))}
               <Link href="/sign-in">Sign in</Link>
-              <Link href="/#contact" className={styles.mobileQuoteLink}>
+              <Link href="/quote" className={styles.mobileQuoteLink}>
                 Get a quote <ArrowRight aria-hidden="true" />
               </Link>
             </nav>
