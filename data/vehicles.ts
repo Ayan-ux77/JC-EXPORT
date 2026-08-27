@@ -30,6 +30,9 @@ export type Vehicle = {
 
   stock: string;
   location: string;
+  stockCategory?: "Regular Stock" | "Engine Stock" | "Third-Party Stock";
+  sourceMarket?: "Japan" | "Taiwan" | "China" | "Other";
+  ownershipType?: "Company Owned" | "Consignment" | "Customer Owned";
 
   freight: number;
   insurance: number;

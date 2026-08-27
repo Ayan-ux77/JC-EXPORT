@@ -241,15 +241,21 @@ export async function getCustomerSession() {
 }
 
 export async function getPortalOverview() {
-  return callCurrentCustomer<PortalOverview>(
+  const overview = await callCurrentCustomer<PortalOverview>(
     "jcexport_erp.customer_portal.get_overview",
   );
+  return {
+    ...overview,
+    inquiries: overview.inquiries.map(normalizePortalInquiry),
+  };
 }
 
 export async function getPortalInquiry(reference: string) {
-  return callCurrentCustomer<PortalInquiry>(
-    "jcexport_erp.customer_portal.get_inquiry",
-    { public_reference: reference },
+  return normalizePortalInquiry(
+    await callCurrentCustomer<PortalInquiry>(
+      "jcexport_erp.customer_portal.get_inquiry",
+      { public_reference: reference },
+    ),
   );
 }
 
@@ -335,6 +341,29 @@ async function callFrappeWithSession<T>(
     },
   );
   return parseFrappeResponse<T>(response);
+}
+
+function normalizePortalInquiry(inquiry: PortalInquiry): PortalInquiry {
+  if (!inquiry.vehicle?.image) {
+    return inquiry;
+  }
+  return {
+    ...inquiry,
+    vehicle: {
+      ...inquiry.vehicle,
+      image: normalizePortalMediaUrl(inquiry.vehicle.image),
+    },
+  };
+}
+
+function normalizePortalMediaUrl(value: string) {
+  if (!value || /^https?:\/\//i.test(value)) {
+    return value;
+  }
+  if (value.startsWith("/assets/") || value.startsWith("/files/")) {
+    return `${frappeOrigin}${value}`;
+  }
+  return value;
 }
 
 async function parseFrappeResponse<T>(response: Response): Promise<T> {

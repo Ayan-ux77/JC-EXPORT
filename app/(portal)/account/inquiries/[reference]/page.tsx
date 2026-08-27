@@ -16,7 +16,6 @@ import { isRemoteVehicleMedia } from "@/data/vehicles";
 
 import { formatDate, formatMoney, StatusBadge } from "../../portal-ui";
 import styles from "../../portal.module.css";
-import { ReservationAction } from "./reservation-action";
 
 type InquiryPageProps = {
   params: Promise<{ reference: string }>;
@@ -87,7 +86,10 @@ export default async function InquiryPage({ params }: InquiryPageProps) {
                 </div>
               </dl>
               {!inquiry.reservation && inquiry.quotation.status === "Submitted" && (
-                <ReservationAction reference={inquiry.reference} />
+                <p className={styles.pendingText}>
+                  Your sales representative will confirm the reservation after agreeing the
+                  commercial and payment terms with you.
+                </p>
               )}
             </>
           ) : (

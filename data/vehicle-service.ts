@@ -30,9 +30,7 @@ export async function getVehicles(query: VehicleQuery = {}): Promise<Vehicle[]> 
       "jcexport_erp.api.get_public_vehicles",
       params,
     );
-    if (result.length > 0) {
-      return result.map(normalizeVehicle);
-    }
+    return result.map(normalizeVehicle);
   } catch {
     // The fallback keeps the public site available while the local ERP is offline.
   }
@@ -60,10 +58,7 @@ async function fetchFromFrappe<T>(method: string, params: URLSearchParams): Prom
   const response = await fetch(
     `${frappeOrigin}/api/method/${method}?${params.toString()}`,
     {
-      next: {
-        revalidate: 60,
-        tags: ["public-vehicles"],
-      },
+      cache: "no-store",
       signal: AbortSignal.timeout(5000),
     },
   );
