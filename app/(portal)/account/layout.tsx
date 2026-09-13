@@ -54,8 +54,8 @@ export default async function AccountLayout({
           })}
         </nav>
         <div className={styles.sidebarFooter}>
-          <p>{session.full_name}</p>
-          <span>{session.user}</span>
+          <p>{session.name}</p>
+          <span>{session.email}</span>
           <SignOutButton />
         </div>
       </aside>
@@ -64,7 +64,7 @@ export default async function AccountLayout({
         <header className={styles.topbar}>
           <div>
             <span>Customer portal</span>
-            <strong>{session.customer_name}</strong>
+            <strong>{session.company || session.name}</strong>
           </div>
           <div className={styles.topbarActions}>
             <Link href="/vehicles">Browse vehicles</Link>

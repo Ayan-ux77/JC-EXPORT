@@ -83,29 +83,24 @@ export function QuoteRequestForm({
     setError("");
     try {
       const result = await submitWebsiteInquiry({
-        vehicle: initialVehicleId || values.vehicle,
+        source: "WEBSITE",
+        vehicleSlug: initialVehicleId || undefined,
+        vehicle: values.vehicle,
         make: values.make,
         model: values.model,
         year: values.year,
         budget: values.budget,
-        currency: "USD",
         country: values.country,
         port: values.port,
         shipping: values.shipping,
-        quoteBasis: "CIF",
         name: values.name,
         email: values.email,
         phone: values.phone,
         message: values.message,
         privacyConsent: values.privacyConsent,
-        marketingConsent: values.marketingConsent,
       });
       const reference = result.data.reference;
       setSubmittedReference(reference);
-      sessionStorage.setItem(
-        `jcexport-inquiry:${reference}`,
-        result.data.lookup_token,
-      );
     } catch (reason) {
       setError(
         reason instanceof Error

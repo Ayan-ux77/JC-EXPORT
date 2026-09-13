@@ -19,12 +19,7 @@ export function ContactInquiryForm() {
     try {
       const subject = String(data.get("subject") || "");
       const result = await submitWebsiteInquiry({
-        inquiryType:
-          subject === "Shipping update" ||
-          subject === "Documentation" ||
-          subject === "Payment question"
-            ? "Shipping / After-sales"
-            : "General Sales Inquiry",
+        source: "CONTACT_FORM",
         name: String(data.get("name") || ""),
         email: String(data.get("email") || ""),
         phone: String(data.get("phone") || ""),
@@ -33,10 +28,6 @@ export function ContactInquiryForm() {
         privacyConsent: data.get("privacyConsent") === "on",
       });
       setSubmittedReference(result.data.reference);
-      sessionStorage.setItem(
-        `jcexport-inquiry:${result.data.reference}`,
-        result.data.lookup_token,
-      );
       event.currentTarget.reset();
     } catch (reason) {
       setError(

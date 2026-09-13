@@ -1,25 +1,19 @@
 import { CircleDollarSign } from "lucide-react";
 
-import { getPortalOverview } from "@/data/customer-session";
+import { getPortalInvoices, getPortalPayments } from "@/data/customer-session";
 
-import { EmptySection, formatDate, formatMoney, StatusBadge } from "../portal-ui";
+import {
+  EmptySection,
+  formatDate,
+  formatMoney,
+  invoiceVehicleSummary,
+  InvoiceDownloadLink,
+  StatusBadge,
+} from "../portal-ui";
 import styles from "../portal.module.css";
 
 export default async function PaymentsPage() {
-  const overview = await getPortalOverview();
-  const invoices = overview.inquiries.flatMap((inquiry) =>
-    inquiry.financials.invoices.map((invoice) => ({
-      ...invoice,
-      inquiry: inquiry.reference,
-      vehicle: inquiry.vehicle?.title || "Vehicle order",
-    })),
-  );
-  const payments = overview.inquiries.flatMap((inquiry) =>
-    inquiry.financials.payments.map((payment) => ({
-      ...payment,
-      inquiry: inquiry.reference,
-    })),
-  );
+  const [invoices, payments] = await Promise.all([getPortalInvoices(), getPortalPayments()]);
 
   return (
     <>
@@ -39,16 +33,21 @@ export default async function PaymentsPage() {
           </div>
           <div className={styles.tableWrap}>
             <table>
-              <thead><tr><th>Invoice</th><th>Vehicle</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Invoice</th><th>Vehicle</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Download</th>
+                </tr>
+              </thead>
               <tbody>
                 {invoices.map((invoice) => (
-                  <tr key={invoice.reference}>
-                    <td>{invoice.reference}<small>{formatDate(invoice.posting_date)}</small></td>
-                    <td>{invoice.vehicle}<small>{invoice.inquiry}</small></td>
-                    <td>{formatMoney(invoice.total, invoice.currency)}</td>
-                    <td>{formatMoney(invoice.paid, invoice.currency)}</td>
-                    <td>{formatMoney(invoice.outstanding, invoice.currency)}</td>
+                  <tr key={invoice.invoice_number}>
+                    <td>{invoice.invoice_number}<small>{formatDate(invoice.invoice_date)}</small></td>
+                    <td>{invoiceVehicleSummary(invoice) || "—"}</td>
+                    <td>{formatMoney(invoice.grand_total, invoice.currency)}</td>
+                    <td>{formatMoney(invoice.paid_amount, invoice.currency)}</td>
+                    <td>{formatMoney(invoice.balance_due, invoice.currency)}</td>
                     <td><StatusBadge value={invoice.status} /></td>
+                    <td><InvoiceDownloadLink invoice={invoice} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -69,15 +68,17 @@ export default async function PaymentsPage() {
           </div>
           <div className={styles.tableWrap}>
             <table>
-              <thead><tr><th>Reference</th><th>Bank reference</th><th>Received</th><th>Net amount</th><th>Status</th></tr></thead>
+              {/* No bank reference or payment status in the new API -- a
+                  remittance here is already verified and applied, and which
+                  invoices it settled is the useful fact in place of those. */}
+              <thead><tr><th>Reference</th><th>Received</th><th>Amount</th><th>Applied to</th></tr></thead>
               <tbody>
                 {payments.map((payment) => (
-                  <tr key={payment.reference}>
-                    <td>{payment.reference}<small>{payment.inquiry}</small></td>
-                    <td>{payment.bank_reference}</td>
-                    <td>{formatDate(payment.received_on)}</td>
-                    <td>{formatMoney(payment.net, payment.currency)}</td>
-                    <td><StatusBadge value={payment.status} /></td>
+                  <tr key={payment.reference_code}>
+                    <td>{payment.reference_code}</td>
+                    <td>{formatDate(payment.received_date)}</td>
+                    <td>{formatMoney(payment.amount, payment.currency)}</td>
+                    <td>{payment.applied_to.map((line) => line.invoice_number).join(", ") || "Unallocated"}</td>
                   </tr>
                 ))}
               </tbody>

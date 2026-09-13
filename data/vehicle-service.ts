@@ -1,99 +1,114 @@
 import "server-only";
 
-import { vehicles as fallbackVehicles, type Vehicle } from "./vehicles";
+import { callApi, JcApiError } from "./jc-api";
+import type { Vehicle } from "./vehicles";
 
-type FrappeResponse<T> = {
-  message: T;
-};
-
-type VehicleQuery = {
+export type VehicleQuery = {
   featuredOnly?: boolean;
   limit?: number;
+  page?: number;
+  make?: string;
+  model?: string;
+  bodyType?: string;
+  fuel?: string;
+  transmission?: string;
+  steering?: string;
+  yearFrom?: number;
+  yearTo?: number;
+  priceMin?: number;
+  priceMax?: number;
+  search?: string;
+  sort?: string;
 };
 
-const frappeOrigin = (
-  process.env.FRAPPE_API_URL ||
-  process.env.NEXT_PUBLIC_FRAPPE_API_URL ||
-  "http://jcexport.localhost:8000"
-).replace(/\/+$/, "");
+export type FilterOption = { name: string; count: number };
 
+export type VehicleFilters = {
+  makes: FilterOption[];
+  bodyTypes: FilterOption[];
+  fuels: FilterOption[];
+  transmissions: FilterOption[];
+  steerings: FilterOption[];
+  years: { min: number | null; max: number | null };
+};
+
+/**
+ * There is deliberately no fallback list here.
+ *
+ * The previous version answered an unreachable ERP with a hardcoded set of
+ * demo cars, so the catalogue stayed up by advertising stock JC does not own.
+ * An empty result and a visible error is the honest answer: a buyer who
+ * enquires about a car that does not exist costs a real conversation.
+ */
 export async function getVehicles(query: VehicleQuery = {}): Promise<Vehicle[]> {
-  const params = new URLSearchParams({
-    limit: String(query.limit ?? 100),
-  });
-  if (query.featuredOnly) {
-    params.set("featured_only", "1");
-  }
+  const path = query.featuredOnly
+    ? `vehicles/featured?limit=${query.limit ?? 8}`
+    : `vehicles?${toParams(query)}`;
 
-  try {
-    const result = await fetchFromFrappe<Vehicle[]>(
-      "jcexport_erp.api.get_public_vehicles",
-      params,
-    );
-    return result.map(normalizeVehicle);
-  } catch {
-    // The fallback keeps the public site available while the local ERP is offline.
-  }
-
-  const fallback = query.featuredOnly
-    ? fallbackVehicles.filter((vehicle) => vehicle.isFeatured !== false)
-    : fallbackVehicles;
-  return fallback.slice(0, query.limit ?? fallback.length);
+  return callApi<Vehicle[]>(path, { revalidate: 60 });
 }
 
 export async function getVehicle(slug: string): Promise<Vehicle | undefined> {
-  const params = new URLSearchParams({ slug });
   try {
-    const vehicle = await fetchFromFrappe<Vehicle>(
-      "jcexport_erp.api.get_public_vehicle",
-      params,
-    );
-    return normalizeVehicle(vehicle);
-  } catch {
-    return fallbackVehicles.find((vehicle) => vehicle.slug === slug);
+    return await callApi<Vehicle>(`vehicles/${encodeURIComponent(slug)}`, { revalidate: 60 });
+  } catch (reason) {
+    // A car that has sold is genuinely gone, and the page should 404 rather
+    // than error. Anything else is a fault and must not be swallowed.
+    if (reason instanceof JcApiError && reason.status === 404) {
+      return undefined;
+    }
+    throw reason;
   }
 }
 
-async function fetchFromFrappe<T>(method: string, params: URLSearchParams): Promise<T> {
-  const response = await fetch(
-    `${frappeOrigin}/api/method/${method}?${params.toString()}`,
-    {
-      cache: "no-store",
-      signal: AbortSignal.timeout(5000),
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(`Frappe request failed with ${response.status}`);
-  }
-
-  const payload = (await response.json()) as FrappeResponse<T>;
-  return payload.message;
+export async function getSimilarVehicles(slug: string): Promise<Vehicle[]> {
+  return callApi<Vehicle[]>(`vehicles/${encodeURIComponent(slug)}/similar`, { revalidate: 300 });
 }
 
-function normalizeVehicle(vehicle: Vehicle): Vehicle {
-  const images = vehicle.images.map(normalizeMediaUrl);
-  return {
-    ...vehicle,
-    image: normalizeMediaUrl(vehicle.image),
-    images,
-    damages: vehicle.damages?.map((damage) => ({
-      ...damage,
-      photo: damage.photo ? normalizeMediaUrl(damage.photo) : undefined,
-    })),
-    documents: vehicle.documents?.map((document) => ({
-      ...document,
-      file: normalizeMediaUrl(document.file),
-    })),
-  };
+/**
+ * Filter options come from listed stock, so the sidebar never offers a make
+ * JC has none of. Cached longer than the listing: the set of makes in stock
+ * changes far more slowly than the stock itself.
+ */
+export async function getVehicleFilters(): Promise<VehicleFilters> {
+  return callApi<VehicleFilters>("vehicles/filters", { revalidate: 300 });
 }
 
-function normalizeMediaUrl(value: string) {
-  if (!value || value.startsWith("http://") || value.startsWith("https://")) {
-    return value;
+export async function getModelsForMake(make: string): Promise<string[]> {
+  return callApi<string[]>(`vehicles/models?make=${encodeURIComponent(make)}`, {
+    revalidate: 300,
+  });
+}
+
+function toParams(query: VehicleQuery) {
+  const params = new URLSearchParams();
+
+  const mapping: Array<[keyof VehicleQuery, string]> = [
+    ["make", "make"],
+    ["model", "model"],
+    ["bodyType", "body_type"],
+    ["fuel", "fuel"],
+    ["transmission", "transmission"],
+    ["steering", "steering"],
+    ["yearFrom", "year_from"],
+    ["yearTo", "year_to"],
+    ["priceMin", "price_min"],
+    ["priceMax", "price_max"],
+    ["search", "search"],
+    ["sort", "sort"],
+    ["page", "page"],
+  ];
+
+  for (const [key, param] of mapping) {
+    const value = query[key];
+    if (value !== undefined && value !== null && value !== "") {
+      params.set(param, String(value));
+    }
   }
-  if (value.startsWith("/assets/") || value.startsWith("/files/")) {
-    return `${frappeOrigin}${value}`;
+
+  if (query.limit) {
+    params.set("per_page", String(query.limit));
   }
-  return value;
+
+  return params.toString();
 }

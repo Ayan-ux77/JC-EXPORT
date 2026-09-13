@@ -201,14 +201,9 @@
 
 .primaryAction svg,
 .sectionHeading a svg,
-.shipmentRow a svg {
-  width: 17px;
-  height: 17px;
-}
-
 .metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   margin-bottom: 46px;
   background: #dbe2e6;
@@ -346,7 +341,7 @@
 
 .inquiryProgress {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(7, 1fr);
 }
 
 .inquiryProgress span {
@@ -494,7 +489,7 @@
 }
 
 .shipmentRow {
-  grid-template-columns: minmax(260px, 1fr) minmax(300px, 0.9fr) auto auto;
+  grid-template-columns: minmax(260px, 1fr) minmax(300px, 0.9fr) auto;
   min-height: 105px;
   padding: 20px;
 }
@@ -520,16 +515,6 @@
 .shipmentSchedule span {
   color: #596870;
   font-size: 12px;
-}
-
-.shipmentRow > a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #1f6eaf;
-  font-size: 13px;
-  font-weight: 850;
-  text-decoration: none;
 }
 
 .backLink {
@@ -599,7 +584,7 @@
 .journey {
   margin: 24px 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   background: #ffffff;
   border: 1px solid #dce3e7;
 }
@@ -908,7 +893,8 @@
   font-size: 12px;
 }
 
-.documentList article a {
+.documentList article a,
+.documentList article .documentLocked {
   width: 40px;
   height: 40px;
   display: grid;
@@ -918,9 +904,38 @@
   text-decoration: none;
 }
 
-.documentList article a svg {
+.documentList article a svg,
+.documentList article .documentLocked svg {
   width: 18px;
   height: 18px;
+}
+
+.documentWithheld {
+  opacity: 0.6;
+}
+
+.documentWithheld .documentLocked {
+  color: #98a3a9;
+}
+
+/**
+ * A smaller sibling of the documentList download button, for the same action
+ * inside a table row (Payments, the dashboard, an enquiry) -- same colors and
+ * shape, so it reads as one download control across the portal, not two.
+ */
+.tableDownload {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  color: #287ec9;
+  border: 1px solid #ccd7dd;
+  text-decoration: none;
+}
+
+.tableDownload svg {
+  width: 15px;
+  height: 15px;
 }
 
 .profilePanel {

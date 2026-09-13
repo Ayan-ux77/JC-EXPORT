@@ -1,66 +1,73 @@
 import { NextResponse } from "next/server";
 
-import {
-  CUSTOMER_SESSION_COOKIE,
-  loginCustomer,
-} from "@/data/customer-session";
-import {
-  FrappeAPIError,
-  assertSameOrigin,
-  callFrappe,
-  integrationErrorResponse,
-  readJsonBody,
-} from "@/data/frappe-api";
+import { CUSTOMER_SESSION_COOKIE, type CustomerSession } from "@/data/customer-session";
+import { JcApiError, apiErrorResponse, assertSameOrigin, callApi, readJsonBody } from "@/data/jc-api";
+
+type RegisterResult = Partial<CustomerSession> & { token?: string; message?: string };
 
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const body = await readJsonBody(request, 8192);
-    const fullName = readText(body.fullName, 140);
+    const name = readText(body.fullName, 140);
     const email = readEmail(body.email);
     const password =
       typeof body.password === "string" ? body.password.slice(0, 256) : "";
-    if (fullName.length < 2) {
-      throw new FrappeAPIError(400, "NAME_REQUIRED", "Enter your full name.");
+    if (name.length < 2) {
+      throw new JcApiError(400, "NAME_REQUIRED", "Enter your full name.");
     }
     if (
       password.length < 10 ||
       !/[A-Za-z]/.test(password) ||
       !/\d/.test(password)
     ) {
-      throw new FrappeAPIError(
+      throw new JcApiError(
         400,
         "WEAK_PASSWORD",
         "Use at least 10 characters with a letter and a number.",
       );
     }
     if (body.privacyConsent !== true) {
-      throw new FrappeAPIError(
+      throw new JcApiError(
         400,
         "PRIVACY_CONSENT_REQUIRED",
         "Accept the privacy policy to create an account.",
       );
     }
-    await callFrappe(
-      "jcexport_erp.customer_portal.register_customer",
-      {
-        payload: JSON.stringify({
-          full_name: fullName,
-          email,
-          phone: readText(body.phone, 40),
-          company: readText(body.company, 140),
-          currency: readText(body.currency, 3).toUpperCase() || "USD",
-          password,
-          privacy_consent: 1,
-        }),
-      },
+
+    const result = await callApi<RegisterResult>("auth/register", {
+      method: "POST",
       request,
-    );
-    const { sid, session } = await loginCustomer(email, password);
+      body: {
+        name,
+        email,
+        password,
+        // The form already checked the two fields match before this ever
+        // reached the network, so confirming with the same value repeats a
+        // check that already passed rather than trusting the client twice.
+        password_confirmation: password,
+        phone: readText(body.phone, 40) || undefined,
+        company_name: readText(body.company, 140) || undefined,
+        default_currency: readText(body.currency, 3).toUpperCase() || undefined,
+        privacy_consent: true,
+      },
+    });
+
+    // An address that already has a portal login answers 202 with no token:
+    // jc-portal refuses to overwrite an existing password from this open
+    // endpoint, so there is no session to start here.
+    if (!result.token) {
+      return NextResponse.json(
+        { data: { pending: true, message: result.message } },
+        { status: 202 },
+      );
+    }
+
+    const { token, message: _message, ...session } = result;
     const response = NextResponse.json({ data: session }, { status: 201 });
     response.cookies.set({
       name: CUSTOMER_SESSION_COOKIE,
-      value: sid,
+      value: token,
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -70,7 +77,7 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (reason) {
-    return integrationErrorResponse(reason);
+    return apiErrorResponse(reason);
   }
 }
 
@@ -83,11 +90,7 @@ function readText(value: unknown, maxLength: number) {
 function readEmail(value: unknown) {
   const email = readText(value, 254).toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new FrappeAPIError(
-      400,
-      "INVALID_EMAIL",
-      "Enter a valid email address.",
-    );
+    throw new JcApiError(400, "INVALID_EMAIL", "Enter a valid email address.");
   }
   return email;
 }

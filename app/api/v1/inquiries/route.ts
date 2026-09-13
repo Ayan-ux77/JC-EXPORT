@@ -1,71 +1,109 @@
 import {
+  apiErrorResponse,
   assertSameOrigin,
-  callFrappe,
-  FrappeAPIError,
-  integrationErrorResponse,
+  callApi,
+  JcApiError,
   readJsonBody,
   requireIdempotencyKey,
-} from "@/data/frappe-api";
+} from "@/data/jc-api";
+
+type InquiryResult = {
+  reference: string;
+  status: string;
+  received_at: string;
+};
 
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const body = await readJsonBody(request);
+
+    // A double-click, or a phone retrying this POST on a flaky connection,
+    // must not create two enquiries that two sales agents both end up
+    // answering. jc-portal de-duplicates on this same header for an hour, so
+    // the browser's key has to reach it unchanged, not just be checked here.
     const idempotencyKey = requireIdempotencyKey(request);
-    const payload = sanitizeInquiry(body, idempotencyKey);
-    const result = await callFrappe(
-      "jcexport_erp.website_api.submit_inquiry",
-      {
-        payload,
-        idempotency_key: idempotencyKey,
-        correlation_id:
-          request.headers.get("x-correlation-id") || crypto.randomUUID(),
-      },
+
+    const result = await callApi<InquiryResult>("inquiries", {
+      method: "POST",
+      body: sanitizeInquiry(body),
       request,
-    );
-    return Response.json(result, {
-      status: 201,
-      headers: { "Cache-Control": "no-store" },
+      headers: { "Idempotency-Key": idempotencyKey },
     });
+
+    return Response.json(
+      { data: result },
+      { status: 201, headers: { "Cache-Control": "no-store" } },
+    );
   } catch (reason) {
-    return integrationErrorResponse(reason);
+    return apiErrorResponse(reason);
   }
 }
 
-function sanitizeInquiry(
-  body: Record<string, unknown>,
-  idempotencyKey: string,
-) {
+/**
+ * jc-portal's WebsiteInquiryController::store takes one flat set of fields.
+ * Everything else the forms collect -- make, budget, shipping preference --
+ * has no column of its own there, so it is folded into the two free-text
+ * fields a sales agent actually reads rather than being silently dropped.
+ */
+function sanitizeInquiry(body: Record<string, unknown>) {
   return {
-    inquiry_type: optionalString(body.inquiryType, 80),
-    vehicle: optionalString(body.vehicle, 180),
-    make: optionalString(body.make, 140),
-    model: optionalString(body.model, 140),
-    year: optionalString(body.year, 40),
-    budget: optionalString(body.budget, 40),
-    currency: optionalString(body.currency, 3) || "USD",
-    body_type: optionalString(body.bodyType, 100),
-    country: optionalString(body.country, 120),
-    port: optionalString(body.port, 180),
-    shipping: optionalString(body.shipping, 80),
-    quote_basis: optionalString(body.quoteBasis, 3) || "CIF",
     name: requiredString(body.name, "Full name", 140),
-    company: optionalString(body.company, 140),
-    email: optionalString(body.email, 254),
-    phone: optionalString(body.phone, 80),
-    subject: optionalString(body.subject, 120),
-    message: optionalString(body.message, 4000),
+    email: optionalString(body.email, 190) || undefined,
+    phone: optionalString(body.phone, 40) || undefined,
+    company: optionalString(body.company, 140) || undefined,
+    city: optionalString(body.city, 80) || undefined,
+    country: optionalString(body.country, 80) || undefined,
+    vehicle_slug: optionalString(body.vehicleSlug, 190) || undefined,
+    message: buildMessage(body) || undefined,
+    vehicle_requirement: buildVehicleRequirement(body) || undefined,
+    source: body.source === "CONTACT_FORM" ? "CONTACT_FORM" : "WEBSITE",
     privacy_consent: body.privacyConsent === true,
-    marketing_consent: body.marketingConsent === true,
-    request_id:
-      optionalString(body.requestId, 140) || idempotencyKey,
   };
+}
+
+function buildMessage(body: Record<string, unknown>) {
+  const subject = optionalString(body.subject, 120);
+  const port = optionalString(body.port, 80);
+  const shipping = optionalString(body.shipping, 80);
+  const message = optionalString(body.message, 4000);
+
+  return [
+    subject && `Subject: ${subject}`,
+    port && `Preferred port: ${port}`,
+    shipping && shipping !== "Not sure" && `Shipping preference: ${shipping}`,
+    message,
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, 4000);
+}
+
+function buildVehicleRequirement(body: Record<string, unknown>) {
+  const vehicle = optionalString(body.vehicle, 190);
+  const makeModel = [optionalString(body.make, 140), optionalString(body.model, 140)]
+    .filter(Boolean)
+    .join(" ");
+  const year = optionalString(body.year, 40);
+  const bodyType = optionalString(body.bodyType, 100);
+  const budget = optionalString(body.budget, 40);
+
+  return [
+    vehicle,
+    makeModel,
+    year && `Year: ${year}`,
+    bodyType && `Body type: ${bodyType}`,
+    budget && `Budget: USD ${budget}`,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+    .slice(0, 2000);
 }
 
 function requiredString(value: unknown, label: string, limit: number) {
   const result = optionalString(value, limit);
   if (!result) {
-    throw new FrappeAPIError(400, "INVALID_FORM", `${label} is required.`);
+    throw new JcApiError(400, "INVALID_FORM", `${label} is required.`);
   }
   return result;
 }
@@ -75,7 +113,7 @@ function optionalString(value: unknown, limit: number) {
     return "";
   }
   if (typeof value !== "string") {
-    throw new FrappeAPIError(
+    throw new JcApiError(
       400,
       "INVALID_FORM",
       "The submitted form contains an invalid field.",
@@ -83,7 +121,7 @@ function optionalString(value: unknown, limit: number) {
   }
   const result = value.trim();
   if (result.length > limit) {
-    throw new FrappeAPIError(
+    throw new JcApiError(
       400,
       "INVALID_FORM",
       "The submitted form contains a field that is too long.",

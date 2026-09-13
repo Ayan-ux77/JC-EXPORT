@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
 
-import {
-  CUSTOMER_SESSION_COOKIE,
-  loginCustomer,
-} from "@/data/customer-session";
-import {
-  FrappeAPIError,
-  assertSameOrigin,
-  integrationErrorResponse,
-  readJsonBody,
-} from "@/data/frappe-api";
+import { CUSTOMER_SESSION_COOKIE, loginCustomer } from "@/data/customer-session";
+import { JcApiError, apiErrorResponse, assertSameOrigin, readJsonBody } from "@/data/jc-api";
 
 export async function POST(request: Request) {
   try {
@@ -19,17 +11,13 @@ export async function POST(request: Request) {
     const password =
       typeof body.password === "string" ? body.password.slice(0, 256) : "";
     if (!password) {
-      throw new FrappeAPIError(
-        400,
-        "PASSWORD_REQUIRED",
-        "Enter your password.",
-      );
+      throw new JcApiError(400, "PASSWORD_REQUIRED", "Enter your password.");
     }
-    const { sid, session } = await loginCustomer(email, password);
+    const { token, session } = await loginCustomer(email, password);
     const response = NextResponse.json({ data: session });
     response.cookies.set({
       name: CUSTOMER_SESSION_COOKIE,
-      value: sid,
+      value: token,
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -39,18 +27,14 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (reason) {
-    return integrationErrorResponse(reason);
+    return apiErrorResponse(reason);
   }
 }
 
 function readEmail(value: unknown) {
   const email = typeof value === "string" ? value.trim().toLowerCase() : "";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
-    throw new FrappeAPIError(
-      400,
-      "INVALID_EMAIL",
-      "Enter a valid email address.",
-    );
+    throw new JcApiError(400, "INVALID_EMAIL", "Enter a valid email address.");
   }
   return email;
 }

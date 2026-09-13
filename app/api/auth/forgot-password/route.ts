@@ -1,10 +1,4 @@
-import {
-  FrappeAPIError,
-  assertSameOrigin,
-  callFrappe,
-  integrationErrorResponse,
-  readJsonBody,
-} from "@/data/frappe-api";
+import { JcApiError, apiErrorResponse, assertSameOrigin, callApi, readJsonBody } from "@/data/jc-api";
 
 export async function POST(request: Request) {
   try {
@@ -13,24 +7,18 @@ export async function POST(request: Request) {
     const email =
       typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
-      throw new FrappeAPIError(
-        400,
-        "INVALID_EMAIL",
-        "Enter a valid email address.",
-      );
+      throw new JcApiError(400, "INVALID_EMAIL", "Enter a valid email address.");
     }
-    await callFrappe<{ accepted: boolean }>(
-      "jcexport_erp.customer_portal.request_password_reset",
-      { email },
+    // jc-portal answers the same way whether or not the address is
+    // registered, so relaying its own message keeps that guarantee instead
+    // of risking a second, slightly different copy of it here.
+    const result = await callApi<{ message: string }>("auth/forgot-password", {
+      method: "POST",
+      body: { email },
       request,
-    );
-    return Response.json({
-      data: {
-        message:
-          "If the account exists, password reset instructions have been sent.",
-      },
     });
+    return Response.json({ data: result });
   } catch (reason) {
-    return integrationErrorResponse(reason);
+    return apiErrorResponse(reason);
   }
 }

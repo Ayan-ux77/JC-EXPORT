@@ -90,6 +90,7 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -120,12 +121,34 @@ export function RegisterForm() {
       if (!response.ok) {
         throw new Error(payload.error?.message || "Account creation failed.");
       }
+      // An address that already has a portal login gets a 202 here, not a
+      // fresh session -- there is no cookie to act on, only a nudge to sign
+      // in with whatever password that account already uses.
+      if (response.status === 202) {
+        setPending(true);
+        setSubmitting(false);
+        return;
+      }
       router.replace("/account");
       router.refresh();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Account creation failed.");
       setSubmitting(false);
     }
+  }
+
+  if (pending) {
+    return (
+      <div>
+        <p className={styles.success}>
+          <Check aria-hidden="true" /> An account with this email already exists.
+        </p>
+        <p className={styles.footer}>
+          <Link href="/sign-in">Sign in instead</Link> or{" "}
+          <Link href="/forgot-password">reset your password</Link>.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -209,24 +232,25 @@ export function RegisterForm() {
 export function ForgotPasswordForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
+  const [sentTo, setSentTo] = useState("");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setError("");
     const form = new FormData(event.currentTarget);
+    const email = String(form.get("email") || "");
     try {
       const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.get("email") }),
+        body: JSON.stringify({ email }),
       });
       const payload = (await response.json()) as ErrorPayload;
       if (!response.ok) {
         throw new Error(payload.error?.message || "Request failed.");
       }
-      setSent(true);
+      setSentTo(email);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Request failed.");
     } finally {
@@ -234,13 +258,18 @@ export function ForgotPasswordForm() {
     }
   }
 
-  if (sent) {
+  if (sentTo) {
     return (
       <div>
         <p className={styles.success}>
-          <Check aria-hidden="true" /> If the account exists, reset instructions have been sent.
+          <Check aria-hidden="true" /> If that address has an account, a 6-digit code is on its way.
         </p>
-        <p className={styles.footer}><Link href="/sign-in">Return to sign in</Link></p>
+        <p className={styles.footer}>
+          <Link href={`/reset-password?email=${encodeURIComponent(sentTo)}`}>
+            Enter the code
+          </Link>{" "}
+          or <Link href="/sign-in">return to sign in</Link>.
+        </p>
       </div>
     );
   }
@@ -253,14 +282,14 @@ export function ForgotPasswordForm() {
       </label>
       {error && <p className={styles.error} role="alert">{error}</p>}
       <button className={styles.submit} type="submit" disabled={submitting}>
-        {submitting ? "Sending..." : "Send reset instructions"}
+        {submitting ? "Sending..." : "Send reset code"}
         <ArrowRight aria-hidden="true" />
       </button>
     </form>
   );
 }
 
-export function ResetPasswordForm({ resetKey }: { resetKey: string }) {
+export function ResetPasswordForm({ email = "" }: { email?: string }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -280,7 +309,11 @@ export function ResetPasswordForm({ resetKey }: { resetKey: string }) {
       const response = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: resetKey, password }),
+        body: JSON.stringify({
+          email: form.get("email"),
+          code: form.get("code"),
+          password,
+        }),
       });
       const payload = (await response.json()) as ErrorPayload;
       if (!response.ok) {
@@ -294,17 +327,31 @@ export function ResetPasswordForm({ resetKey }: { resetKey: string }) {
     }
   }
 
-  if (!resetKey) {
-    return (
-      <div>
-        <p className={styles.error}>This password reset link is incomplete or expired.</p>
-        <p className={styles.footer}><Link href="/forgot-password">Request another link</Link></p>
-      </div>
-    );
-  }
-
   return (
     <form className={styles.form} onSubmit={submit}>
+      <label>
+        Email address
+        <input
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          defaultValue={email}
+          placeholder="you@example.com"
+        />
+      </label>
+      <label>
+        6-digit code
+        <input
+          name="code"
+          inputMode="numeric"
+          pattern="\d{6}"
+          maxLength={6}
+          autoComplete="one-time-code"
+          required
+          placeholder="123456"
+        />
+      </label>
       <label>
         New password
         <input name="password" type="password" autoComplete="new-password" minLength={10} required />
@@ -317,6 +364,132 @@ export function ResetPasswordForm({ resetKey }: { resetKey: string }) {
       <button className={styles.submit} type="submit" disabled={submitting}>
         {submitting ? "Updating..." : "Set new password"}
         <ArrowRight aria-hidden="true" />
+      </button>
+      <p className={styles.footer}>
+        Didn&apos;t get a code? <Link href="/forgot-password">Send another</Link>
+      </p>
+    </form>
+  );
+}
+
+export function VerifyOtpForm({ email = "" }: { email?: string }) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [verified, setVerified] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    const form = new FormData(event.currentTarget);
+    try {
+      const response = await fetch("/api/auth/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.get("email"),
+          code: form.get("code"),
+        }),
+      });
+      const payload = (await response.json()) as ErrorPayload;
+      if (!response.ok) {
+        throw new Error(payload.error?.message || "That code is not valid or has expired.");
+      }
+      setVerified(true);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "That code is not valid or has expired.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function resend(currentEmail: string) {
+    setError("");
+    setResent(false);
+    try {
+      const response = await fetch("/api/auth/resend-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: currentEmail }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json()) as ErrorPayload;
+        throw new Error(payload.error?.message || "Could not resend the code.");
+      }
+      setResent(true);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not resend the code.");
+    }
+  }
+
+  if (verified) {
+    return (
+      <div>
+        <p className={styles.success}>
+          <Check aria-hidden="true" /> Your email is verified.
+        </p>
+        <p className={styles.footer}>
+          <Link
+            href="/sign-in"
+            onClick={(event) => {
+              event.preventDefault();
+              router.replace("/sign-in");
+              router.refresh();
+            }}
+          >
+            Continue to sign in
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form className={styles.form} onSubmit={submit}>
+      <label>
+        Email address
+        <input
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          defaultValue={email}
+          placeholder="you@example.com"
+        />
+      </label>
+      <label>
+        6-digit code
+        <input
+          name="code"
+          inputMode="numeric"
+          pattern="\d{6}"
+          maxLength={6}
+          autoComplete="one-time-code"
+          required
+          placeholder="123456"
+        />
+      </label>
+      {resent && (
+        <p className={styles.success}>
+          <Check aria-hidden="true" /> A new code is on its way.
+        </p>
+      )}
+      {error && <p className={styles.error} role="alert">{error}</p>}
+      <button className={styles.submit} type="submit" disabled={submitting}>
+        {submitting ? "Verifying..." : "Verify email"}
+        <ArrowRight aria-hidden="true" />
+      </button>
+      <button
+        className={styles.footer}
+        type="button"
+        onClick={(event) => {
+          const emailInput = event.currentTarget.form?.elements.namedItem("email") as HTMLInputElement | null;
+          void resend(emailInput?.value || "");
+        }}
+      >
+        Resend code
       </button>
     </form>
   );

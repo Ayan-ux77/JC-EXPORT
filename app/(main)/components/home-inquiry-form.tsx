@@ -19,7 +19,7 @@ export function HomeInquiryForm() {
     const form = new FormData(event.currentTarget);
     try {
       const result = await submitWebsiteInquiry({
-        inquiryType: "Sourcing Request",
+        source: "WEBSITE",
         name: String(form.get("name") || ""),
         country: String(form.get("country") || ""),
         email: String(form.get("email") || ""),
@@ -29,10 +29,6 @@ export function HomeInquiryForm() {
         privacyConsent: form.get("privacyConsent") === "on",
       });
       setReference(result.data.reference);
-      sessionStorage.setItem(
-        `jcexport-inquiry:${result.data.reference}`,
-        result.data.lookup_token,
-      );
       event.currentTarget.reset();
     } catch (reason) {
       setError(

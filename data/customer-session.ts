@@ -2,413 +2,295 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
-import { FrappeAPIError } from "./frappe-api";
+import { callApi, JcApiError } from "./jc-api";
 
 export const CUSTOMER_SESSION_COOKIE = "jcexport_customer_session";
 
+/**
+ * What auth/login, auth/register and auth/reset-password answer with, and
+ * what auth/profile answers on every later request. The cookie of the same
+ * name now holds a Sanctum bearer token rather than a Frappe `sid` -- the
+ * browser still never sees it, only what goes in it changed.
+ */
 export type CustomerSession = {
-  user: string;
-  full_name: string;
-  first_name: string;
-  customer: string;
-  customer_name: string;
+  id: number;
+  name: string;
+  email: string;
+  company?: string;
+  country?: string;
+  currency: string;
+  emailVerified: boolean;
+};
+
+/**
+ * The account as portal/profile shows it and PUT portal/profile accepts it
+ * back. Deliberately not the same shape as CustomerSession: this one carries
+ * the postal address a buyer fills in for shipping paperwork, which signing
+ * in has no reason to return.
+ */
+export type PortalProfile = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  company_name: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  postcode: string | null;
+  country: string | null;
   default_currency: string;
+  email_verified: boolean;
 };
 
-export type PortalVehicle = {
-  id: string;
-  slug: string;
-  title: string;
-  year: number;
-  make: string;
-  model: string;
-  image: string;
-  stock_no: string;
+export type PortalSummary = {
+  open_inquiries: number;
+  invoices_outstanding: number;
+  cars_on_water: number;
 };
 
-export type PortalQuotation = {
+export type PortalInvoiceLine = {
+  description: string | null;
+  chassis_number: string | null;
+  line_total: string;
+};
+
+/**
+ * Money is always a decimal STRING here, never a number -- see jc-api.ts.
+ * A float would lose cents at the edges, and JSON would drop a trailing
+ * ".00" so the same field arrives as 4200 one day and 4200.5 the next.
+ */
+export type PortalInvoice = {
+  /** The handle the portal links its PDF download to. */
+  id: number;
+  invoice_number: string;
   status: string;
   currency: string;
-  total: string;
-  valid_until: string;
-  price_basis: string;
-  fob: string;
-  freight: string;
-  insurance: string;
-  cif: string;
+  grand_total: string;
+  paid_amount: string;
+  balance_due: string;
+  invoice_date: string | null;
+  due_date: string | null;
+  incoterm: string | null;
+  lines: PortalInvoiceLine[];
 };
 
-export type PortalReservation = {
-  reference: string;
-  status: string;
-  reserved_on: string;
-  vehicle_id: string;
-  sales_order: string | null;
-  sales_order_created: boolean;
-  shipment_created: boolean;
-  export_shipment: string | null;
+export type PortalPayment = {
+  reference_code: string;
+  amount: string;
+  currency: string;
+  received_date: string | null;
+  applied_to: Array<{ invoice_number: string; amount: string }>;
 };
 
+export type PortalShipmentCourier = {
+  tracking_number: string;
+  courier_company: string;
+  sent_on: string | null;
+  delivered: boolean;
+};
+
+/**
+ * One car's shipping leg, not one inquiry. Several cars can ride on the same
+ * invoice and each still gets its own vessel and its own courier envelope,
+ * so there is no single "the shipment for this inquiry" concept any more.
+ */
 export type PortalShipment = {
-  reference: string;
+  id: number;
+  car: {
+    stock: string | null;
+    title: string;
+    chassis: string | null;
+  };
+  vessel: string | null;
+  voyage: string | null;
+  pol: string | null;
+  pod: string | null;
+  etd: string | null;
+  eta: string | null;
+  sailed_on: string | null;
+  arrived_on: string | null;
+  delivered_on: string | null;
+  bl_number: string | null;
   status: string;
-  booking_reference: string;
-  vessel: string;
-  voyage_number: string;
-  etd: string;
-  eta: string;
-  actual_departure: string;
-  actual_arrival: string;
-  current_location: string;
-  released: boolean;
-  events: Array<{
-    type: string;
-    time: string;
-    kind: string;
-    port: string;
-    notes: string;
-  }>;
-  documents: Array<{
-    reference: string;
-    type: string;
-    version: number;
-    issue_date: string;
-    expiry_date: string;
-    download_available: boolean;
-  }>;
+  courier: PortalShipmentCourier | null;
 };
 
-export type PortalFinancials = {
-  invoices: Array<{
-    reference: string;
-    status: string;
-    currency: string;
-    total: string;
-    paid: string;
-    outstanding: string;
-    posting_date: string;
-    due_date: string;
-    invoice_type: string;
-  }>;
-  payments: Array<{
-    reference: string;
-    status: string;
-    currency: string;
-    gross: string;
-    net: string;
-    received_on: string;
-    bank_reference: string;
-  }>;
+/**
+ * One file about one of the customer's cars. Always listed even when it
+ * cannot be fetched yet -- JC does not release shipping documents until that
+ * car's invoice is paid in full, the same rule Arrival Watch is built on, and
+ * hiding a document that exists is what turns into the phone call this page
+ * is meant to prevent.
+ */
+export type PortalDocument = {
+  id: string;
+  type: string | null;
+  label: string;
+  file_name: string;
+  size: number;
+  uploaded_on: string | null;
+  stock: string | null;
+  downloadable: boolean;
+  withheld_reason: string | null;
 };
 
+/**
+ * A named step in the seven-stage journey from enquiry to delivery, shared
+ * by the compact progress bar and the full journey strip so the two can
+ * never disagree about which stage is current -- the label and completion
+ * flag come from here, not from a second copy of the stage list on this
+ * side.
+ */
+export type PortalJourneyStage = {
+  key: string;
+  label: string;
+  complete: boolean;
+  on: string | null;
+};
+
+/**
+ * There is no Quotation and no Sales Order stage: those were ERPNext's
+ * document model, not how JC actually sells a car. An inquiry is just
+ * itself -- reference, status, the car it is about -- and pricing,
+ * invoicing and shipping are tracked as their own resources once they
+ * exist, not folded into the inquiry that started them. `progress` is the
+ * exception: the seven-stage journey is computed once, server-side, so every
+ * page that shows it agrees, including for an inquiry with no car attached.
+ */
 export type PortalInquiry = {
   reference: string;
   status: string;
-  received_at: string;
-  next_action: string;
-  vehicle: PortalVehicle | null;
-  quotation: PortalQuotation | null;
-  reservation: PortalReservation | null;
-  shipment: PortalShipment | null;
-  financials: PortalFinancials;
-  last_synced_at: string;
+  created_at: string | null;
+  message: string | null;
+  car: {
+    stock: string | null;
+    slug: string | null;
+    title: string;
+  } | null;
+  // Named so the detail page can link an enquiry straight to what its car
+  // turned into, instead of pointing vaguely at the Payments and Shipments
+  // pages. Either is null until that step actually happens.
+  invoice: { id: number; invoice_number: string; status: string } | null;
+  shipment: { id: number; status: string } | null;
+  progress: PortalJourneyStage[];
 };
 
 export type PortalOverview = {
-  profile: CustomerSession;
-  summary: {
-    inquiries: number;
-    quotations: number;
-    reservations: number;
-    shipments: number;
-  };
-  inquiries: PortalInquiry[];
+  profile: PortalProfile;
+  summary: PortalSummary;
+  // Kept per currency, never summed: a customer owing 5,000 USD and 300,000
+  // JPY does not owe 305,000 of anything.
+  outstanding_balance: Record<string, string>;
+  recent_invoices: PortalInvoice[];
+  recent_payments: PortalPayment[];
+  recent_shipments: PortalShipment[];
+  recent_inquiries: PortalInquiry[];
 };
 
-const frappeOrigin = (
-  process.env.FRAPPE_API_URL || "http://jcexport.localhost:8000"
-).replace(/\/+$/, "");
-
 export async function loginCustomer(email: string, password: string) {
-  const response = await fetch(`${frappeOrigin}/api/method/login`, {
+  const result = await callApi<CustomerSession & { token: string }>("auth/login", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Accept: "application/json",
-    },
-    body: new URLSearchParams({ usr: email, pwd: password }),
-    cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
+    body: { email, password },
   });
-  const payload = (await response.json().catch(() => ({}))) as {
-    message?: string;
-    exception?: string;
-  };
-  if (!response.ok || payload.exception) {
-    throw new FrappeAPIError(
-      response.status === 401 ? 401 : 502,
-      response.status === 401 ? "INVALID_CREDENTIALS" : "ERP_LOGIN_FAILED",
-      response.status === 401
-        ? "Email or password is incorrect."
-        : "Sign in is temporarily unavailable.",
-    );
-  }
-  const sid = extractSessionId(response.headers);
-  if (!sid) {
-    throw new FrappeAPIError(
-      502,
-      "INVALID_LOGIN_RESPONSE",
-      "Sign in is temporarily unavailable.",
-    );
-  }
-  try {
-    const session = await callFrappeWithSession<CustomerSession>(
-      "jcexport_erp.customer_portal.get_session",
-      {},
-      sid,
-      "GET",
-    );
-    return { sid, session };
-  } catch (reason) {
-    await logoutCustomer(sid);
-    throw reason;
-  }
+  const { token, ...session } = result;
+  return { token, session };
 }
 
-export async function logoutCustomer(sid: string) {
-  await fetch(`${frappeOrigin}/api/method/logout`, {
+export async function resetCustomerPassword(
+  email: string,
+  code: string,
+  password: string,
+  passwordConfirmation: string,
+) {
+  const result = await callApi<CustomerSession & { token: string }>("auth/reset-password", {
     method: "POST",
-    headers: {
-      Cookie: `sid=${encodeURIComponent(sid)}`,
-      Accept: "application/json",
-    },
-    cache: "no-store",
-    signal: AbortSignal.timeout(5_000),
-  }).catch(() => undefined);
+    body: { email, code, password, password_confirmation: passwordConfirmation },
+  });
+  const { token, ...session } = result;
+  return { token, session };
 }
 
-export async function resetCustomerPassword(key: string, password: string) {
-  const response = await fetch(
-    `${frappeOrigin}/api/method/frappe.core.doctype.user.user.update_password`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        key,
-        new_password: password,
-        logout_all_sessions: 1,
-      }),
-      cache: "no-store",
-      signal: AbortSignal.timeout(10_000),
-    },
-  );
-  await parseFrappeResponse<string>(response);
-  const sid = extractSessionId(response.headers);
-  if (!sid) {
-    throw new FrappeAPIError(
-      502,
-      "INVALID_RESET_RESPONSE",
-      "Your password was updated. Please sign in.",
-    );
-  }
-  const session = await callFrappeWithSession<CustomerSession>(
-    "jcexport_erp.customer_portal.get_session",
-    {},
-    sid,
-    "GET",
-  );
-  return { sid, session };
+export async function logoutCustomer(token: string) {
+  // Best-effort: a network blip here must not stop the cookie from being
+  // cleared, or the customer would look signed out locally while the token
+  // is still live on the ERP.
+  await callApi("auth/logout", { method: "POST", token }).catch(() => undefined);
 }
 
 export async function getCustomerSession() {
-  const sid = (await cookies()).get(CUSTOMER_SESSION_COOKIE)?.value;
-  if (!sid) {
+  const token = (await cookies()).get(CUSTOMER_SESSION_COOKIE)?.value;
+  if (!token) {
     return null;
   }
   try {
-    return await callFrappeWithSession<CustomerSession>(
-      "jcexport_erp.customer_portal.get_session",
-      {},
-      sid,
-      "GET",
-    );
+    return await callApi<CustomerSession>("auth/profile", { token });
   } catch {
+    // An expired or revoked token reads as "signed out", not as a crash --
+    // whatever called this redirects to sign-in either way.
     return null;
   }
 }
 
 export async function getPortalOverview() {
-  const overview = await callCurrentCustomer<PortalOverview>(
-    "jcexport_erp.customer_portal.get_overview",
-  );
-  return {
-    ...overview,
-    inquiries: overview.inquiries.map(normalizePortalInquiry),
-  };
+  return callApi<PortalOverview>("portal/overview", { token: await requireCustomerToken() });
 }
 
 export async function getPortalInquiry(reference: string) {
-  return normalizePortalInquiry(
-    await callCurrentCustomer<PortalInquiry>(
-      "jcexport_erp.customer_portal.get_inquiry",
-      { public_reference: reference },
-    ),
-  );
-}
-
-export async function callCurrentCustomer<T>(
-  method: string,
-  args: Record<string, string> = {},
-  requestMethod: "GET" | "POST" = "GET",
-) {
-  const sid = (await cookies()).get(CUSTOMER_SESSION_COOKIE)?.value;
-  if (!sid) {
-    throw new FrappeAPIError(401, "SIGN_IN_REQUIRED", "Sign in is required.");
-  }
-  return callFrappeWithSession<T>(method, args, sid, requestMethod);
-}
-
-export async function callFrappeGuest<T>(
-  method: string,
-  args: Record<string, string>,
-) {
-  const response = await fetch(`${frappeOrigin}/api/method/${method}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(args),
-    cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
+  return callApi<PortalInquiry>(`portal/inquiries/${encodeURIComponent(reference)}`, {
+    token: await requireCustomerToken(),
   });
-  return parseFrappeResponse<T>(response);
 }
 
-export async function fetchCurrentCustomerFile(
-  method: string,
-  args: Record<string, string>,
-) {
-  const sid = (await cookies()).get(CUSTOMER_SESSION_COOKIE)?.value;
-  if (!sid) {
-    throw new FrappeAPIError(401, "SIGN_IN_REQUIRED", "Sign in is required.");
-  }
-  const query = new URLSearchParams(args);
-  const response = await fetch(
-    `${frappeOrigin}/api/method/${method}?${query.toString()}`,
-    {
-      method: "GET",
-      headers: {
-        Cookie: `sid=${encodeURIComponent(sid)}`,
-        Accept: "application/octet-stream",
-      },
-      cache: "no-store",
-      signal: AbortSignal.timeout(15_000),
-    },
-  );
-  if (!response.ok) {
-    await parseFrappeResponse<never>(response);
-  }
-  return response;
+/**
+ * The full history, not the dashboard's five-item preview -- these back the
+ * standalone list pages, which is exactly what a customer opens this account
+ * for when the dashboard's "View all" is what they clicked.
+ */
+export async function getPortalInquiries(page = 1) {
+  return callApi<PortalInquiry[]>(`portal/inquiries?page=${page}`, {
+    token: await requireCustomerToken(),
+  });
 }
 
-async function callFrappeWithSession<T>(
-  method: string,
-  args: Record<string, string>,
-  sid: string,
-  requestMethod: "GET" | "POST",
-) {
-  const query = new URLSearchParams(args);
-  const response = await fetch(
-    `${frappeOrigin}/api/method/${method}${
-      requestMethod === "GET" && query.size ? `?${query.toString()}` : ""
-    }`,
-    {
-      method: requestMethod,
-      headers: {
-        Cookie: `sid=${encodeURIComponent(sid)}`,
-        Accept: "application/json",
-        ...(requestMethod === "POST"
-          ? { "Content-Type": "application/json" }
-          : {}),
-      },
-      body: requestMethod === "POST" ? JSON.stringify(args) : undefined,
-      cache: "no-store",
-      signal: AbortSignal.timeout(10_000),
-    },
-  );
-  return parseFrappeResponse<T>(response);
+export async function getPortalInvoices(page = 1) {
+  return callApi<PortalInvoice[]>(`portal/invoices?page=${page}`, {
+    token: await requireCustomerToken(),
+  });
 }
 
-function normalizePortalInquiry(inquiry: PortalInquiry): PortalInquiry {
-  if (!inquiry.vehicle?.image) {
-    return inquiry;
-  }
-  return {
-    ...inquiry,
-    vehicle: {
-      ...inquiry.vehicle,
-      image: normalizePortalMediaUrl(inquiry.vehicle.image),
-    },
-  };
+export async function getPortalPayments(page = 1) {
+  return callApi<PortalPayment[]>(`portal/payments?page=${page}`, {
+    token: await requireCustomerToken(),
+  });
 }
 
-function normalizePortalMediaUrl(value: string) {
-  if (!value || /^https?:\/\//i.test(value)) {
-    return value;
-  }
-  if (value.startsWith("/assets/") || value.startsWith("/files/")) {
-    return `${frappeOrigin}${value}`;
-  }
-  return value;
+export async function getPortalShipments(page = 1) {
+  return callApi<PortalShipment[]>(`portal/shipments?page=${page}`, {
+    token: await requireCustomerToken(),
+  });
 }
 
-async function parseFrappeResponse<T>(response: Response): Promise<T> {
-  const payload = (await response.json().catch(() => ({}))) as {
-    message?: T;
-    exception?: string;
-    exc_type?: string;
-    _server_messages?: string;
-  };
-  if (!response.ok || payload.exception || payload.message === undefined) {
-    throw new FrappeAPIError(
-      response.status >= 400 ? response.status : 502,
-      payload.exc_type || "ERP_REQUEST_FAILED",
-      extractMessage(payload._server_messages) ||
-        (response.status === 401
-          ? "Your session has expired. Please sign in again."
-          : "The request could not be completed."),
-    );
-  }
-  return payload.message;
+/**
+ * Not paginated -- a customer's cars rarely carry more than a handful of
+ * documents each, nowhere near invoice or payment volume, so there is no
+ * page size here to plumb through.
+ */
+export async function getPortalDocuments() {
+  return callApi<PortalDocument[]>("portal/documents", {
+    token: await requireCustomerToken(),
+  });
 }
 
-function extractSessionId(headers: Headers) {
-  const setCookie = headers.get("set-cookie") || "";
-  const match = setCookie.match(/(?:^|,\s*)sid=([^;]+)/i);
-  if (!match?.[1]) {
-    return "";
+/**
+ * The one place that reads the session cookie for a request that must not
+ * proceed without it -- a raw fetch (the document download route) as much as
+ * the JSON calls above, so the cookie's name is only ever spelled out once.
+ */
+export async function requireCustomerToken() {
+  const token = (await cookies()).get(CUSTOMER_SESSION_COOKIE)?.value;
+  if (!token) {
+    throw new JcApiError(401, "SIGN_IN_REQUIRED", "Sign in is required.");
   }
-  return decodeURIComponent(match[1].replace(/^"|"$/g, ""));
-}
-
-function extractMessage(serverMessages?: string) {
-  if (!serverMessages) {
-    return "";
-  }
-  try {
-    const messages = JSON.parse(serverMessages) as string[];
-    for (const message of messages) {
-      const value = JSON.parse(message) as { message?: string };
-      if (value.message) {
-        return value.message.replace(/<[^>]*>/g, "").trim();
-      }
-    }
-  } catch {
-    return "";
-  }
-  return "";
+  return token;
 }

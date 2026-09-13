@@ -1,57 +1,49 @@
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, CarFront, MapPin } from "lucide-react";
+import { ArrowRight, CalendarDays, CarFront, Download, MapPin } from "lucide-react";
 
-import type { PortalInquiry } from "@/data/customer-session";
-import { isRemoteVehicleMedia } from "@/data/vehicles";
+import type { PortalInquiry, PortalInvoice, PortalShipment } from "@/data/customer-session";
 
 import styles from "./portal.module.css";
 
 export function StatusBadge({ value }: { value: string }) {
   const tone =
-    /cancel|reject|overdue/i.test(value)
+    /cancel|reject|overdue|lost/i.test(value)
       ? styles.statusDanger
-      : /submit|active|paid|verified|depart|transit|arrived|deliver|release|ship/i.test(value)
+      : /paid|verified|arrived|deliver|release|won/i.test(value)
         ? styles.statusSuccess
-        : /draft|new|pending|await|planning|request/i.test(value)
+        : /draft|new|pending|await|planning|request|progress|quoted|booked|sailed|yard|issued/i.test(value)
           ? styles.statusWarning
           : styles.statusNeutral;
   return <span className={`${styles.status} ${tone}`}>{value}</span>;
 }
 
+/**
+ * The seven-stage journey comes from the API as `progress` -- CustomerJourney
+ * on the ERP side -- so this reads its label and completion straight off
+ * that array instead of keeping a second copy here that could drift from it.
+ */
 export function InquiryRow({ inquiry }: { inquiry: PortalInquiry }) {
   return (
     <article className={styles.inquiryRow}>
       <div className={styles.vehicleThumb}>
-        {inquiry.vehicle?.image ? (
-          <Image
-            src={inquiry.vehicle.image}
-            alt={inquiry.vehicle.title}
-            fill
-            sizes="112px"
-            unoptimized={isRemoteVehicleMedia(inquiry.vehicle.image)}
-          />
-        ) : (
-          <CarFront aria-hidden="true" />
-        )}
+        <CarFront aria-hidden="true" />
       </div>
       <div className={styles.inquiryIdentity}>
         <div>
           <span>{inquiry.reference}</span>
           <StatusBadge value={inquiry.status} />
         </div>
-        <h2>{inquiry.vehicle?.title || "Vehicle sourcing request"}</h2>
+        <h2>{inquiry.car?.title || "Vehicle sourcing request"}</h2>
         <p>
-          {inquiry.vehicle?.stock_no
-            ? `Stock ${inquiry.vehicle.stock_no}`
-            : inquiry.next_action || "Our export team is reviewing your request."}
+          {inquiry.car?.stock
+            ? `Stock ${inquiry.car.stock}`
+            : inquiry.message || "Our export team is reviewing your request."}
         </p>
       </div>
       <div className={styles.inquiryProgress}>
-        <ProgressItem label="Inquiry" complete />
-        <ProgressItem label="Quotation" complete={Boolean(inquiry.quotation)} />
-        <ProgressItem label="Reserved" complete={Boolean(inquiry.reservation)} />
-        <ProgressItem label="Shipment" complete={Boolean(inquiry.shipment)} />
+        {inquiry.progress.map((stage) => (
+          <ProgressItem key={stage.key} label={stage.label} complete={stage.complete} />
+        ))}
       </div>
       <Link
         href={`/account/inquiries/${encodeURIComponent(inquiry.reference)}`}
@@ -84,31 +76,33 @@ export function EmptySection({
   );
 }
 
-export function ShipmentSummary({ inquiry }: { inquiry: PortalInquiry }) {
-  const shipment = inquiry.shipment;
-  if (!shipment) {
-    return null;
-  }
+/**
+ * A shipping leg for one car, not one inquiry -- several cars can ride on the
+ * same invoice, and each still gets its own vessel. There is no reference to
+ * link back to an inquiry from here, so the chassis is what identifies it and
+ * there is nowhere for this card to link on to.
+ */
+export function ShipmentSummary({ shipment }: { shipment: PortalShipment }) {
   return (
     <article className={styles.shipmentRow}>
       <div>
-        <span>{shipment.reference}</span>
-        <h2>{inquiry.vehicle?.title || "Vehicle shipment"}</h2>
-        <p><MapPin aria-hidden="true" /> {shipment.current_location || "Location update pending"}</p>
+        <span>{shipment.car.chassis || shipment.car.stock || "Shipment"}</span>
+        <h2>{shipment.car.title || "Vehicle shipment"}</h2>
+        <p>
+          <MapPin aria-hidden="true" />{" "}
+          {[shipment.pol, shipment.pod].filter(Boolean).join(" → ") || "Route to be confirmed"}
+        </p>
       </div>
       <div className={styles.shipmentSchedule}>
         <span><CalendarDays aria-hidden="true" /> ETD {formatDate(shipment.etd)}</span>
         <span><CalendarDays aria-hidden="true" /> ETA {formatDate(shipment.eta)}</span>
       </div>
       <StatusBadge value={shipment.status} />
-      <Link href={`/account/inquiries/${encodeURIComponent(inquiry.reference)}`}>
-        Track <ArrowRight aria-hidden="true" />
-      </Link>
     </article>
   );
 }
 
-export function formatDate(value: string) {
+export function formatDate(value: string | null | undefined) {
   if (!value) {
     return "To be confirmed";
   }
@@ -120,6 +114,36 @@ export function formatDate(value: string) {
         month: "short",
         year: "numeric",
       }).format(date);
+}
+
+/**
+ * One control, reused everywhere an invoice appears (Payments, the
+ * dashboard, an enquiry's detail page), so a customer sees the same download
+ * button rather than three different-looking ones for the same action.
+ */
+export function InvoiceDownloadLink({
+  invoice,
+}: {
+  invoice: { id: number; invoice_number: string };
+}) {
+  return (
+    <a
+      href={`/api/account/documents/invoice/${invoice.id}`}
+      className={styles.tableDownload}
+      aria-label={`Download invoice ${invoice.invoice_number}`}
+      title="Download invoice PDF"
+    >
+      <Download aria-hidden="true" />
+    </a>
+  );
+}
+
+/** Invoice lines carry the car, not the invoice header, in this API. */
+export function invoiceVehicleSummary(invoice: PortalInvoice) {
+  return invoice.lines
+    .map((line) => line.chassis_number || line.description)
+    .filter(Boolean)
+    .join(", ");
 }
 
 export function formatMoney(value: string, currency: string) {
