@@ -27,11 +27,13 @@ import {
 import {
   getModelsForMake,
   getReviews,
+  getVehicleFilters,
   getVehiclePage,
   getVehicles,
 } from "@/data/vehicle-service";
 import { FeaturedVehicles } from "./components/featured-vehicles";
 import { HomeInquiryForm } from "./components/home-inquiry-form";
+import { HeroCarousel } from "./components/hero-carousel";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -192,12 +194,19 @@ export default async function HomePage() {
   // Models are unfiltered (getModelsForMake("")) because the hero form is
   // a plain GET <form>, not a client component: there is no make-selected
   // event to chain a model list off without JavaScript.
-  const [vehicles, stock, models, reviews] = await Promise.all([
+  const [vehicles, stock, models, reviews, filters] = await Promise.all([
     getVehicles({ featuredOnly: true, limit: 6 }),
     getVehiclePage({ limit: 1 }),
     getModelsForMake(""),
     getReviews(3),
+    // Stock counts per make, so the logo wall becomes something a buyer can
+    // navigate by rather than decoration.
+    getVehicleFilters().catch(() => null),
   ]);
+
+  const stockByMake = new Map(
+    (filters?.makes ?? []).map((make) => [make.name.toLowerCase(), make.count]),
+  );
   const stockCount = stock.total;
 
   /**
@@ -226,14 +235,7 @@ export default async function HomePage() {
       className={`${styles.page} ${bodyFont.variable} ${displayFont.variable}`}
     >
       <section className={styles.hero} aria-labelledby="hero-title">
-        <Image
-          src="/home-hero.webp"
-          alt="Used Japanese vehicles prepared for export at a port inspection yard"
-          fill
-          priority
-          sizes="100vw"
-          className={styles.heroImage}
-        />
+        <HeroCarousel />
         <div className={styles.heroOverlay} />
 
         <div className={styles.heroInner}>
@@ -290,6 +292,16 @@ export default async function HomePage() {
                 <Search aria-hidden="true" /> Find vehicles
               </button>
             </form>
+
+            {/* Phones only (the form above is hidden there by CSS). On a
+                narrow screen the hero's Make/Model form and the full search
+                panel directly beneath it are two search forms back to back,
+                which is most of what made the banner feel crowded. Desktop
+                keeps the form, where the panel is a scroll away; the phone
+                gets one button and lets the panel do the searching. */}
+            <Link href="/vehicles" className={styles.heroCompactCta}>
+              <Search aria-hidden="true" /> Find vehicles
+            </Link>
 
             {/* Real inventory, not a marketing number -- stock.total comes
                 from the same paginated endpoint the listing page uses, so
@@ -391,23 +403,40 @@ export default async function HomePage() {
         </div>
 
         <div className={styles.brandsGrid}>
-          {brands.map((brand) => (
-            <Link
-              key={brand.name}
-              href={`/vehicles?brand=${brand.name.toLowerCase()}`}
-              className={styles.brandItem}
-              aria-label={`Browse ${brand.name} vehicles`}
-            >
-              <Image
-                src={brand.logo}
-                alt=""
-                width={82}
-                height={58}
-                className={styles.brandLogo}
-              />
-              <span>{brand.name}</span>
-            </Link>
-          ))}
+          {brands.map((brand) => {
+            const inStock = stockByMake.get(brand.name.toLowerCase()) ?? 0;
+
+            return (
+              <Link
+                key={brand.name}
+                href={`/vehicles?brand=${brand.name.toLowerCase()}`}
+                className={styles.brandItem}
+                data-empty={inStock === 0 || undefined}
+                aria-label={
+                  inStock > 0
+                    ? `Browse ${inStock} ${brand.name} vehicles`
+                    : `Ask us to source a ${brand.name}`
+                }
+              >
+                <Image
+                  src={brand.logo}
+                  alt=""
+                  width={82}
+                  height={58}
+                  className={styles.brandLogo}
+                />
+                <span>{brand.name}</span>
+                {/* A make with nothing in stock still links somewhere useful:
+                    JC sources to order, and saying so is more honest than a
+                    tile that silently leads to an empty result. */}
+                <small>
+                  {inStock > 0
+                    ? `${inStock} in stock`
+                    : "Source on request"}
+                </small>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -429,6 +458,18 @@ export default async function HomePage() {
         </div>
 
         <FeaturedVehicles vehicles={vehicles} />
+
+        {/* The link in the section header sits above the cars, which is where
+            nobody is looking once they have finished scanning them. After six
+            vehicles the question is "show me the rest", and the eye is at the
+            bottom of the grid. The count makes it a concrete offer rather
+            than a vague one. */}
+        <div className={styles.vehiclesFooter}>
+          <Link href="/vehicles" className={styles.browseAllButton}>
+            Browse all {stockCount} vehicles <ArrowRight aria-hidden="true" />
+          </Link>
+          <p>Full stock with filters, auction grades and landed-cost estimates.</p>
+        </div>
       </section>
 
       <section

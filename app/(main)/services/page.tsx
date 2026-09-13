@@ -15,6 +15,7 @@ import {
 
 import { PublicPageHero } from "../components/public-page-hero";
 import styles from "../components/public-pages.module.css";
+import { heroFocalStyle, heroImage } from "@/data/hero";
 
 export const metadata: Metadata = {
   title: "Japanese Used Vehicle Export Services | Japan Car Export",
@@ -50,7 +51,7 @@ const services = [
     lead: "Use the route that fits the vehicle and destination.",
     description: "We coordinate RoRo, full-container, or shared-container options based on port access, vehicle size, sailing availability, and buyer priorities.",
     deliverables: ["RoRo and container options", "Freight quotation", "Sailing coordination", "Marine insurance support"],
-    image: "/home-hero.webp",
+    image: heroImage.src,
   },
   {
     id: "documents",
@@ -72,7 +73,8 @@ export default function ServicesPage() {
         kicker="End-to-end export support"
         title={<>From vehicle search to <em>shipping documents.</em></>}
         description="Choose only the support you need or let one team coordinate sourcing, condition review, shipping, insurance, and export documentation."
-        image="/home-hero.webp"
+        image={heroImage.src}
+        focal={heroFocalStyle}
         imageAlt="Used Japanese vehicles at an export port"
         actions={
           <>

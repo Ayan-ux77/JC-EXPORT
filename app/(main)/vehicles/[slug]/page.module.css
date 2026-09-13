@@ -104,6 +104,100 @@
   min-width: 0;
 }
 
+/* The carousel is a scroll container, nothing more. The browser snaps it, on
+   the compositor, so swiping never waits on JavaScript. */
+.carousel {
+  position: relative;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #dfe5e7;
+}
+
+.carouselTrack {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  /* Keeps a fast swipe from overshooting past the next photo on iOS. */
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.carouselTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselTrack:focus-visible {
+  outline: 3px solid var(--brand-teal-strong);
+  outline-offset: -3px;
+}
+
+.carouselSlide {
+  position: relative;
+  flex: 0 0 100%;
+  aspect-ratio: 414 / 266;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+.carouselArrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: rgba(8, 23, 34, 0.72);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+.carouselArrow:hover:not(:disabled) {
+  background: rgba(8, 23, 34, 0.92);
+}
+
+.carouselArrow:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.carouselArrow svg {
+  width: 20px;
+  height: 20px;
+}
+
+.carouselPrev {
+  left: 12px;
+}
+
+.carouselNext {
+  right: 12px;
+}
+
+/* Touch devices have the swipe itself, and arrows sitting over the photo cost
+   more than they give on a small screen. */
+@media (hover: none) and (max-width: 760px) {
+  .carouselArrow {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carouselTrack {
+    scroll-behavior: auto;
+  }
+
+  .carouselArrow {
+    transition: none;
+  }
+}
+
 .mainImageFrame {
   position: relative;
   aspect-ratio: 414 / 266;
@@ -158,6 +252,11 @@
 
 .thumbnailRow button.thumbnailActive {
   border-color: var(--blue);
+}
+
+.thumbnailRow button:focus-visible {
+  outline: 2px solid var(--brand-teal-strong);
+  outline-offset: 2px;
 }
 
 .thumbnailRow img {

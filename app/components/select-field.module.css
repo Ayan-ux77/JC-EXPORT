@@ -80,27 +80,38 @@
   transform: rotate(180deg);
 }
 
-.popover {
-  position: absolute;
-  z-index: 60;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-}
+/* Portalled to <body> and positioned from script in viewport coordinates, so
+   that no ancestor's `overflow` can clip it and no ancestor's stacking context
+   can bury it under the sticky header. left/top/width/max-height are all set
+   inline; everything here is appearance only.
 
-/* Opens upwards when there is not room below inside whatever is clipping it --
-   the last field of a scrolling filter rail, typically. */
-.popover[data-placement="top"] {
-  top: auto;
-  bottom: calc(100% + 6px);
-}
-
+   Being outside .root also means none of the tone variables reach it by
+   inheritance any more, so the two palettes are restated against data-tone. */
 .popover {
+  position: fixed;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  background: var(--menu-bg);
-  border: 1px solid var(--field-line);
+  background: #ffffff;
+  border: 1px solid #ccd7dd;
   border-radius: 4px;
   box-shadow: 0 18px 40px rgba(8, 20, 28, 0.22);
+
+  --field-muted: #6b7a84;
+  --field-line: #ccd7dd;
+  --field-ink: #111820;
+  --menu-bg: #ffffff;
+  --menu-hover: #f1f7f8;
+}
+
+.popover[data-tone="dark"] {
+  background: #0d2130;
+  border-color: rgba(255, 255, 255, 0.3);
+
+  --field-line: rgba(255, 255, 255, 0.3);
+  --menu-bg: #0d2130;
+  --menu-hover: rgba(255, 255, 255, 0.09);
 }
 
 .searchRow {
@@ -128,24 +139,30 @@
   outline: none;
 }
 
-.light .searchRow input,
-.light .list {
+/* Scoped to the popover, not to `.dark .list`. Those descendant selectors
+   reached the menu only while it was a child of the field; once it moved to a
+   portal they stopped matching, and the option labels fell back to inheriting
+   near-black from the body -- dark text on the dark panel, which is what made
+   the make list unreadable on the desktop hero. */
+.popover .searchRow input,
+.popover .list {
   color: var(--field-ink);
 }
 
-.dark .searchRow input,
-.dark .list {
+.popover[data-tone="dark"] .searchRow input,
+.popover[data-tone="dark"] .list {
   color: #eaf3f6;
 }
 
-.dark .searchRow input::placeholder {
+.popover[data-tone="dark"] .searchRow input::placeholder {
   color: rgba(234, 243, 246, 0.5);
 }
 
 .list {
-  /* Tall enough to show a real run of options, short enough that the menu
-     never runs off the bottom of a phone. */
+  /* The menu's own max-height is computed from the space actually available
+     and applied inline; this is the ceiling that computation starts from. */
   max-height: 264px;
+  min-height: 0;
   overflow-y: auto;
   margin: 0;
   padding: 4px;

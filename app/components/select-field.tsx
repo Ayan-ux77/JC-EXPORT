@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -8,6 +9,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search } from "lucide-react";
 
 import styles from "./select-field.module.css";
@@ -39,51 +41,80 @@ const OPTION_HEIGHT = 36;
 const LIST_MAX_HEIGHT = 264;
 const SEARCH_ROW_HEIGHT = 42;
 const MENU_GAP = 8;
+/** Keeps the menu off the very edge of the screen. */
+const VIEWPORT_MARGIN = 8;
+/** Below this a menu is useless; better to overlap the field than to show a sliver. */
+const MIN_MENU_HEIGHT = 132;
 
 /**
- * The box the menu must stay inside: the nearest ancestor that clips, or the
- * viewport. A dropdown that opens downwards out of a scrolling filter rail is
- * simply not there as far as the reader is concerned, which is worse than the
- * native menu this replaced.
+ * Where the menu goes, in viewport coordinates.
+ *
+ * The menu is portalled to <body> and positioned fixed, so the only box it has
+ * to stay inside is the viewport. That is the point of the portal: the old
+ * absolutely-positioned menu was a child of whatever contained the field, and
+ * on the home page that is the hero -- which sets `overflow: hidden` and
+ * `isolation: isolate`. The list was therefore clipped at the hero's edge and
+ * painted underneath the sticky header, so on a phone the first option was cut
+ * in half and the rest sat behind the logo. Nothing a z-index could reach.
  */
-function clippingRect(node: HTMLElement | null): DOMRect {
-  let element = node?.parentElement ?? null;
-  while (element && element !== document.body) {
-    const { overflow, overflowY } = getComputedStyle(element);
-    if (overflow !== "visible" || overflowY !== "visible") {
-      return element.getBoundingClientRect();
-    }
-    element = element.parentElement;
-  }
-  return new DOMRect(0, 0, window.innerWidth, window.innerHeight);
-}
+type MenuPosition = {
+  left: number;
+  width: number;
+  top: number;
+  maxHeight: number;
+};
 
-/**
- * Decided when the menu opens rather than measured after it renders: the
- * height is a function of the option count and whether there is a filter box,
- * both of which are known here, and measuring afterwards means painting once
- * in the wrong place first.
- */
-function choosePlacement(
+function measure(
   node: HTMLElement | null,
   optionCount: number,
   withSearch: boolean,
-): "bottom" | "top" {
+): MenuPosition | null {
   if (!node) {
-    return "bottom";
+    return null;
   }
   const trigger = node.getBoundingClientRect();
-  const bounds = clippingRect(node);
-  const height =
+  const wanted =
     Math.min(LIST_MAX_HEIGHT, optionCount * OPTION_HEIGHT + 8) +
     (withSearch ? SEARCH_ROW_HEIGHT : 0);
 
-  const below = bounds.bottom - trigger.bottom - MENU_GAP;
-  const above = trigger.top - bounds.top - MENU_GAP;
+  const below = window.innerHeight - trigger.bottom - MENU_GAP - VIEWPORT_MARGIN;
+  const above = trigger.top - MENU_GAP - VIEWPORT_MARGIN;
 
-  // Only flip when it actually helps: above a field near the top of a short
-  // panel there may be even less room.
-  return height > below && above > below ? "top" : "bottom";
+  // Only flip up when it actually helps: above a field near the top of the
+  // page there may be even less room than below it.
+  const flip = wanted > below && above > below;
+  const maxHeight = Math.max(MIN_MENU_HEIGHT, Math.min(wanted, flip ? above : below));
+
+  // Held inside the viewport horizontally. A field close to the right edge
+  // would otherwise put half its menu off the side of the screen -- fixed
+  // positioning has no containing block to be pushed back by.
+  const width = Math.min(trigger.width, window.innerWidth - VIEWPORT_MARGIN * 2);
+  const left = Math.min(
+    Math.max(VIEWPORT_MARGIN, trigger.left),
+    window.innerWidth - width - VIEWPORT_MARGIN,
+  );
+
+  // Clamped vertically for the same reason as horizontally. In normal use the
+  // flip above already keeps the menu on screen; this covers the case where
+  // the field itself is out of view when the menu opens, so the menu lands
+  // somewhere visible instead of following it off the edge.
+  const wantedTop = flip ? trigger.top - MENU_GAP - maxHeight : trigger.bottom + MENU_GAP;
+  const top = Math.min(
+    Math.max(VIEWPORT_MARGIN, wantedTop),
+    Math.max(VIEWPORT_MARGIN, window.innerHeight - maxHeight - VIEWPORT_MARGIN),
+  );
+
+  return { left, width, top, maxHeight };
+}
+
+/** True once the field has scrolled out of sight in either direction. */
+function offScreen(rect: DOMRect): boolean {
+  return (
+    rect.bottom < 0 ||
+    rect.top > window.innerHeight ||
+    rect.right < 0 ||
+    rect.left > window.innerWidth
+  );
 }
 
 /**
@@ -120,9 +151,10 @@ export function SelectField({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [placement, setPlacement] = useState<"bottom" | "top">("bottom");
+  const [position, setPosition] = useState<MenuPosition | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const listId = useId();
@@ -149,6 +181,10 @@ export function SelectField({
   const selectedLabel =
     withPlaceholder.find((option) => option.value === current)?.label ?? placeholder;
 
+  const reposition = useCallback(() => {
+    setPosition(measure(rootRef.current, withPlaceholder.length, showSearch));
+  }, [showSearch, withPlaceholder.length]);
+
   // Close on an outside click or Escape, the two things every dropdown owes
   // the reader.
   useEffect(() => {
@@ -156,7 +192,11 @@ export function SelectField({
       return;
     }
     const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // The menu is portalled out of the root, so "outside" has to mean
+      // outside both boxes -- otherwise pointerdown on an option would close
+      // the menu before the click that selects it ever landed.
+      if (!rootRef.current?.contains(target) && !popoverRef.current?.contains(target)) {
         setOpen(false);
       }
     };
@@ -173,6 +213,31 @@ export function SelectField({
     }
   }, [open, showSearch]);
 
+  // A fixed menu does not travel with the page, so it is re-aimed on every
+  // scroll and resize. `true` on the scroll listener catches scrolling
+  // containers as well as the window -- the filter rail on the listing page
+  // is one. If the field itself scrolls out of sight the menu closes rather
+  // than hanging in mid-air.
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const sync = () => {
+      const trigger = rootRef.current?.getBoundingClientRect();
+      if (!trigger || offScreen(trigger)) {
+        setOpen(false);
+        return;
+      }
+      reposition();
+    };
+    window.addEventListener("scroll", sync, true);
+    window.addEventListener("resize", sync);
+    return () => {
+      window.removeEventListener("scroll", sync, true);
+      window.removeEventListener("resize", sync);
+    };
+  }, [open, reposition]);
+
   useEffect(() => {
     if (!open) {
       return;
@@ -186,7 +251,7 @@ export function SelectField({
     const index = withPlaceholder.findIndex((option) => option.value === current);
     setActiveIndex(index >= 0 ? index : 0);
     setQuery("");
-    setPlacement(choosePlacement(rootRef.current, withPlaceholder.length, showSearch));
+    reposition();
     setOpen(true);
   }
 
@@ -262,8 +327,18 @@ export function SelectField({
         <ChevronDown aria-hidden="true" className={styles.chevron} />
       </button>
 
-      {open && (
-        <div className={styles.popover} data-placement={placement}>
+      {open && position && createPortal(
+        <div
+          ref={popoverRef}
+          className={styles.popover}
+          data-tone={tone}
+          style={{
+            left: position.left,
+            width: position.width,
+            top: position.top,
+            maxHeight: position.maxHeight,
+          }}
+        >
           {showSearch && (
             <div className={styles.searchRow}>
               <Search aria-hidden="true" />
@@ -301,7 +376,8 @@ export function SelectField({
             ))}
             {visible.length === 0 && <li className={styles.noMatch}>No matches</li>}
           </ul>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Without JavaScript the button above does nothing, so the real control

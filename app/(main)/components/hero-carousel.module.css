@@ -1,0 +1,116 @@
+.stack {
+  position: absolute;
+  inset: 0;
+  /* Below the overlay (-2) and the hero's own content, above the section's
+     flat navy fallback. */
+  z-index: -3;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Aimed per slide from data/hero.ts via inline custom properties. */
+  object-position: var(--hero-focal-x, 50%) var(--hero-focal-y, center);
+  opacity: 0;
+  /* Only opacity animates, so the transition stays on the compositor and the
+     banner never reflows mid-fade. */
+  transition: opacity 900ms ease-in-out;
+  will-change: opacity;
+}
+
+.slideActive {
+  opacity: 1;
+}
+
+.controls {
+  position: absolute;
+  right: clamp(16px, 4vw, 40px);
+  bottom: clamp(14px, 3vh, 26px);
+  /* Above the overlay, which sits at -2. */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pause,
+.dot,
+.dotActive {
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  transition: background-color 160ms ease, width 220ms ease, opacity 160ms ease;
+}
+
+.pause {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #ffffff;
+  background: rgba(8, 24, 37, 0.5);
+  /* The banner behind is a photograph, so the control needs an edge of its
+     own to stay findable wherever the fade happens to be. */
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(4px);
+}
+
+.pause svg {
+  width: 13px;
+  height: 13px;
+}
+
+.pause:hover {
+  background: rgba(8, 24, 37, 0.78);
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot,
+.dotActive {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.dot {
+  width: 6px;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.dotActive {
+  width: 26px;
+  background: var(--brand-teal, #2aa9a2);
+}
+
+.pause:focus-visible,
+.dot:focus-visible,
+.dotActive:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .slide {
+    object-position: var(--hero-focal-x-mobile, 50%) var(--hero-focal-y, center);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: none;
+  }
+}

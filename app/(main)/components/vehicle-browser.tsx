@@ -8,8 +8,11 @@ import { useEffect, useState, useTransition } from "react";
 import {
   ArrowUpRight,
   CalendarDays,
+  CarFront,
   CircleGauge,
+  Cog,
   Disc,
+  Fuel,
   Gauge,
   Grid2X2,
   List,
@@ -589,13 +592,32 @@ function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMo
           <span><MapPin aria-hidden="true" /> {vehicle.location}</span>
         </div>
 
-        <div className={styles.vehicleSpecs}>
-          <span><CalendarDays aria-hidden="true" /> {vehicle.year}</span>
-          <span><Gauge aria-hidden="true" /> {vehicle.mileage}</span>
-          <span><CircleGauge aria-hidden="true" /> {vehicle.engine}</span>
-          <span><Settings2 aria-hidden="true" /> {vehicle.transmission}</span>
-          <span><Disc aria-hidden="true" /> {vehicle.steering}</span>
-        </div>
+        {/* A labelled grid rather than a run-on line of values. "2019 ·
+            42,000 km · 2700cc · Automatic · 4WD" makes a buyer work out what
+            each figure is; the label says it. Grid view hides the labels and
+            the last few rows through CSS, so both views share one markup. */}
+        <dl className={styles.vehicleSpecs}>
+          {[
+            { icon: CalendarDays, label: "Year", value: vehicle.year },
+            { icon: Gauge, label: "Mileage", value: vehicle.mileage },
+            { icon: CircleGauge, label: "Engine", value: vehicle.engine },
+            { icon: Fuel, label: "Fuel", value: vehicle.fuel },
+            { icon: Settings2, label: "Trans.", value: vehicle.transmission },
+            { icon: Disc, label: "Steering", value: vehicle.steering },
+            { icon: Cog, label: "Drive", value: vehicle.drivetrain },
+            { icon: CarFront, label: "Body", value: vehicle.bodyType },
+          ]
+            .filter((spec) => spec.value !== null && spec.value !== undefined && spec.value !== "")
+            .map(({ icon: Icon, label, value }) => (
+              <div key={label}>
+                <dt>
+                  <Icon aria-hidden="true" />
+                  <span>{label}</span>
+                </dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+        </dl>
 
         <p className={styles.cardDescription}>{vehicle.description}</p>
 

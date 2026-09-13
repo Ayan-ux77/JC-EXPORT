@@ -636,21 +636,38 @@
   height: 11px;
 }
 
+/* Grid view keeps the old compact run of icon + value: a card that narrow
+   has no room for labels, and five facts is as much as it can carry. */
 .vehicleSpecs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 12px;
-  margin-top: 10px;
+  margin: 10px 0 0;
   padding: 10px 0;
   border-top: 1px solid #e6eaed;
   border-bottom: 1px solid #e6eaed;
 }
 
-.vehicleSpecs span {
+.vehicleSpecs > div {
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.vehicleSpecs dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.vehicleSpecs dt span {
+  display: none;
+}
+
+.vehicleSpecs dd {
+  margin: 0;
   color: #59666f;
   font-size: 9px;
   white-space: nowrap;
@@ -661,6 +678,10 @@
   height: 13px;
   flex: 0 0 auto;
   color: var(--blue);
+}
+
+.vehicleSpecs > div:nth-child(n + 6) {
+  display: none;
 }
 
 .cardDescription {
@@ -777,65 +798,248 @@
   grid-template-columns: 1fr;
 }
 
-/* List mode is a compact row, not a smaller version of the grid card:
-   thumbnail, title, specs, price and action inline on one line wherever the
-   row is wide enough. Buyers comparing forty cars scan rows like this; a
-   brochure-style stacked card is the two-per-row problem all over again. */
+/* List mode is a row built for comparison, not a wider grid card.
+   Three bands: the photograph, everything that identifies the car, and a
+   price rail the eye can run straight down. The specs become a labelled grid
+   -- "2019 / 42,000 km / 2700cc / Automatic" makes a buyer work out what each
+   figure is, and the label does that work for them. */
+/* Two columns, because the card has two children. It declared three, and the
+   footer that was meant to fill the third sits inside the body -- so the
+   third column was simply 216px of empty white down the right of every row. */
 .vehicleList .vehicleCard {
   display: grid;
-  grid-template-columns: 148px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: stretch;
 }
 
+/* The photographs are roughly 3:2. Stretching the box to the row's height
+   made it portrait and cropped most of the car away; matching the source
+   ratio shows the whole vehicle, which is the entire point of the picture. */
 .vehicleList .vehicleImageLink {
   min-height: 0;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 2;
+  background: #eef1f3;
 }
 
+.vehicleList .vehicleImage {
+  object-fit: contain;
+}
+
+/* The body carries the price rail, so the split happens here rather than on
+   the card. */
 .vehicleList .vehicleCardBody {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 20px;
-  padding: 10px 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  grid-template-rows: auto auto auto 1fr;
+  align-content: start;
+  gap: 8px 0;
+  padding: 16px 0 16px 18px;
+}
+
+.vehicleList .vehicleMeta,
+.vehicleList .vehicleCard h2,
+.vehicleList .stockMeta,
+.vehicleList .vehicleSpecs {
+  grid-column: 1;
 }
 
 .vehicleList .vehicleMeta {
   flex: 0 0 auto;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 2px;
+  align-items: center;
+  gap: 10px;
 }
 
 .vehicleList .vehicleCard h2 {
-  flex: 1 1 200px;
   min-height: 0;
   margin: 0;
-  font-size: 15px;
+  font-size: 19px;
+  line-height: 1.25;
 }
 
 .vehicleList .stockMeta {
-  flex: 0 0 auto;
-  margin-top: 0;
+  margin: 0;
 }
 
+/* The labelled grid. Four across on a wide row, so eight facts read as two
+   tidy lines rather than a paragraph. */
 .vehicleList .vehicleSpecs {
-  flex: 1 1 260px;
-  margin-top: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: auto;
   padding: 0;
-  border: 0;
+  background: #e6eaed;
+  border: 1px solid #e6eaed;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-/* A compact row has no room for prose -- the description stays on the
-   detail page, one click away. */
+.vehicleList .vehicleSpecs > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px 10px;
+  background: #ffffff;
+}
+
+.vehicleList .vehicleSpecs > div:nth-child(n + 6) {
+  display: flex;
+}
+
+.vehicleList .vehicleSpecs dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #7c8993;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.vehicleList .vehicleSpecs dt span {
+  display: inline;
+}
+
+.vehicleList .vehicleSpecs dd {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vehicleList .vehicleSpecs svg {
+  width: 12px;
+  height: 12px;
+}
+
 .vehicleList .cardDescription {
   display: none;
 }
 
+/* The price rail: one vertical line for the eye to run down a whole page of
+   results, instead of a price that moves with the length of the title above
+   it. */
 .vehicleList .vehicleFooter {
-  flex: 0 0 auto;
+  grid-column: 2;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
   margin: 0;
-  gap: 14px;
+  padding: 16px 18px;
+  border-left: 1px solid #e6eaed;
+  background: #fbfcfc;
+}
+
+.vehicleList .vehicleFooter > div {
+  text-align: right;
+}
+
+.vehicleList .vehicleFooter strong {
+  font-size: 25px;
+}
+
+.vehicleList .footerActions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.vehicleList .footerActions a {
+  justify-content: center;
+}
+
+@media (max-width: 1180px) {
+  .vehicleList .vehicleCard {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .vehicleList .vehicleCardBody {
+    grid-template-columns: minmax(0, 1fr) 190px;
+  }
+
+  .vehicleList .vehicleSpecs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Below this the three bands stop fitting, so the rail moves under the body
+   and the row becomes a card again rather than three cramped columns. */
+@media (max-width: 900px) {
+  .vehicleList .vehicleCard {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+
+  .vehicleList .vehicleCardBody {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px 16px;
+  }
+
+  .vehicleList .vehicleFooter {
+    grid-column: 1;
+    grid-row: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 0;
+    border-top: 1px solid #e6eaed;
+  }
+
+  .vehicleList .footerActions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .vehicleList .vehicleSpecs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Two columns is narrow enough that "Right Hand Drive" was being clipped to
+     "Right Han...". A value the reader cannot finish is worse than a row of
+     uneven height, so it wraps here instead. */
+  .vehicleList .vehicleSpecs > div {
+    align-items: center;
+  }
+
+  .vehicleList .vehicleSpecs dd {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+  }
+}
+
+@media (max-width: 560px) {
+  .vehicleList .vehicleCard {
+    grid-template-columns: 1fr;
+  }
+
+  .vehicleList .vehicleImageLink {
+    aspect-ratio: 16 / 10;
+  }
+
+  .vehicleList .vehicleFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .vehicleList .vehicleFooter > div {
+    text-align: left;
+  }
+
+  .vehicleList .footerActions a {
+    flex: 1 1 auto;
+  }
 }
 
 .emptyState {
@@ -1040,18 +1244,9 @@
     grid-template-columns: 1fr;
   }
 
-  .vehicleList .vehicleCard {
-    display: block;
-  }
-
-  .vehicleList .vehicleImageLink {
-    min-height: 0;
-    aspect-ratio: 4 / 3;
-  }
-
+  /* The list row's own narrow-width behaviour is defined with the rest of
+     it above. display:block here used to flatten the grid and undo it. */
   .vehicleList .vehicleCardBody {
-    flex-direction: column;
-    align-items: flex-start;
     padding: 14px 16px;
   }
 }

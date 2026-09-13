@@ -378,7 +378,7 @@
     display: block;
   }
 
-  .mobileMenu summary {
+  .mobileMenu .mobileMenuButton {
     width: 42px;
     height: 42px;
     display: flex;
@@ -386,16 +386,21 @@
     justify-content: center;
     border: 1px solid #cbd4da;
     border-radius: 4px;
+    background: #ffffff;
     color: #15212a;
     cursor: pointer;
-    list-style: none;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
   }
 
-  .mobileMenu summary::-webkit-details-marker {
-    display: none;
+  /* Open looks pressed, so the button reads as a toggle rather than as two
+     unrelated icons that happen to swap places. */
+  .mobileMenu[data-open] .mobileMenuButton {
+    background: var(--brand-charcoal);
+    border-color: var(--brand-charcoal);
+    color: #ffffff;
   }
 
-  .mobileMenu summary svg {
+  .mobileMenu .mobileMenuButton svg {
     width: 21px;
     height: 21px;
   }
@@ -430,8 +435,19 @@
 
   .mobileMenu nav a.mobileNavActive {
     color: var(--brand-charcoal);
-    background: #f1f7f8;
-    box-shadow: inset 3px 0 0 var(--brand-teal-strong);
+    background: #eef7f8;
+    font-weight: 800;
+    box-shadow: inset 4px 0 0 var(--brand-teal-strong);
+  }
+
+  /* A dot after the label, so the current page is identifiable without
+     relying on a background tint that a bright screen outdoors washes out. */
+  .mobileMenu nav a.mobileNavActive::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--brand-teal-strong);
   }
 
   .mobileMenu nav a:last-child {

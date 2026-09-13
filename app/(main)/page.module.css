@@ -46,19 +46,23 @@
   background: var(--navy);
 }
 
-.heroImage {
-  z-index: -3;
-  object-fit: cover;
-  object-position: center;
-}
-
 .heroOverlay {
   position: absolute;
   z-index: -2;
   inset: 0;
+  /* Heavier on the left where the words are, lighter on the right so the
+     photograph is still a photograph rather than a dark rectangle.
+
+     The stops are set by measurement, not taste: against the carrier deck
+     photo the previous ramp left the eyebrow at 3.05:1 and the description at
+     4.19:1, both under the 4.5:1 AA floor for text that size, because the
+     wake behind the ship is nearly white. Carrying 0.92 out to 40% and 0.38
+     out to 72% puts every line in the hero over its floor -- the worst is now
+     the eyebrow at 4.63:1 -- while the right third stays photographic.
+     Re-measure if the photograph is ever swapped for a brighter one. */
   background:
-    linear-gradient(90deg, rgba(5, 15, 24, 0.96) 0%, rgba(8, 24, 37, 0.9) 38%, rgba(8, 24, 37, 0.38) 72%, rgba(8, 24, 37, 0.22) 100%),
-    linear-gradient(0deg, rgba(5, 14, 22, 0.7) 0%, transparent 44%);
+    linear-gradient(90deg, rgba(5, 15, 24, 0.97) 0%, rgba(8, 24, 37, 0.92) 40%, rgba(8, 24, 37, 0.38) 72%, rgba(8, 24, 37, 0.14) 100%),
+    linear-gradient(0deg, rgba(5, 14, 22, 0.66) 0%, transparent 46%);
 }
 
 .heroInner {
@@ -249,6 +253,12 @@
 }
 
 /* stock.total, not a marketing figure -- see the comment in page.tsx. */
+/* Replaces the hero search form on phones; see the note beside it in
+   page.tsx. Hidden here, revealed in the 760px block below. */
+.heroCompactCta {
+  display: none;
+}
+
 .heroStockCount {
   margin: 16px 0 0;
   color: rgba(255, 255, 255, 0.85);
@@ -372,6 +382,73 @@
   cursor: pointer;
 }
 
+/* The home page has no .redButton -- that class lives in
+   public-pages.module.css, which this page does not import, so the class name
+   resolved to undefined and the link rendered as a bare browser default:
+   purple and underlined. */
+.browseAllButton {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 26px;
+  border-radius: 3px;
+  background: var(--brand-charcoal);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.browseAllButton:hover {
+  background: #23201f;
+  transform: translateY(-1px);
+}
+
+.browseAllButton svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browseAllButton {
+    transition: none;
+  }
+
+  .browseAllButton:hover {
+    transform: none;
+  }
+}
+
+.vehiclesFooter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 34px;
+}
+
+.vehiclesFooter p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 620px) {
+  .vehiclesFooter {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .vehiclesFooter .browseAllButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .statsSection {
   padding: 66px 24px 22px;
   background: #ffffff;
@@ -425,7 +502,7 @@
 }
 
 .brandsSection {
-  padding: 82px 0 104px;
+  padding: 62px 0 72px;
 }
 
 .sectionIntroRow > div {
@@ -459,12 +536,14 @@
 }
 
 .brandItem {
-  min-height: 128px;
+  position: relative;
+  min-height: 132px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 13px;
+  gap: 9px;
+  padding: 18px 12px;
   background: #ffffff;
   color: #303c46;
   font-size: 12px;
@@ -478,6 +557,49 @@
   color: var(--blue-dark);
 }
 
+/* The count is what turns a wall of logos into something to navigate by --
+   a buyer picking a make wants to know there is anything behind it. */
+.brandItem small {
+  color: var(--brand-teal-strong);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.brandItem[data-empty] small {
+  color: #90a0a9;
+}
+
+.brandItem[data-empty] .brandLogo {
+  opacity: 0.5;
+}
+
+/* A teal rule on hover, drawn from the bottom edge, so the tile reads as a
+   destination rather than a picture. */
+.brandItem::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--brand-teal-strong);
+  transform: scaleX(0);
+  transition: transform 180ms ease;
+}
+
+.brandItem:hover::after,
+.brandItem:focus-visible::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brandItem,
+  .brandItem::after {
+    transition: none;
+  }
+}
+
 .brandLogo {
   width: 74px;
   height: 50px;
@@ -485,7 +607,7 @@
 }
 
 .vehiclesSection {
-  padding: 90px 0 104px;
+  padding: 66px 0 74px;
 }
 
 .vehiclesSection::before {
@@ -737,7 +859,7 @@
 }
 
 .processSection {
-  padding: 102px 0 112px;
+  padding: 72px 0 78px;
 }
 
 .processGrid {
@@ -1038,7 +1160,7 @@
 }
 
 .testimonialsSection {
-  padding: 104px max(24px, calc((100vw - 1296px) / 2)) 112px;
+  padding: 74px max(24px, calc((100vw - 1296px) / 2)) 80px;
   background: #f3efe7;
 }
 
@@ -1147,7 +1269,7 @@
   grid-template-columns: minmax(0, 0.92fr) minmax(460px, 1.08fr);
   gap: clamp(52px, 8vw, 108px);
   align-items: start;
-  padding: 112px 0;
+  padding: 78px 0;
 }
 
 .contactLead {
@@ -1393,33 +1515,89 @@ a.contactItem:hover {
     min-height: clamp(380px, 46vh, 480px);
   }
 
-  .heroImage {
-    object-position: 64% center;
-  }
-
   .heroOverlay {
-    background: linear-gradient(90deg, rgba(5, 15, 24, 0.94), rgba(5, 15, 24, 0.68));
+    /* The desktop ramp is horizontal because the copy occupies the left half.
+       On a phone the copy occupies everything, so the darkening runs top to
+       bottom instead -- heaviest behind the headline, easing right off over
+       the lower third so the photograph is actually visible.
+
+       Measured against both slides at 375x440: the lightest line (the stock
+       count, which sits over the carrier's white wake) still clears 9:1 with
+       the scrim below, and the headline clears 8.6:1. An earlier, heavier
+       ramp passed contrast comfortably but reduced the photograph to a dark
+       panel, which defeats the point of having one. */
+    background:
+      linear-gradient(180deg, rgba(5, 15, 24, 0.8) 0%, rgba(5, 15, 24, 0.7) 55%, rgba(5, 15, 24, 0.32) 100%);
   }
 
   .heroInner {
     width: min(100% - 32px, 1296px);
-    padding: 28px 0;
+    padding: 24px 0;
   }
 
   .hero h1 {
-    font-size: clamp(32px, 9vw, 44px);
+    font-size: clamp(30px, 8.2vw, 40px);
+  }
+
+  /* The phone banner was a wall of words: eyebrow, three lines of headline,
+     three more of description, three stacked bullets and a two-row search
+     panel, roughly 700px of text before the visitor saw a single car. The
+     description is the part that earns least -- it restates the headline --
+     so it goes, and everything below it tightens up. */
+  .heroDescription {
+    display: none;
   }
 
   .heroProof {
-    display: grid;
+    gap: 6px 14px;
+    margin-top: 14px;
+  }
+
+  .heroProof li {
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .heroProof svg {
+    width: 14px;
+    height: 14px;
   }
 
   .heroSearch {
-    grid-template-columns: 1fr;
+    display: none;
   }
 
-  .heroSearchButton {
-    width: 100%;
+  .heroCompactCta {
+    min-height: 50px;
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 22px;
+    border-radius: 6px;
+    background: var(--brand-teal);
+    color: var(--brand-charcoal);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .heroCompactCta svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .heroStockCount {
+    /* Its own scrim. The page overlay is deliberately light down here so the
+       photograph shows through, and on the carrier slide this line lands over
+       white wake -- without the scrim it measures 2.09:1. With it, 9.98:1. */
+    width: fit-content;
+    margin-top: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(5, 15, 24, 0.78);
+    backdrop-filter: blur(6px);
   }
 
   .searchPanel {

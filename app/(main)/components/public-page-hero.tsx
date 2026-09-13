@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import type { CSSProperties } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
@@ -12,6 +14,11 @@ type PublicPageHeroProps = {
   description: string;
   image?: string;
   imageAlt?: string;
+  /**
+   * Focal points for `image`, from data/hero.ts. Without it the banner falls
+   * back to dead centre, which cuts the cars out of a portrait source.
+   */
+  focal?: CSSProperties;
   actions?: ReactNode;
 };
 
@@ -22,10 +29,11 @@ export function PublicPageHero({
   description,
   image,
   imageAlt = "",
+  focal,
   actions,
 }: PublicPageHeroProps) {
   return (
-    <section className={styles.hero}>
+    <section className={styles.hero} style={focal}>
       {image && (
         <Image
           src={image}

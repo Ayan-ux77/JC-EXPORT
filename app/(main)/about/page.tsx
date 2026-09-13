@@ -16,6 +16,7 @@ import {
 
 import { PublicPageHero } from "../components/public-page-hero";
 import styles from "../components/public-pages.module.css";
+import { heroFocalStyle, heroImage } from "@/data/hero";
 
 export const metadata: Metadata = {
   title: "About Japan Car Export | Japanese Used Vehicle Export",
@@ -54,7 +55,8 @@ export default function AboutPage() {
         kicker="About Japan Car Export"
         title={<>Used-vehicle exporting, <em>made more transparent.</em></>}
         description="Japan Car Export helps buyers source Japanese used vehicles with clearer condition evidence, practical shipping support, and documentation organized for international delivery."
-        image="/home-hero.webp"
+        image={heroImage.src}
+        focal={heroFocalStyle}
         imageAlt="Japanese used vehicles prepared for export at a port"
         actions={
           <>

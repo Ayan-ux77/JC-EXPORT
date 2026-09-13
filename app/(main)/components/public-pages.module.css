@@ -54,7 +54,9 @@
 .heroImage {
   z-index: -3;
   object-fit: cover;
-  object-position: center;
+  /* Aimed from data/hero.ts via the section's inline style; centre only when
+     no focal point was supplied. */
+  object-position: var(--hero-focal-x, center) var(--hero-focal-y, center);
 }
 
 .heroOverlay {

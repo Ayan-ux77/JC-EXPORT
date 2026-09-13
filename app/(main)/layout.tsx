@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Mail, Menu, MessageCircle, Phone } from "lucide-react";
+import { ArrowRight, Mail, MessageCircle, Phone } from "lucide-react";
 import {
   FaFacebookF,
   FaInstagram,
@@ -10,6 +10,7 @@ import {
 
 import { BrandLogo } from "@/app/components/brand-logo";
 import { NavLink } from "@/app/components/nav-link";
+import { MobileNav } from "./components/mobile-nav";
 import { getCustomerSession } from "@/data/customer-session";
 import { mailto, site, whatsapp } from "@/data/site";
 
@@ -136,27 +137,11 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             </Link>
           </div>
 
-          <details className={styles.mobileMenu}>
-            <summary aria-label="Open navigation menu" title="Open navigation">
-              <Menu aria-hidden="true" />
-            </summary>
-            <nav aria-label="Mobile navigation">
-              {navigation.map((item) => (
-                <NavLink
-                  key={item.label}
-                  href={item.href}
-                  activeClassName={styles.mobileNavActive}
-                  exact={item.href === "/"}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-              <Link href={accountHref}>{accountLabel}</Link>
-              <Link href="/quote" className={styles.mobileQuoteLink}>
-                Get a quote <ArrowRight aria-hidden="true" />
-              </Link>
-            </nav>
-          </details>
+          <MobileNav
+            navigation={navigation}
+            accountHref={accountHref}
+            accountLabel={accountLabel}
+          />
         </div>
       </header>
 
