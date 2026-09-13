@@ -1,3 +1,12 @@
+:root {
+  /* Sampled from the Japan Car Export lockup — the single source of truth
+     for brand color, so every stylesheet references these instead of its
+     own approximation of "the blue" or "the dark." */
+  --brand-charcoal: #373435;
+  --brand-teal: #5cc6d0;
+  --brand-teal-strong: #3fa6b1;
+}
+
 * {
   margin: 0;
   padding: 0;

@@ -22,7 +22,7 @@ const displayFont = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Request a Japanese Vehicle Export Quote | JC Export",
+  title: "Request a Japanese Vehicle Export Quote | Japan Car Export",
   description:
     "Request a clear vehicle, freight, insurance, and export-document quote for a Japanese used vehicle.",
 };

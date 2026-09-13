@@ -6,9 +6,9 @@
   --soft: #f4f6f7;
   --navy: #0a1722;
   --navy-2: #123047;
-  --blue: #287ec9;
-  --blue-dark: #1764a6;
-  --red: #c30010;
+  --blue: var(--brand-teal);
+  --blue-dark: var(--brand-charcoal);
+  --red: var(--brand-charcoal);
   --warm: #f3efe7;
   width: 100%;
   overflow: hidden;
@@ -30,13 +30,16 @@
 }
 
 .page em {
-  color: var(--blue);
+  color: var(--brand-charcoal);
   font-weight: 500;
 }
 
 .hero {
+  /* Roughly half the viewport on desktop, clamped so a very short or very
+     tall window doesn't push it back toward "a full screen of photograph
+     before a single car" -- the problem this replaces. */
   position: relative;
-  min-height: min(760px, calc(100svh - 54px));
+  min-height: clamp(460px, 52vh, 620px);
   isolation: isolate;
   overflow: hidden;
   color: #ffffff;
@@ -62,11 +65,10 @@
   width: min(100% - 48px, 1296px);
   min-height: inherit;
   margin: 0 auto;
-  padding: clamp(82px, 10vh, 120px) 0 150px;
+  padding: clamp(28px, 6vh, 56px) 0;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 48px;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .heroCopy {
@@ -93,36 +95,36 @@
 .eyebrow > span {
   width: 38px;
   height: 3px;
-  background: var(--red);
+  background: var(--brand-teal);
 }
 
 .hero h1 {
   max-width: 760px;
-  margin: 24px 0 0;
-  font-size: clamp(48px, 5.2vw, 76px);
+  margin: 16px 0 0;
+  font-size: clamp(34px, 4.2vw, 54px);
   font-weight: 600;
-  line-height: 1.01;
+  line-height: 1.05;
   text-wrap: balance;
 }
 
 .hero h1 em {
   display: block;
-  color: #86c7ff;
+  color: var(--brand-teal);
 }
 
 .heroDescription {
   max-width: 655px;
-  margin: 26px 0 0;
+  margin: 14px 0 0;
   color: rgba(255, 255, 255, 0.8);
-  font-size: clamp(16px, 1.4vw, 18px);
-  line-height: 1.65;
+  font-size: clamp(15px, 1.3vw, 17px);
+  line-height: 1.6;
 }
 
 .heroProof {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 24px;
-  margin: 26px 0 0;
+  gap: 8px 24px;
+  margin: 18px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -142,15 +144,6 @@
   stroke-width: 3;
 }
 
-.heroActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 34px;
-}
-
-.primaryButton,
-.secondaryButton,
 .inlineButton,
 .searchButton,
 .submitButton {
@@ -169,31 +162,18 @@
   transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
 }
 
-.primaryButton,
 .searchButton {
   background: var(--blue);
-  color: #ffffff;
+  color: var(--brand-charcoal);
 }
 
-.primaryButton:hover,
 .searchButton:hover,
 .inlineButton:hover {
   background: var(--blue-dark);
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
-.secondaryButton {
-  border-color: rgba(255, 255, 255, 0.72);
-  background: rgba(8, 24, 37, 0.4);
-  color: #ffffff;
-}
-
-.secondaryButton:hover {
-  border-color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.primaryButton svg,
 .inlineButton svg,
 .searchButton svg,
 .submitButton svg,
@@ -202,59 +182,107 @@
   height: 17px;
 }
 
-.heroNote {
-  width: 250px;
-  flex: 0 0 auto;
-  padding: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  border-left: 3px solid var(--red);
-  background: rgba(5, 19, 30, 0.72);
-  backdrop-filter: blur(12px);
+/* The hero's own quick search -- a plain GET form styled to sit inside the
+   shortened hero rather than in a separate section pulled up to meet it. */
+.heroSearch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(8, 24, 37, 0.55);
+  backdrop-filter: blur(10px);
 }
 
-.heroNoteLabel {
-  display: block;
-  color: #9ed3ff;
+.heroSearch label {
+  min-width: 150px;
+  flex: 1 1 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.heroSearch label > span {
+  color: rgba(255, 255, 255, 0.72);
   font-size: 11px;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
-.heroNote strong {
-  display: block;
-  margin-top: 8px;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 20px;
-  line-height: 1.25;
+.heroSearch select {
+  height: 46px;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.heroNoteRoute {
-  position: relative;
-  margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
+.heroSearch select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(92, 198, 208, 0.28);
+}
+
+.heroSearchButton {
+  min-height: 46px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 10px;
-  text-transform: uppercase;
+  border: 0;
+  border-radius: 3px;
+  padding: 0 22px;
+  background: var(--blue);
+  color: var(--brand-charcoal);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background-color 180ms ease, transform 180ms ease;
 }
 
-.heroNoteRoute::before {
-  content: "";
-  position: absolute;
-  top: -8px;
-  right: 0;
-  left: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--blue) 0 70%, var(--red) 70%);
+.heroSearchButton:hover {
+  background: var(--blue-dark);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.heroSearchButton svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* stock.total, not a marketing figure -- see the comment in page.tsx. */
+.heroStockCount {
+  margin: 16px 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+}
+
+.heroStockCount strong {
+  margin-right: 6px;
+  color: var(--brand-teal);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 19px;
 }
 
 .searchPanel {
+  /* Used to sit pulled up into 150px of reserved empty space at the bottom
+     of a much taller hero; the hero is short and full of content now, so
+     this just flows below it instead of overlapping it. */
   position: relative;
   z-index: 2;
   width: min(100% - 48px, 1296px);
-  margin: -72px auto 0;
+  margin: 40px auto 0;
   padding: 26px 28px 28px;
   border: 1px solid var(--line);
   border-top: 4px solid var(--blue);
@@ -290,6 +318,7 @@
 
 .textLink:hover {
   color: var(--red);
+  text-decoration: underline;
 }
 
 .searchForm {
@@ -342,7 +371,7 @@
 .quoteForm select:focus,
 .quoteForm textarea:focus {
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(40, 126, 201, 0.13);
+  box-shadow: 0 0 0 3px rgba(92, 198, 208, 0.13);
 }
 
 .searchButton {
@@ -671,9 +700,10 @@
 
 .vehicleFooter strong {
   margin-top: 4px;
-  color: var(--red);
+  color: var(--brand-charcoal);
   font-family: var(--font-display), Georgia, serif;
   font-size: 25px;
+  font-weight: 700;
 }
 
 .vehicleFooter > a {
@@ -690,7 +720,7 @@
 
 .vehicleFooter > a:hover {
   background: var(--blue);
-  color: #ffffff;
+  color: var(--brand-charcoal);
 }
 
 .vehicleFooter svg {
@@ -743,7 +773,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--blue);
+  color: var(--brand-charcoal);
 }
 
 .processCard:nth-child(even) .processCardTop {
@@ -816,7 +846,7 @@
   left: 24px;
   width: min(330px, calc(100% - 48px));
   padding: 22px 24px;
-  border-left: 3px solid var(--red);
+  border-left: 3px solid var(--brand-teal);
   background: rgba(7, 23, 35, 0.92);
   color: #ffffff;
 }
@@ -827,7 +857,7 @@
 }
 
 .aboutImageCaption span {
-  color: #99cdf7;
+  color: var(--brand-teal);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -901,7 +931,7 @@
   width: max-content;
   margin-top: 28px;
   background: var(--blue);
-  color: #ffffff;
+  color: var(--brand-charcoal);
 }
 
 .trustSection {
@@ -933,7 +963,7 @@
 .trustItem > svg {
   width: 31px;
   height: 31px;
-  color: #78bdf6;
+  color: var(--brand-teal);
   stroke-width: 1.5;
 }
 
@@ -1026,7 +1056,7 @@
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--blue);
-  color: #ffffff;
+  color: var(--brand-charcoal);
   font-size: 12px;
   font-weight: 900;
 }
@@ -1184,7 +1214,8 @@ a.contactItem:hover {
 }
 
 .submitButton:hover {
-  background: #a9000d;
+  background: var(--brand-teal);
+  color: var(--brand-charcoal);
   transform: translateY(-1px);
 }
 
@@ -1251,10 +1282,6 @@ a.contactItem:hover {
 }
 
 @media (max-width: 1120px) {
-  .heroNote {
-    display: none;
-  }
-
   .searchForm {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1301,7 +1328,7 @@ a.contactItem:hover {
 
 @media (max-width: 760px) {
   .hero {
-    min-height: 680px;
+    min-height: clamp(380px, 46vh, 480px);
   }
 
   .heroImage {
@@ -1314,20 +1341,29 @@ a.contactItem:hover {
 
   .heroInner {
     width: min(100% - 32px, 1296px);
-    padding: 70px 0 120px;
+    padding: 28px 0;
   }
 
   .hero h1 {
-    font-size: clamp(42px, 12vw, 58px);
+    font-size: clamp(32px, 9vw, 44px);
   }
 
   .heroProof {
     display: grid;
   }
 
+  .heroSearch {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .heroSearchButton {
+    width: 100%;
+  }
+
   .searchPanel {
     width: min(100% - 24px, 1296px);
-    margin-top: -62px;
+    margin-top: 28px;
     padding: 22px 18px;
   }
 
@@ -1448,12 +1484,9 @@ a.contactItem:hover {
 
 @media (max-width: 480px) {
   .hero {
-    min-height: 720px;
+    min-height: clamp(360px, 44vh, 440px);
   }
 
-  .heroActions,
-  .primaryButton,
-  .secondaryButton,
   .inlineButton {
     width: 100%;
   }

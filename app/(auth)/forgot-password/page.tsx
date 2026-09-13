@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
           </h1>
           <p>
             We will send a secure password reset link to the email connected to
-            your JC Export customer account.
+            your Japan Car Export customer account.
           </p>
         </div>
         <ul className={styles.trustList}>

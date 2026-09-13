@@ -41,7 +41,7 @@ export default async function ProfilePage() {
           </div>
         </dl>
         <p className={styles.profileNote}>
-          Contact JC Export support to change legal company details or the
+          Contact Japan Car Export support to change legal company details or the
           customer transaction currency after invoices have been created.
         </p>
       </section>

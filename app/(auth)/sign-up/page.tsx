@@ -14,7 +14,7 @@ export default function SignUpPage() {
             Buy from Japan with <em>fewer unknowns.</em>
           </h1>
           <p>
-            Your account connects inquiries, vehicle quotations, reservations,
+            Your account connects inquiries, reservations, invoices,
             payments, shipping, and documents to one customer record.
           </p>
         </div>

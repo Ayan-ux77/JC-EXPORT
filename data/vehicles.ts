@@ -1,3 +1,17 @@
+export type LandedCost = {
+  port: string;
+  fob: number;
+  freight: number | null;
+  insurance: number | null;
+  total: number | null;
+  currency: string;
+  // False when JC has no freight rate for this route. The UI must say so
+  // ("ask us for a freight quote") rather than present the FOB figure as if
+  // it were a landed price -- that is a number the buyer would hold JC to.
+  priced: boolean;
+  shipment_type: string;
+};
+
 export type Vehicle = {
   id: number | string;
   slug: string;
@@ -16,8 +30,12 @@ export type Vehicle = {
   engine: string;
   fuel: string;
 
-  price: number;
-  currency?: string;
+  // Null when the car has no published asking price -- the ERP calls this
+  // "price on application" and the API sends price and currency as null
+  // together. The type has to say so, or every call site formats a null and
+  // Intl.NumberFormat throws on the currency rather than the number.
+  price: number | null;
+  currency?: string | null;
 
   transmission: string;
   drivetrain: string;
@@ -37,9 +55,23 @@ export type Vehicle = {
   freight: number;
   insurance: number;
 
-  auctionGrade: number;
+  // Null when the car has no recorded auction grade -- an unscored trade-in,
+  // say. The listing must not print "Grade null"; it must simply omit the
+  // badge, because a grade is trust evidence and absence of evidence is not
+  // evidence of a low grade.
+  auctionGrade: number | null;
   auctionGradeLabel?: string;
   condition: string;
+
+  // Present only when the caller asked for a destination port. Null means
+  // either no destination was requested, or the car's price is not public
+  // (a price-on-application car cannot be quoted a landed cost either).
+  landed: LandedCost | null;
+
+  // ISO date the unit was listed. Drives the "New arrival" badge and the
+  // default "recently listed first" sort -- repeat buyers come back to see
+  // what landed since their last visit.
+  listedAt: string;
 
   description: string;
   conditionSummary?: string;
@@ -71,16 +103,69 @@ export type Vehicle = {
   }>;
 };
 
+/** What the site shows where a price would go when JC has not published one. */
+export const PRICE_ON_APPLICATION = "Price on application";
+
+export function hasPublicPrice(vehicle: Pick<Vehicle, "price">): boolean {
+  return vehicle.price != null;
+}
+
 export function formatVehiclePrice(vehicle: Pick<Vehicle, "price" | "currency">) {
+  return formatCurrency(vehicle.price, vehicle.currency);
+}
+
+/**
+ * Shared money formatting so a landed total and an FOB price never drift in
+ * style. A missing amount is spelled out rather than rendered as $0 -- a car
+ * with no published price is not a free car -- and a missing currency code
+ * falls back instead of throwing, since one unpriced unit in the feed used to
+ * take the whole listing page down with it.
+ */
+export function formatCurrency(value: number | null | undefined, currency?: string | null) {
+  if (value == null) {
+    return PRICE_ON_APPLICATION;
+  }
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: vehicle.currency || "USD",
+    currency: currency || "USD",
     maximumFractionDigits: 0,
-  }).format(vehicle.price);
+  }).format(value);
 }
 
 export function isRemoteVehicleMedia(value: string) {
   return /^https?:\/\//i.test(value);
+}
+
+const NEW_ARRIVAL_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+
+/**
+ * A car counts as a "new arrival" for 14 days after listing. Buyers who
+ * compare this site against BE FORWARD and SBT week over week come back to
+ * see what is new; this is the signal that answers that visit.
+ */
+export function isNewArrival(listedAt: string | undefined): boolean {
+  if (!listedAt) return false;
+  const listedTime = new Date(listedAt).getTime();
+  if (Number.isNaN(listedTime)) return false;
+  const age = Date.now() - listedTime;
+  return age >= 0 && age <= NEW_ARRIVAL_WINDOW_MS;
+}
+
+/**
+ * This trade runs on WhatsApp, not contact forms -- a buyer in Mombasa
+ * expects to type "do you still have JC-0042?" into a chat, not fill a form
+ * and wait for email. Returns null when no number is configured so callers
+ * can hide the button entirely rather than render a link that goes nowhere.
+ */
+export function whatsappUrl(vehicle: Pick<Vehicle, "stock" | "title">): string | null {
+  const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
+  if (!number) return null;
+
+  const text = encodeURIComponent(
+    `Hello, I am interested in ${vehicle.stock} (${vehicle.title}).`,
+  );
+
+  return `https://wa.me/${number}?text=${text}`;
 }
 
 /*

@@ -7,9 +7,9 @@
   --paper: #ffffff;
   --navy: #0a1722;
   --navy-2: #14344b;
-  --blue: #287ec9;
-  --blue-dark: #1764a6;
-  --red: #c30010;
+  --blue: var(--brand-teal);
+  --blue-dark: var(--brand-charcoal);
+  --red: var(--brand-charcoal);
   min-height: 100vh;
   background: var(--paper);
   color: var(--ink);
@@ -36,7 +36,7 @@
 
 .page em,
 .legalPage em {
-  color: var(--blue);
+  color: var(--brand-charcoal);
   font-weight: 500;
 }
 
@@ -98,7 +98,7 @@
 .sectionKicker,
 .formEyebrow {
   margin: 30px 0 0;
-  color: #8dcbff;
+  color: var(--brand-teal);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.09em !important;
@@ -115,7 +115,7 @@
 }
 
 .hero h1 em {
-  color: #8dcbff;
+  color: var(--brand-teal);
 }
 
 .heroDescription {
@@ -155,12 +155,13 @@
 .heroPrimary,
 .blueButton {
   background: var(--blue);
-  color: #ffffff;
+  color: var(--brand-charcoal);
 }
 
 .heroPrimary:hover,
 .blueButton:hover {
   background: var(--blue-dark);
+  color: #ffffff;
 }
 
 .heroSecondary,
@@ -281,7 +282,7 @@
 .quoteProgress div[data-active="true"] span {
   border-color: var(--blue);
   background: var(--blue);
-  color: #ffffff;
+  color: var(--brand-charcoal);
 }
 
 .quoteProgress svg {
@@ -401,7 +402,7 @@
   width: 17px;
   height: 17px;
   flex: 0 0 auto;
-  color: var(--blue);
+  color: var(--brand-charcoal);
 }
 
 .inputWithIcon input {
@@ -434,7 +435,7 @@
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
-  color: var(--blue);
+  color: var(--brand-charcoal);
 }
 
 .formNotice p {
@@ -521,7 +522,7 @@
   border-radius: 3px;
   padding: 0 17px;
   background: var(--blue);
-  color: #ffffff;
+  color: var(--brand-charcoal);
   font: inherit;
   font-size: 11px;
   font-weight: 900;
@@ -556,7 +557,7 @@
   grid-template-columns: auto 1fr;
   gap: 14px;
   padding: 21px;
-  border-left: 4px solid var(--red);
+  border-left: 4px solid var(--brand-teal);
   border-radius: 4px;
   background: var(--navy);
   color: #ffffff;
@@ -565,7 +566,7 @@
 .responseCard > svg {
   width: 24px;
   height: 24px;
-  color: #8acbff;
+  color: var(--brand-teal);
 }
 
 .responseCard span,
@@ -574,7 +575,7 @@
 }
 
 .responseCard span {
-  color: #8acbff;
+  color: var(--brand-teal);
   font-size: 9px;
   font-weight: 900;
   text-transform: uppercase;
@@ -650,7 +651,7 @@
 .quoteTrustGrid svg {
   width: 20px;
   height: 20px;
-  color: var(--blue);
+  color: var(--brand-charcoal);
 }
 
 .quoteTrustGrid strong,
@@ -705,7 +706,7 @@
 }
 
 .legalHeader a {
-  color: #8acbff;
+  color: var(--brand-teal);
   font-size: 11px;
   font-weight: 900;
   text-decoration: none;
@@ -856,7 +857,7 @@
 }
 
 .contactFormHeading span {
-  color: var(--red);
+  color: var(--brand-charcoal);
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.07em;
@@ -871,7 +872,7 @@
 .contactFormHeading svg {
   width: 25px;
   height: 25px;
-  color: var(--red);
+  color: var(--brand-charcoal);
 }
 
 .contactSubmit {
@@ -982,7 +983,7 @@
 .mediaCaption svg {
   width: 16px;
   height: 16px;
-  color: #89caff;
+  color: var(--brand-teal);
 }
 
 .splitContent .sectionKicker,
@@ -1116,11 +1117,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--blue);
+  color: var(--brand-charcoal);
 }
 
 .valueCard:nth-child(even) > div {
-  color: var(--red);
+  color: var(--brand-charcoal);
 }
 
 .valueCard > div > span {
@@ -1217,12 +1218,12 @@
 .locationCard > svg {
   width: 30px;
   height: 30px;
-  color: var(--blue);
+  color: var(--brand-charcoal);
   stroke-width: 1.5;
 }
 
 .locationCard:nth-child(2) > svg {
-  color: var(--red);
+  color: var(--brand-charcoal);
 }
 
 .locationCard > span {
@@ -1256,14 +1257,14 @@
   justify-content: space-between;
   gap: 46px;
   padding: 44px 50px;
-  border-left: 5px solid var(--red);
+  border-left: 5px solid var(--brand-teal);
   background: var(--navy);
   color: #ffffff;
 }
 
 .ctaBand p {
   margin: 0;
-  color: #8acbff;
+  color: var(--brand-teal);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.07em;
@@ -1279,7 +1280,7 @@
 }
 
 .ctaBand h2 em {
-  color: #8acbff;
+  color: var(--brand-teal);
 }
 
 .ctaBand .redButton {
@@ -1323,7 +1324,7 @@
 }
 
 .serviceNav span {
-  color: var(--blue);
+  color: var(--brand-charcoal);
   font-family: Georgia, serif;
   font-style: italic;
 }
@@ -1385,7 +1386,7 @@
 .serviceContent > svg {
   width: 34px;
   height: 34px;
-  color: var(--blue);
+  color: var(--brand-charcoal);
   stroke-width: 1.5;
 }
 
@@ -1499,12 +1500,12 @@
 .comparisonGrid article > svg {
   width: 30px;
   height: 30px;
-  color: var(--blue);
+  color: var(--brand-charcoal);
   stroke-width: 1.5;
 }
 
 .comparisonGrid article:nth-child(2) > svg {
-  color: var(--red);
+  color: var(--brand-charcoal);
 }
 
 .comparisonGrid article > span {
@@ -1565,7 +1566,7 @@
   width: 21px;
   height: 21px;
   flex: 0 0 auto;
-  color: var(--blue);
+  color: var(--brand-charcoal);
 }
 
 .comparisonNote p {
@@ -1625,12 +1626,12 @@ a.channelCard:hover {
 .channelCard > svg {
   width: 28px;
   height: 28px;
-  color: var(--blue);
+  color: var(--brand-charcoal);
   stroke-width: 1.6;
 }
 
 .channelCard:nth-child(even) > svg {
-  color: var(--red);
+  color: var(--brand-charcoal);
 }
 
 .channelCard > span {
@@ -1709,7 +1710,7 @@ a.channelCard:hover {
   width: 20px;
   height: 20px;
   align-self: center;
-  color: var(--blue);
+  color: var(--brand-charcoal);
 }
 
 .contactTips strong,
@@ -1758,7 +1759,7 @@ a.channelCard:hover {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #8acbff;
+  color: var(--brand-teal);
   font-size: 10px;
   font-weight: 900;
   text-decoration: none;
@@ -1819,7 +1820,7 @@ a.channelCard:hover {
 .faqCategoryNav svg {
   width: 23px;
   height: 23px;
-  color: var(--blue);
+  color: var(--brand-charcoal);
   stroke-width: 1.7;
 }
 
@@ -1896,7 +1897,7 @@ a.channelCard:hover {
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
-  color: var(--blue);
+  color: var(--brand-charcoal);
   transition: transform 180ms ease;
 }
 
@@ -1917,7 +1918,7 @@ a.channelCard:hover {
   position: sticky;
   top: 118px;
   padding: 30px;
-  border-top: 5px solid var(--red);
+  border-top: 5px solid var(--brand-teal);
   background: var(--navy);
   color: #ffffff;
 }
@@ -1925,13 +1926,13 @@ a.channelCard:hover {
 .faqSupport > svg {
   width: 31px;
   height: 31px;
-  color: #8dcbff;
+  color: var(--brand-teal);
   stroke-width: 1.6;
 }
 
 .faqSupport > p {
   margin: 38px 0 0;
-  color: #8dcbff;
+  color: var(--brand-teal);
   font-size: 9px;
   font-weight: 900;
   text-transform: uppercase;
@@ -1994,12 +1995,12 @@ a.channelCard:hover {
 .costCard > div svg {
   width: 27px;
   height: 27px;
-  color: var(--blue);
+  color: var(--brand-charcoal);
   stroke-width: 1.6;
 }
 
 .costCard:nth-child(2) > div svg {
-  color: var(--red);
+  color: var(--brand-charcoal);
 }
 
 .costCard h3 {
@@ -2031,7 +2032,7 @@ a.channelCard:hover {
   width: 22px;
   height: 22px;
   flex: 0 0 auto;
-  color: var(--red);
+  color: var(--brand-charcoal);
 }
 
 .guideNotice p,
@@ -2062,7 +2063,7 @@ a.channelCard:hover {
 .documentSection > div > svg {
   width: 34px;
   height: 34px;
-  color: var(--blue);
+  color: var(--brand-charcoal);
   stroke-width: 1.5;
 }
 
@@ -2160,12 +2161,12 @@ a.channelCard:hover {
 .guideComparison article > svg {
   width: 31px;
   height: 31px;
-  color: var(--blue);
+  color: var(--brand-charcoal);
   stroke-width: 1.5;
 }
 
 .guideComparison article:nth-child(2) > svg {
-  color: var(--red);
+  color: var(--brand-charcoal);
 }
 
 .guideComparison article > span {

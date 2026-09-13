@@ -31,7 +31,7 @@ const displayFont = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Shipping and Payment Guide | JC Export",
+  title: "Shipping and Payment Guide | Japan Car Export",
   description:
     "Understand Japanese used-vehicle export pricing, payment, RoRo and container shipping, documents, and destination costs.",
 };
@@ -56,7 +56,7 @@ const costLayers = [
 
 const paymentSteps = [
   ["Confirm the vehicle", "Review stock identity, condition information, quote basis, destination, and requested services."],
-  ["Verify the invoice", "Check the beneficiary and bank details through an established JC Export contact before transferring funds."],
+  ["Verify the invoice", "Check the beneficiary and bank details through an established Japan Car Export contact before transferring funds."],
   ["Send payment", "Use the invoice reference and share transfer evidence so the payment can be matched efficiently."],
   ["Receive confirmation", "We confirm cleared funds and communicate the next vehicle, booking, and document milestones."],
 ];
@@ -110,7 +110,7 @@ export default function ShippingAndPaymentPage() {
         </div>
         <div className={styles.guideNotice}>
           <ShieldAlert aria-hidden="true" />
-          <p><strong>Confirm locally before purchase.</strong> Import age limits, taxes, inspections, emissions rules, registration, and port charges vary by country and can change independently of JC Export.</p>
+          <p><strong>Confirm locally before purchase.</strong> Import age limits, taxes, inspections, emissions rules, registration, and port charges vary by country and can change independently of Japan Car Export.</p>
         </div>
       </section>
 

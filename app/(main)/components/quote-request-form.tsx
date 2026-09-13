@@ -115,7 +115,7 @@ export function QuoteRequestForm({
   const whatsappUrl = submittedReference
     ? `https://wa.me/923001234567?text=${encodeURIComponent(
         [
-          "Hello JC Export, I submitted an export quote request.",
+          "Hello Japan Car Export, I submitted an export quote request.",
           `Inquiry reference: ${submittedReference}`,
           `Vehicle/stock: ${values.vehicle || "Sourcing request"}`,
         ].join("\n"),
@@ -233,7 +233,7 @@ export function QuoteRequestForm({
               }))
             }
           />
-          <span>I agree to the privacy policy and consent to JC Export using these details to respond to this inquiry.</span>
+          <span>I agree to the privacy policy and consent to Japan Car Export using these details to respond to this inquiry.</span>
         </label>
         <label className={styles.consentField}>
           <input

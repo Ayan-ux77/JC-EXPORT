@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Fraunces, Lato } from "next/font/google";
 import {
   ArrowLeft,
@@ -23,8 +24,9 @@ import {
   Users,
 } from "lucide-react";
 
-import { getVehicle, getVehicles } from "@/data/vehicle-service";
-import { isRemoteVehicleMedia } from "@/data/vehicles";
+import { getDestinations, getVehicle, getVehicles, type ShipmentType } from "@/data/vehicle-service";
+import { formatCurrency, isRemoteVehicleMedia, whatsappUrl } from "@/data/vehicles";
+import { DestinationSelector } from "../../components/destination-selector";
 import { VehicleGallery } from "../../components/vehicle-gallery";
 import styles from "./page.module.css";
 
@@ -41,9 +43,16 @@ const displayFont = Fraunces({
   variable: "--font-display",
 });
 
+type SearchValue = string | string[] | undefined;
+
 type VehicleDetailsPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, SearchValue>>;
 };
+
+function firstValue(value: SearchValue) {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export async function generateStaticParams() {
   const vehicles = await getVehicles();
@@ -55,26 +64,35 @@ export async function generateMetadata({ params }: VehicleDetailsPageProps): Pro
   const vehicle = await getVehicle(slug);
 
   if (!vehicle) {
-    return { title: "Vehicle not found | JC Export" };
+    return { title: "Vehicle not found | Japan Car Export" };
   }
 
   return {
-    title: `${vehicle.year} ${vehicle.brand} ${vehicle.model} | JC Export`,
-    description: `${vehicle.condition} ${vehicle.year} ${vehicle.brand} ${vehicle.model}, ${vehicle.mileage}, ${vehicle.engine}, FOB ${formatMoney(vehicle.price, vehicle.currency)}.`,
+    title: `${vehicle.year} ${vehicle.brand} ${vehicle.model} | Japan Car Export`,
+    description: `${vehicle.condition} ${vehicle.year} ${vehicle.brand} ${vehicle.model}, ${vehicle.mileage}, ${vehicle.engine}, FOB ${formatCurrency(vehicle.price, vehicle.currency)}.`,
   };
 }
 
-export default async function VehicleDetailsPage({ params }: VehicleDetailsPageProps) {
-  const { slug } = await params;
-  const vehicle = await getVehicle(slug);
+export default async function VehicleDetailsPage({ params, searchParams }: VehicleDetailsPageProps) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  const destinationPort = firstValue(query.destination_port) || undefined;
+  const shipmentType =
+    firstValue(query.shipment_type) === "CONTAINER" ? ("CONTAINER" as ShipmentType) : undefined;
+
+  // As on the listing page: the vehicle itself must fetch cleanly or the
+  // page 404s/errors honestly, but a destinations outage should only cost
+  // the selector, not the whole product page.
+  const [vehicle, destinations] = await Promise.all([
+    getVehicle(slug, { destinationPort, shipmentType }),
+    getDestinations().catch(() => []),
+  ]);
 
   if (!vehicle) {
     notFound();
   }
 
+  const landed = vehicle.landed;
   const vehicles = await getVehicles();
-  const totalPrice = vehicle.price + vehicle.freight + vehicle.insurance;
-  const hasShippingEstimate = vehicle.freight > 0 || vehicle.insurance > 0;
   const relatedVehicles = vehicles
     .filter(
       (item) =>
@@ -82,9 +100,7 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
         (item.brand === vehicle.brand || item.bodyType === vehicle.bodyType),
     )
     .slice(0, 3);
-  const whatsappText = encodeURIComponent(
-    `Hello JC Export, I am interested in ${vehicle.year} ${vehicle.brand} ${vehicle.model}, stock ${vehicle.stock}.`,
-  );
+  const whatsapp = whatsappUrl(vehicle);
 
   const specifications = [
     { label: "Year", value: vehicle.year, icon: CalendarDays },
@@ -118,20 +134,33 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
           <ArrowLeft aria-hidden="true" /> Back to all vehicles
         </Link>
 
+        {/* Same selector as the listing, same URL params -- a buyer who
+            picked Mombasa on the listing and clicked into a car should not
+            have to say so twice. */}
+        <Suspense fallback={null}>
+          <div className={styles.destinationRow}>
+            <DestinationSelector destinations={destinations} />
+          </div>
+        </Suspense>
+
         <section className={styles.productLayout} aria-labelledby="vehicle-title">
           <div className={styles.galleryColumn}>
             <VehicleGallery images={vehicle.images} title={vehicle.title} />
 
             <section className={styles.disclosureBar} aria-label="Vehicle disclosure summary">
               <span><BadgeCheck aria-hidden="true" /> {vehicle.condition} vehicle</span>
-              <span><ShieldCheck aria-hidden="true" /> Auction grade {vehicle.auctionGrade}</span>
+              {vehicle.auctionGrade != null && (
+                <span><ShieldCheck aria-hidden="true" /> Auction grade {vehicle.auctionGrade}</span>
+              )}
               <span><FileCheck2 aria-hidden="true" /> Stock verified</span>
             </section>
           </div>
 
           <aside className={styles.purchasePanel}>
             <div className={styles.statusRow}>
-              <span className={styles.availableBadge}>{vehicle.availability || "Available"}</span>
+              <span className={vehicle.availability === "Reserved" ? styles.reservedBadge : styles.availableBadge}>
+                {vehicle.availability || "Available"}
+              </span>
               <span>{vehicle.condition}</span>
             </div>
 
@@ -155,27 +184,41 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
 
             <div className={styles.priceBox}>
               <div>
-                <span>FOB price</span>
-                <strong>{formatMoney(vehicle.price, vehicle.currency)}</strong>
+                <span>{landed?.priced && landed.total != null ? `Est. landed · ${landed.port}` : "FOB price"}</span>
+                <strong>
+                  {landed?.priced && landed.total != null
+                    ? formatCurrency(landed.total, landed.currency)
+                    : formatCurrency(vehicle.price, vehicle.currency)}
+                </strong>
               </div>
-              <small>Freight and destination charges quoted separately</small>
+              <small>
+                {landed?.priced && landed.total != null
+                  ? `FOB ${formatCurrency(vehicle.price, vehicle.currency)} · estimate, confirmed at booking`
+                  : landed && !landed.priced
+                    ? `We do not have a freight rate to ${landed.port} yet -- ask us for a quote`
+                    : vehicle.price == null
+                      ? "This unit is priced on request -- send us your destination and we will come back with a figure"
+                      : "Freight and destination charges quoted separately"}
+              </small>
             </div>
 
-            <div className={styles.primaryActions}>
+            <div className={`${styles.primaryActions} ${!whatsapp ? styles.primaryActionsSingle : ""}`}>
               <Link
                 href={`/quote?vehicle=${vehicle.slug}`}
                 className={styles.primaryAction}
               >
                 Request export quote <ArrowRight aria-hidden="true" />
               </Link>
-              <a
-                href={`https://wa.me/923001234567?text=${whatsappText}`}
-                target="_blank"
-                rel="noreferrer"
-                className={styles.secondaryAction}
-              >
-                <MessageCircle aria-hidden="true" /> Ask a question
-              </a>
+              {whatsapp && (
+                <a
+                  href={whatsapp}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.secondaryAction}
+                >
+                  <MessageCircle aria-hidden="true" /> WhatsApp us
+                </a>
+              )}
             </div>
 
             <div className={styles.advisorCard}>
@@ -184,25 +227,56 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
                 <strong>Vehicle export desk</strong>
                 <small>Replies with availability, inspection, and shipping details</small>
               </div>
-              <BadgeCheck aria-label="Verified JC Export contact" />
+              <BadgeCheck aria-label="Verified Japan Car Export contact" />
             </div>
 
-            {hasShippingEstimate && <div className={styles.estimateCard}>
-              <div className={styles.estimateHeader}>
-                <div>
-                  <span>Example export estimate</span>
-                  <strong>FOB + freight + insurance</strong>
+            {landed && landed.priced && landed.total != null && (
+              <div className={styles.estimateCard}>
+                <div className={styles.estimateHeader}>
+                  <div>
+                    <span>Estimated landed cost</span>
+                    <strong>FOB + freight + insurance to {landed.port}</strong>
+                  </div>
+                  <Ship aria-hidden="true" />
                 </div>
-                <Ship aria-hidden="true" />
+                <dl>
+                  <div>
+                    <dt>Vehicle FOB</dt>
+                    <dd>{formatCurrency(landed.fob, landed.currency)}</dd>
+                  </div>
+                  <div>
+                    <dt>Ocean freight ({landed.shipment_type === "CONTAINER" ? "Container" : "RoRo"})</dt>
+                    <dd>{formatCurrency(landed.freight ?? 0, landed.currency)}</dd>
+                  </div>
+                  <div>
+                    <dt>Marine insurance</dt>
+                    <dd>{formatCurrency(landed.insurance ?? 0, landed.currency)}</dd>
+                  </div>
+                  <div className={styles.estimateTotal}>
+                    <dt>Estimated total landed</dt>
+                    <dd>{formatCurrency(landed.total, landed.currency)}</dd>
+                  </div>
+                </dl>
+                <p>Estimate only -- freight moves with sailing schedules and fuel prices. Final cost is confirmed at booking.</p>
               </div>
-              <dl>
-                <div><dt>Vehicle FOB</dt><dd>{formatMoney(vehicle.price, vehicle.currency)}</dd></div>
-                <div><dt>Ocean freight</dt><dd>{formatMoney(vehicle.freight, vehicle.currency)}</dd></div>
-                <div><dt>Marine insurance</dt><dd>{formatMoney(vehicle.insurance, vehicle.currency)}</dd></div>
-                <div className={styles.estimateTotal}><dt>Estimated CIF</dt><dd>{formatMoney(totalPrice, vehicle.currency)}</dd></div>
-              </dl>
-              <p>Final freight depends on destination port and sailing availability.</p>
-            </div>}
+            )}
+
+            {landed && !landed.priced && (
+              <div className={styles.estimateCard}>
+                <div className={styles.estimateHeader}>
+                  <div>
+                    <span>Landed cost</span>
+                    <strong>No standing freight rate to {landed.port}</strong>
+                  </div>
+                  <Ship aria-hidden="true" />
+                </div>
+                <p>
+                  {whatsapp
+                    ? "Message us on WhatsApp with this stock number and we will quote freight to your port directly."
+                    : "Request an export quote and we will price freight to your port directly."}
+                </p>
+              </div>
+            )}
           </aside>
         </section>
 
@@ -253,7 +327,7 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
 
           <div className={styles.gradeCard}>
             <span>Auction grade</span>
-            <strong>{vehicle.auctionGradeLabel || vehicle.auctionGrade}</strong>
+            <strong>{vehicle.auctionGradeLabel || vehicle.auctionGrade || "Not graded"}</strong>
             <small>Condition: {vehicle.condition}</small>
             <div>
               <ShieldCheck aria-hidden="true" />
@@ -287,8 +361,11 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
                   <div>
                     <span>{relatedVehicle.year} / {relatedVehicle.brand}</span>
                     <h3><Link href={`/vehicles/${relatedVehicle.slug}`}>{relatedVehicle.model}</Link></h3>
-                    <p>{relatedVehicle.mileage} · Grade {relatedVehicle.auctionGrade}</p>
-                    <strong>{formatMoney(relatedVehicle.price, relatedVehicle.currency)} FOB</strong>
+                    <p>
+                      {relatedVehicle.mileage}
+                      {relatedVehicle.auctionGrade != null ? ` · Grade ${relatedVehicle.auctionGrade}` : ""}
+                    </p>
+                    <strong>{formatCurrency(relatedVehicle.price, relatedVehicle.currency)} FOB</strong>
                   </div>
                 </article>
               ))}
@@ -298,12 +375,4 @@ export default async function VehicleDetailsPage({ params }: VehicleDetailsPageP
       </div>
     </main>
   );
-}
-
-function formatMoney(value: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(value);
 }

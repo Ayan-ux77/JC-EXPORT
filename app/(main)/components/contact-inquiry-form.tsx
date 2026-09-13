@@ -42,7 +42,7 @@ export function ContactInquiryForm() {
 
   const whatsappUrl = submittedReference
     ? `https://wa.me/923001234567?text=${encodeURIComponent(
-        `Hello JC Export, I submitted inquiry ${submittedReference}.`,
+        `Hello Japan Car Export, I submitted inquiry ${submittedReference}.`,
       )}`
     : "";
 
@@ -85,7 +85,7 @@ export function ContactInquiryForm() {
       </div>
       <label className={styles.consentField}>
         <input name="privacyConsent" type="checkbox" required />
-        <span>I agree to the privacy policy and consent to JC Export using these details to respond to this inquiry.</span>
+        <span>I agree to the privacy policy and consent to Japan Car Export using these details to respond to this inquiry.</span>
       </label>
       <button
         type="submit"

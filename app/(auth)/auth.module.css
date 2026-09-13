@@ -33,7 +33,7 @@
 .eyebrow,
 .formEyebrow {
   margin: 0 0 24px;
-  color: #7db9ee;
+  color: var(--brand-teal);
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
@@ -49,7 +49,7 @@
 }
 
 .aside h1 em {
-  color: #70b7f2;
+  color: var(--brand-teal);
   font-weight: 500;
 }
 
@@ -82,7 +82,7 @@
 .trustList svg {
   width: 19px;
   height: 19px;
-  color: #70b7f2;
+  color: var(--brand-teal);
 }
 
 .main {
@@ -97,7 +97,7 @@
   padding: clamp(30px, 4.5vw, 56px);
   background: #ffffff;
   border: 1px solid #dbe2e6;
-  border-top: 5px solid #287ec9;
+  border-top: 5px solid var(--brand-teal);
   border-radius: 6px;
   box-shadow: 0 22px 60px rgba(17, 32, 43, 0.08);
 }
@@ -142,8 +142,8 @@
 
 .form input:focus,
 .form select:focus {
-  outline: 3px solid rgba(40, 126, 201, 0.18);
-  border-color: #287ec9;
+  outline: 3px solid rgba(92, 198, 208, 0.18);
+  border-color: var(--brand-teal);
 }
 
 .fieldRow {
@@ -169,7 +169,7 @@
   display: grid;
   place-items: center;
   border: 0;
-  color: #287ec9;
+  color: var(--brand-charcoal);
   background: transparent;
   cursor: pointer;
 }
@@ -206,8 +206,9 @@
 .options a,
 .footer a,
 .check a {
-  color: #1f6eaf;
+  color: var(--brand-charcoal);
   font-weight: 800;
+  text-decoration: underline;
 }
 
 .submit {
@@ -218,7 +219,7 @@
   justify-content: center;
   gap: 10px;
   color: #ffffff;
-  background: #c52325;
+  background: var(--brand-charcoal);
   border: 0;
   border-radius: 4px;
   font: inherit;
@@ -227,7 +228,8 @@
 }
 
 .submit:hover {
-  background: #a91517;
+  background: var(--brand-teal);
+  color: var(--brand-charcoal);
 }
 
 .submit:disabled {

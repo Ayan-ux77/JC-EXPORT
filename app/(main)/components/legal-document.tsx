@@ -28,7 +28,7 @@ export function LegalDocument({
     <main className={styles.legalPage}>
       <header className={styles.legalHeader}>
         <div>
-          <Link href="/">JC Export</Link>
+          <Link href="/">Japan Car Export</Link>
           <span>{eyebrow}</span>
           <h1>{title}</h1>
           <p>{introduction}</p>

@@ -45,14 +45,14 @@
 .previousLink:hover,
 .nextLink:hover,
 .breakLink:hover {
-  border-color: #287ec9;
-  color: #1764a6;
+  border-color: var(--brand-teal);
+  color: var(--brand-charcoal);
 }
 
 .activePage .pageLink {
-  border-color: #0a1722;
-  background: #0a1722;
-  color: #ffffff;
+  border-color: var(--brand-teal);
+  background: var(--brand-teal);
+  color: var(--brand-charcoal);
 }
 
 .disabledPage .previousLink,

@@ -39,7 +39,7 @@ export default async function AccountLayout({
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
-        <Link href="/" className={styles.logo} aria-label="JC Export home">
+        <Link href="/" className={styles.logo} aria-label="Japan Car Export home">
           <BrandLogo tone="on-dark" size="compact" />
         </Link>
         <nav aria-label="Customer account">

@@ -1,24 +1,36 @@
 import "server-only";
 
-import { callApi, JcApiError } from "./jc-api";
+import { callApi, callApiPage, JcApiError, type Paginated } from "./jc-api";
 import type { Vehicle } from "./vehicles";
 
+export type ShipmentType = "RORO" | "CONTAINER";
+
+// make/model/bodyType/fuel/transmission each accept either one value or a
+// list -- the API takes them as a comma-separated string and matches any of
+// them (VehicleCatalogController::listOf), so "Toyota or Nissan" is one
+// request, not one request per make.
 export type VehicleQuery = {
   featuredOnly?: boolean;
   limit?: number;
   page?: number;
-  make?: string;
-  model?: string;
-  bodyType?: string;
-  fuel?: string;
-  transmission?: string;
+  make?: string | string[];
+  model?: string | string[];
+  bodyType?: string | string[];
+  fuel?: string | string[];
+  transmission?: string | string[];
   steering?: string;
+  drive?: string;
   yearFrom?: number;
   yearTo?: number;
   priceMin?: number;
   priceMax?: number;
+  /** Minimum auction grade, 0-10. Letter grades (R, RA -- repaired) cast to 0 server-side and so are excluded by any positive value, which is the point. */
+  gradeMin?: number;
   search?: string;
   sort?: string;
+  /** Buyer's port. Every vehicle comes back with a `landed` breakdown to it. */
+  destinationPort?: string;
+  shipmentType?: ShipmentType;
 };
 
 export type FilterOption = { name: string; count: number };
@@ -30,6 +42,12 @@ export type VehicleFilters = {
   transmissions: FilterOption[];
   steerings: FilterOption[];
   years: { min: number | null; max: number | null };
+};
+
+/** A port JC can actually quote a landed price to -- see getDestinations(). */
+export type Destination = {
+  name: string;
+  country: string | null;
 };
 
 /**
@@ -48,9 +66,31 @@ export async function getVehicles(query: VehicleQuery = {}): Promise<Vehicle[]> 
   return callApi<Vehicle[]>(path, { revalidate: 60 });
 }
 
-export async function getVehicle(slug: string): Promise<Vehicle | undefined> {
+/**
+ * A single page of the catalogue, with the total the page cannot see on its
+ * own. The listing page paginates, filters and sorts through this -- doing
+ * any of that in the browser instead only ever operates on whichever page
+ * happened to be fetched, which is how the old listing capped itself at 24
+ * cars no matter how much stock JC actually had.
+ */
+export async function getVehiclePage(query: VehicleQuery = {}): Promise<Paginated<Vehicle>> {
+  return callApiPage<Vehicle>(`vehicles?${toParams(query)}`, { revalidate: 60 });
+}
+
+export async function getVehicle(
+  slug: string,
+  query: { destinationPort?: string; shipmentType?: ShipmentType } = {},
+): Promise<Vehicle | undefined> {
+  const params = new URLSearchParams();
+  if (query.destinationPort) params.set("destination_port", query.destinationPort);
+  if (query.shipmentType) params.set("shipment_type", query.shipmentType);
+  const qs = params.toString();
+
   try {
-    return await callApi<Vehicle>(`vehicles/${encodeURIComponent(slug)}`, { revalidate: 60 });
+    return await callApi<Vehicle>(
+      `vehicles/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`,
+      { revalidate: 60 },
+    );
   } catch (reason) {
     // A car that has sold is genuinely gone, and the page should 404 rather
     // than error. Anything else is a fault and must not be swallowed.
@@ -80,6 +120,17 @@ export async function getModelsForMake(make: string): Promise<string[]> {
   });
 }
 
+/**
+ * Ports JC can actually quote a landed price to. Driven off the freight
+ * matrix on the API side, so this never offers a route that would come back
+ * "ask us" for every single car -- that teaches buyers the selector is
+ * decorative. Cached for an hour: the quotable port list changes about as
+ * often as JC signs a new freight contract.
+ */
+export async function getDestinations(): Promise<Destination[]> {
+  return callApi<Destination[]>("destinations", { revalidate: 3600 });
+}
+
 function toParams(query: VehicleQuery) {
   const params = new URLSearchParams();
 
@@ -90,17 +141,30 @@ function toParams(query: VehicleQuery) {
     ["fuel", "fuel"],
     ["transmission", "transmission"],
     ["steering", "steering"],
+    ["drive", "drive"],
     ["yearFrom", "year_from"],
     ["yearTo", "year_to"],
     ["priceMin", "price_min"],
     ["priceMax", "price_max"],
+    ["gradeMin", "grade_min"],
     ["search", "search"],
     ["sort", "sort"],
     ["page", "page"],
+    ["destinationPort", "destination_port"],
+    ["shipmentType", "shipment_type"],
   ];
 
   for (const [key, param] of mapping) {
     const value = query[key];
+    if (Array.isArray(value)) {
+      // A list of one is just a value -- but an empty list must drop the
+      // param entirely rather than send an empty `make=`, which the API
+      // would otherwise have to specially ignore.
+      if (value.length > 0) {
+        params.set(param, value.join(","));
+      }
+      continue;
+    }
     if (value !== undefined && value !== null && value !== "") {
       params.set(param, String(value));
     }

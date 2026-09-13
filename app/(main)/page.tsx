@@ -20,7 +20,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { getVehicles } from "@/data/vehicle-service";
+import { getModelsForMake, getVehiclePage, getVehicles } from "@/data/vehicle-service";
 import { FeaturedVehicles } from "./components/featured-vehicles";
 import { HomeInquiryForm } from "./components/home-inquiry-form";
 import styles from "./page.module.css";
@@ -39,7 +39,7 @@ const displayFont = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Japanese Used Cars for Export | JC Export",
+  title: "Japanese Used Cars for Export | Japan Car Export",
   description:
     "Browse inspected Japanese used vehicles with clear FOB pricing, export documentation, and worldwide shipping support.",
 };
@@ -184,7 +184,18 @@ const contactInfo = [
 ];
 
 export default async function HomePage() {
-  const vehicles = await getVehicles({ featuredOnly: true, limit: 6 });
+  // The hero's quick search (make + model) and its stock count both read
+  // straight off the same listing this fetches with limit 1 -- one round
+  // trip for the total, not a full page of vehicles just to read its meta.
+  // Models are unfiltered (getModelsForMake("")) because the hero form is
+  // a plain GET <form>, not a client component: there is no make-selected
+  // event to chain a model list off without JavaScript.
+  const [vehicles, stock, models] = await Promise.all([
+    getVehicles({ featuredOnly: true, limit: 6 }),
+    getVehiclePage({ limit: 1 }),
+    getModelsForMake(""),
+  ]);
+  const stockCount = stock.total;
 
   return (
     <main
@@ -195,7 +206,7 @@ export default async function HomePage() {
           src="/home-hero.webp"
           alt="Used Japanese vehicles prepared for export at a port inspection yard"
           fill
-          preload
+          priority
           sizes="100vw"
           className={styles.heroImage}
         />
@@ -223,30 +234,50 @@ export default async function HomePage() {
               ))}
             </ul>
 
-            <div className={styles.heroActions}>
-              <Link href="/vehicles" className={styles.primaryButton}>
-                Browse vehicles <ArrowRight aria-hidden="true" />
-              </Link>
-              <Link href="/quote" className={styles.secondaryButton}>
-                Get an export quote
-              </Link>
-            </div>
-          </div>
+            {/* Field names match exactly what app/(main)/vehicles/page.tsx
+                reads off the URL -- "make" and "model" -- so this plain GET
+                form needs no JavaScript to hand off to a working search. */}
+            <form
+              className={styles.heroSearch}
+              action="/vehicles"
+              aria-label="Quick vehicle search"
+            >
+              <label>
+                <span>Make</span>
+                <select name="make" defaultValue="">
+                  <option value="">Any make</option>
+                  {brands.map((brand) => (
+                    <option key={brand.name} value={brand.name}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Model</span>
+                <select name="model" defaultValue="">
+                  <option value="">Any model</option>
+                  {models.map((model) => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" className={styles.heroSearchButton}>
+                <Search aria-hidden="true" /> Find vehicles
+              </button>
+            </form>
 
-          <aside
-            className={styles.heroNote}
-            aria-label="Export process summary"
-          >
-            <span className={styles.heroNoteLabel}>
-              From Japan to your port
-            </span>
-            <strong>One team. One clear shipment.</strong>
-            <div className={styles.heroNoteRoute}>
-              <span>Source</span>
-              <span>Inspect</span>
-              <span>Ship</span>
-            </div>
-          </aside>
+            {/* Real inventory, not a marketing number -- stock.total comes
+                from the same paginated endpoint the listing page uses, so
+                this can never claim more cars than a buyer will actually
+                find one click later. */}
+            <p className={styles.heroStockCount}>
+              <strong>{stockCount}</strong> vehicle{stockCount === 1 ? "" : "s"}{" "}
+              in stock now
+            </p>
+          </div>
         </div>
       </section>
 
@@ -264,13 +295,17 @@ export default async function HomePage() {
           </Link>
         </div>
 
+        {/* Names match the listing's own query params (year_from, price_max,
+            body_type -- see app/(main)/vehicles/page.tsx) rather than the
+            ad hoc ones this form used to submit, which the listing quietly
+            ignored. */}
         <form className={styles.searchForm} action="/vehicles">
           <label>
             <span>Make</span>
             <select name="make" defaultValue="">
               <option value="">All makes</option>
               {brands.map((brand) => (
-                <option key={brand.name} value={brand.name.toLowerCase()}>
+                <option key={brand.name} value={brand.name}>
                   {brand.name}
                 </option>
               ))}
@@ -278,18 +313,18 @@ export default async function HomePage() {
           </label>
           <label>
             <span>Body type</span>
-            <select name="bodyType" defaultValue="">
+            <select name="body_type" defaultValue="">
               <option value="">All body types</option>
-              <option value="sedan">Sedan</option>
-              <option value="suv">SUV</option>
-              <option value="hatchback">Hatchback</option>
-              <option value="van">Van</option>
-              <option value="truck">Truck</option>
+              <option value="Sedan">Sedan</option>
+              <option value="SUV">SUV</option>
+              <option value="Hatchback">Hatchback</option>
+              <option value="Van">Van</option>
+              <option value="Truck">Truck</option>
             </select>
           </label>
           <label>
             <span>Year from</span>
-            <select name="year" defaultValue="">
+            <select name="year_from" defaultValue="">
               <option value="">Any year</option>
               <option value="2021">2021</option>
               <option value="2019">2019</option>
@@ -299,7 +334,7 @@ export default async function HomePage() {
           </label>
           <label>
             <span>Max FOB price</span>
-            <select name="maxPrice" defaultValue="">
+            <select name="price_max" defaultValue="">
               <option value="">No limit</option>
               <option value="5000">Up to $5,000</option>
               <option value="10000">Up to $10,000</option>
@@ -315,7 +350,7 @@ export default async function HomePage() {
 
       <section
         className={styles.statsSection}
-        aria-label="JC Export in numbers"
+        aria-label="Japan Car Export in numbers"
       >
         <div className={styles.statsGrid}>
           {stats.map((stat) => (
@@ -455,7 +490,7 @@ export default async function HomePage() {
         </div>
 
         <div className={styles.aboutContent}>
-          <p className={styles.kicker}>Why buyers choose JC Export</p>
+          <p className={styles.kicker}>Why buyers choose Japan Car Export</p>
           <h2 id="about-title">
             More certainty before the car <em>leaves Japan.</em>
           </h2>

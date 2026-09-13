@@ -20,7 +20,7 @@ const bodyFont = Lato({ subsets: ["latin"], weight: ["400", "700", "900"], varia
 const displayFont = Fraunces({ subsets: ["latin"], style: ["normal", "italic"], weight: ["500", "600", "700"], variable: "--font-display" });
 
 export const metadata: Metadata = {
-  title: "Japanese Used Vehicle Export Services | JC Export",
+  title: "Japanese Used Vehicle Export Services | Japan Car Export",
   description: "Vehicle sourcing, condition review, inspection, international shipping, and export-document support for Japanese used vehicles.",
 };
 

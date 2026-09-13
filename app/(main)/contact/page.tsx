@@ -11,8 +11,8 @@ const bodyFont = Lato({ subsets: ["latin"], weight: ["400", "700", "900"], varia
 const displayFont = Fraunces({ subsets: ["latin"], style: ["normal", "italic"], weight: ["500", "600", "700"], variable: "--font-display" });
 
 export const metadata: Metadata = {
-  title: "Contact JC Export | Japanese Vehicle Export Support",
-  description: "Contact JC Export about vehicle sourcing, quotes, shipping, payments, documents, or an existing export order.",
+  title: "Contact Japan Car Export | Japanese Vehicle Export Support",
+  description: "Contact Japan Car Export about vehicle sourcing, quotes, shipping, payments, documents, or an existing export order.",
 };
 
 const channels = [

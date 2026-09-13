@@ -31,9 +31,9 @@ const displayFont = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "About JC Export | Japanese Used Vehicle Export",
+  title: "About Japan Car Export | Japanese Used Vehicle Export",
   description:
-    "Learn how JC Export sources, verifies, documents, and ships Japanese used vehicles for buyers worldwide.",
+    "Learn how Japan Car Export sources, verifies, documents, and ships Japanese used vehicles for buyers worldwide.",
 };
 
 const principles = [
@@ -64,9 +64,9 @@ export default function AboutPage() {
     <main className={`${styles.page} ${bodyFont.variable} ${displayFont.variable}`}>
       <PublicPageHero
         current="About"
-        kicker="About JC Export"
+        kicker="About Japan Car Export"
         title={<>Used-vehicle exporting, <em>made more transparent.</em></>}
-        description="JC Export helps buyers source Japanese used vehicles with clearer condition evidence, practical shipping support, and documentation organized for international delivery."
+        description="Japan Car Export helps buyers source Japanese used vehicles with clearer condition evidence, practical shipping support, and documentation organized for international delivery."
         image="/home-hero.webp"
         imageAlt="Japanese used vehicles prepared for export at a port"
         actions={
@@ -100,7 +100,7 @@ export default function AboutPage() {
             Buying a used vehicle across borders is not difficult because of the car alone. It is difficult because the buyer must judge condition, cost, shipping, and paperwork from a distance.
           </p>
           <p className={styles.bodyText}>
-            JC Export brings those moving parts into one clear process. We support vehicle selection, condition review, export preparation, shipping coordination, and document handover while keeping the buyer informed.
+            Japan Car Export brings those moving parts into one clear process. We support vehicle selection, condition review, export preparation, shipping coordination, and document handover while keeping the buyer informed.
           </p>
           <ul className={styles.checkList}>
             <li><Check aria-hidden="true" /> Japan-sourced stock and sourcing requests</li>
@@ -134,7 +134,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className={styles.operationsBand} aria-label="JC Export operating model">
+      <section className={styles.operationsBand} aria-label="Japan Car Export operating model">
         <div className={styles.operationsGrid}>
           <span><strong>Japan</strong><small>Vehicle sourcing and export preparation</small></span>
           <span><strong>Worldwide</strong><small>RoRo and container delivery support</small></span>

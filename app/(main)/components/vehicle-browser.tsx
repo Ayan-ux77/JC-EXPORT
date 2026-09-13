@@ -2,179 +2,295 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   ArrowUpRight,
-  BadgeCheck,
-  Check,
-  Fuel,
+  CalendarDays,
+  CircleGauge,
+  Disc,
   Gauge,
   Grid2X2,
   List,
   MapPin,
+  MessageCircle,
   RotateCcw,
   Search,
+  Settings2,
   SlidersHorizontal,
   X,
 } from "lucide-react";
 
 import {
+  formatCurrency,
   formatVehiclePrice,
+  hasPublicPrice,
+  PRICE_ON_APPLICATION,
+  isNewArrival,
   isRemoteVehicleMedia,
+  whatsappUrl,
   type Vehicle,
 } from "@/data/vehicles";
+import type { Destination, VehicleFilters } from "@/data/vehicle-service";
+import { DestinationSelector } from "./destination-selector";
 import { Pagination } from "./pagination";
 import styles from "../vehicles/page.module.css";
 
-type InitialFilters = {
-  make?: string;
-  bodyType?: string;
-  minYear?: number;
-  maxPrice?: number;
+type PaginationMeta = {
+  page: number;
+  lastPage: number;
+  total: number;
+  perPage: number;
 };
 
 type VehicleBrowserProps = {
+  /** Only this page's rows. Every count on this screen must come from `pagination` or `filters`, never from vehicles.length. */
   vehicles: Vehicle[];
-  initialFilters?: InitialFilters;
+  /** Option lists and counts over ALL listed stock -- see getVehicleFilters(). Never recomputed from `vehicles`. */
+  filters: VehicleFilters;
+  destinations: Destination[];
+  pagination: PaginationMeta;
 };
 
-type SortOption = "newest" | "oldest" | "price-low" | "price-high" | "mileage";
+// These match the API's `sort` vocabulary (see VehicleCatalogController)
+// rather than an ad hoc set of labels, so the option a buyer picks here means
+// the same thing it would mean typed directly into the API.
+type SortOption =
+  | "newest"
+  | "oldest"
+  | "price_low"
+  | "price_high"
+  | "year_new"
+  | "year_old"
+  | "mileage_low";
 type ViewMode = "grid" | "list";
 
-export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowserProps) {
-  const lowestYear = Math.min(...vehicles.map((vehicle) => vehicle.year));
-  const highestYear = Math.max(...vehicles.map((vehicle) => vehicle.year));
-  const highestPrice = Math.max(...vehicles.map((vehicle) => vehicle.price));
+const VIEW_MODE_STORAGE_KEY = "jc-export:vehicle-view-mode";
 
-  const initialMake = vehicles.find(
-    (vehicle) => vehicle.brand.toLowerCase() === initialFilters.make?.toLowerCase(),
-  )?.brand;
-  const initialBodyType = vehicles.find(
-    (vehicle) =>
-      vehicle.bodyType.toLowerCase() === initialFilters.bodyType?.toLowerCase(),
-  )?.bodyType;
+// How long to wait after the last keystroke in a text/number field before
+// treating it as a real filter change. Short enough to feel responsive,
+// long enough that typing "2015" doesn't fire four separate searches.
+const DEBOUNCE_MS = 450;
 
-  const [query, setQuery] = useState("");
-  const [selectedMakes, setSelectedMakes] = useState<string[]>(
-    initialMake ? [initialMake] : [],
-  );
-  const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>(
-    initialBodyType ? [initialBodyType] : [],
-  );
-  const [selectedFuels, setSelectedFuels] = useState<string[]>([]);
-  const [minYear, setMinYear] = useState(initialFilters.minYear ?? lowestYear);
-  const [maxYear, setMaxYear] = useState(highestYear);
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice ?? highestPrice);
-  const [minimumGrade, setMinimumGrade] = useState(0);
-  const [sort, setSort] = useState<SortOption>("newest");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+type FilterDrafts = {
+  search: string;
+  yearFrom: string;
+  yearTo: string;
+  priceMin: string;
+  priceMax: string;
+};
+
+function draftsFromParams(params: { get(key: string): string | null }): FilterDrafts {
+  return {
+    search: params.get("search") ?? "",
+    yearFrom: params.get("year_from") ?? "",
+    yearTo: params.get("year_to") ?? "",
+    priceMin: params.get("price_min") ?? "",
+    priceMax: params.get("price_max") ?? "",
+  };
+}
+
+// make/body_type/fuel are comma-separated lists on the wire (the API matches
+// any of them -- VehicleCatalogController::listOf), so the URL is the only
+// state a multi-select checkbox group needs.
+function parseList(raw: string | null): string[] {
+  if (!raw) return [];
+  return Array.from(new Set(raw.split(",").map((part) => part.trim()).filter(Boolean)));
+}
+
+export function VehicleBrowser({ vehicles, filters, destinations, pagination }: VehicleBrowserProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // A filter change is now a real round trip to the server component above
+  // (it refetches the page with the new query string), so the UI needs a
+  // pending state -- useTransition keeps the current results on screen,
+  // dimmed, rather than flashing to empty while the new page loads.
+  const [isPending, startTransition] = useTransition();
+
+  const destinationPort = searchParams.get("destination_port") ?? "";
+  // The homepage's brand tiles link in as a single `?brand=Toyota`; every
+  // filter this component writes itself uses the API's own comma-separated
+  // `make` key, so both are read here for as long as an old link might still
+  // point at the legacy one.
+  const makeList = parseList(searchParams.get("make") || searchParams.get("brand"));
+  const bodyTypeList = parseList(searchParams.get("body_type"));
+  const fuelList = parseList(searchParams.get("fuel"));
+  const gradeMin = Number(searchParams.get("grade_min")) || 0;
+  const sort = (searchParams.get("sort") as SortOption | null) || "newest";
+
+  const [viewMode, setViewModeState] = useState<ViewMode>("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const makes = useMemo(() => countValues(vehicles.map((vehicle) => vehicle.brand)), [vehicles]);
-  const bodyTypes = useMemo(
-    () => countValues(vehicles.map((vehicle) => vehicle.bodyType)),
-    [vehicles],
-  );
-  const fuels = useMemo(() => countValues(vehicles.map((vehicle) => vehicle.fuel)), [vehicles]);
+  // The grid/list choice is a personal browsing preference, not something
+  // worth round-tripping through the URL or the server -- localStorage is
+  // exactly the "remembered per-viewer setting" case it's meant for. This
+  // has to run after mount rather than in a lazy useState initializer: the
+  // server always renders "grid" (it has no localStorage to read), and
+  // reading a stored "list" during the client's first render would mismatch
+  // that server HTML and trigger a hydration error across every card.
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      if (stored === "grid" || stored === "list") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate one-time hydration of a per-viewer preference the server cannot see; see comment above.
+        setViewModeState(stored);
+      }
+    } catch {
+      // Private browsing or a locked-down browser: fall back to the default.
+    }
+  }, []);
 
-  const filteredVehicles = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    const matchingVehicles = vehicles.filter((vehicle) => {
-      const searchableText = [
-        vehicle.brand,
-        vehicle.model,
-        vehicle.title,
-        vehicle.stock,
-        vehicle.location,
-      ]
-        .join(" ")
-        .toLowerCase();
+  function setViewMode(mode: ViewMode) {
+    setViewModeState(mode);
+    try {
+      window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    } catch {
+      // Not fatal -- the choice just won't be remembered next visit.
+    }
+  }
 
-      return (
-        (!normalizedQuery || searchableText.includes(normalizedQuery)) &&
-        (!selectedMakes.length || selectedMakes.includes(vehicle.brand)) &&
-        (!selectedBodyTypes.length || selectedBodyTypes.includes(vehicle.bodyType)) &&
-        (!selectedFuels.length || selectedFuels.includes(vehicle.fuel)) &&
-        vehicle.year >= minYear &&
-        vehicle.year <= maxYear &&
-        vehicle.price >= minPrice &&
-        vehicle.price <= maxPrice &&
-        vehicle.auctionGrade >= minimumGrade
-      );
+  // Free-text and range inputs get a local draft so typing feels instant;
+  // the draft is pushed to the URL (and so to the server) only after the
+  // buyer pauses, and re-synced from the URL on the way back (cleared
+  // filters, browser back/forward, a shared link).
+  const [drafts, setDrafts] = useState<FilterDrafts>(() => draftsFromParams(searchParams));
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local drafts to the URL (the source of truth) after navigation, not deriving state from props/state React already has.
+    setDrafts(draftsFromParams(searchParams));
+    // Re-sync whenever the URL's own filter values change, not on every
+    // render -- searchParams.toString() is the stable primitive to key on.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const onUrl = draftsFromParams(searchParams);
+      const trimmedSearch = drafts.search.trim();
+      if (
+        onUrl.search === trimmedSearch &&
+        onUrl.yearFrom === drafts.yearFrom &&
+        onUrl.yearTo === drafts.yearTo &&
+        onUrl.priceMin === drafts.priceMin &&
+        onUrl.priceMax === drafts.priceMax
+      ) {
+        return; // Nothing actually changed -- skip a no-op navigation.
+      }
+
+      pushParams({
+        search: trimmedSearch || undefined,
+        year_from: drafts.yearFrom || undefined,
+        year_to: drafts.yearTo || undefined,
+        price_min: drafts.priceMin || undefined,
+        price_max: drafts.priceMax || undefined,
+      });
+    }, DEBOUNCE_MS);
+
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drafts.search, drafts.yearFrom, drafts.yearTo, drafts.priceMin, drafts.priceMax]);
+
+  /**
+   * Writes `changes` into the query string and lets the server component
+   * refetch -- this is the only place vehicle data changes now. Every call
+   * resets `page` unless told not to: a filter change makes whatever page
+   * the buyer was on meaningless (page 7 of a two-result search is a dead
+   * end), while an actual page click is the one change that must not reset
+   * itself.
+   */
+  function pushParams(changes: Record<string, string | undefined>, keepPage = false) {
+    const next = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(changes)) {
+      if (value) {
+        next.set(key, value);
+      } else {
+        next.delete(key);
+      }
+    }
+    if (!keepPage) {
+      next.delete("page");
+    }
+    const qs = next.toString();
+    startTransition(() => {
+      router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
     });
+  }
 
-    return [...matchingVehicles].sort((a, b) => {
-      if (sort === "oldest") return a.year - b.year;
-      if (sort === "price-low") return a.price - b.price;
-      if (sort === "price-high") return b.price - a.price;
-      if (sort === "mileage") return a.mileageKm - b.mileageKm;
-      return b.year - a.year;
-    });
-  }, [
-    maxPrice,
-    maxYear,
-    minPrice,
-    minYear,
-    minimumGrade,
-    query,
-    selectedBodyTypes,
-    selectedFuels,
-    selectedMakes,
-    sort,
-    vehicles,
-  ]);
+  // make/body_type/fuel are multi-select: the API takes each as a
+  // comma-separated list and matches any value in it, so toggling a checkbox
+  // just adds or removes its value from the list already on the URL.
+  function toggleListValue(key: "make" | "body_type" | "fuel", list: string[], value: string) {
+    const next = list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+    const changes: Record<string, string | undefined> = {
+      [key]: next.length ? next.join(",") : undefined,
+    };
+    if (key === "make") {
+      // Replaces the legacy "brand" param too, so a URL never carries both a
+      // stale single brand and a freshly-picked make list at once.
+      changes.brand = undefined;
+    }
+    pushParams(changes);
+  }
 
-  const itemsPerPage = viewMode === "grid" ? 9 : 8;
-  const pageCount = Math.ceil(filteredVehicles.length / itemsPerPage);
-  const filterKey = JSON.stringify({
-    maxPrice,
-    maxYear,
-    minPrice,
-    minYear,
-    minimumGrade,
-    query,
-    selectedBodyTypes,
-    selectedFuels,
-    selectedMakes,
-    sort,
-    viewMode,
-  });
-  const [pagination, setPagination] = useState({ key: filterKey, page: 0 });
-  const currentPage = pagination.key === filterKey ? pagination.page : 0;
-  const startIndex = currentPage * itemsPerPage;
-  const visibleVehicles = filteredVehicles.slice(startIndex, startIndex + itemsPerPage);
+  function setSort(value: SortOption) {
+    pushParams({ sort: value === "newest" ? undefined : value });
+  }
 
-  const activeFilterCount =
-    selectedMakes.length +
-    selectedBodyTypes.length +
-    selectedFuels.length +
-    Number(minYear !== lowestYear || maxYear !== highestYear) +
-    Number(minPrice !== 0 || maxPrice !== highestPrice) +
-    Number(minimumGrade > 0);
+  // A single value, not a list -- "grade 4 and up" is how buyers think about
+  // condition, not "grade 4 or grade 4.5 or grade 5", so this stays a
+  // minimum-grade select rather than a checkbox group.
+  function setGradeMin(value: number) {
+    pushParams({ grade_min: value > 0 ? String(value) : undefined });
+  }
+
+  function setPage(page: number) {
+    pushParams({ page: page > 1 ? String(page) : undefined }, true);
+  }
 
   function clearFilters() {
-    setQuery("");
-    setSelectedMakes([]);
-    setSelectedBodyTypes([]);
-    setSelectedFuels([]);
-    setMinYear(lowestYear);
-    setMaxYear(highestYear);
-    setMinPrice(0);
-    setMaxPrice(highestPrice);
-    setMinimumGrade(0);
+    setDrafts({ search: "", yearFrom: "", yearTo: "", priceMin: "", priceMax: "" });
+    // Destination and shipment type are pricing context, not a filter --
+    // clearing filters to start a fresh search must not also throw away the
+    // landed price the buyer came here to see.
+    const kept = new URLSearchParams();
+    const port = searchParams.get("destination_port");
+    const shipment = searchParams.get("shipment_type");
+    if (port) kept.set("destination_port", port);
+    if (shipment) kept.set("shipment_type", shipment);
+    const qs = kept.toString();
+    startTransition(() => {
+      router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    });
   }
+
+  const activeFilterCount =
+    Number(makeList.length > 0) +
+    Number(bodyTypeList.length > 0) +
+    Number(fuelList.length > 0) +
+    Number(Boolean(drafts.search)) +
+    Number(Boolean(drafts.yearFrom || drafts.yearTo)) +
+    Number(Boolean(drafts.priceMin || drafts.priceMax)) +
+    Number(gradeMin > 0);
+
+  const { page, lastPage, total, perPage } = pagination;
+  const rangeStart = total === 0 ? 0 : (page - 1) * perPage + 1;
+  const rangeEnd = Math.min(page * perPage, total);
 
   return (
     <section className={styles.browserSection} aria-label="Browse used vehicles">
+      <DestinationSelector destinations={destinations} />
+
       <div className={styles.browserToolbar}>
         <label className={styles.searchField}>
           <Search aria-hidden="true" />
           <input
             type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            value={drafts.search}
+            onChange={(event) =>
+              setDrafts((current) => ({ ...current, search: event.target.value }))
+            }
             placeholder="Search make, model, stock number..."
           />
         </label>
@@ -192,11 +308,13 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
           <label className={styles.sortField}>
             <span>Sort</span>
             <select value={sort} onChange={(event) => setSort(event.target.value as SortOption)}>
-              <option value="newest">Newest year</option>
-              <option value="oldest">Oldest year</option>
-              <option value="price-low">Price: low to high</option>
-              <option value="price-high">Price: high to low</option>
-              <option value="mileage">Lowest mileage</option>
+              <option value="newest">Recently listed</option>
+              <option value="oldest">Oldest listed</option>
+              <option value="price_low">Price: low to high</option>
+              <option value="price_high">Price: high to low</option>
+              <option value="year_new">Year: newest first</option>
+              <option value="year_old">Year: oldest first</option>
+              <option value="mileage_low">Lowest mileage</option>
             </select>
           </label>
           <div className={styles.viewControl} aria-label="Vehicle view">
@@ -257,43 +375,37 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
           )}
 
           <FilterGroup title="Make">
-            {makes.map(({ value, count }) => (
+            {filters.makes.map((option) => (
               <CheckboxRow
-                key={value}
-                value={value}
-                count={count}
-                checked={selectedMakes.includes(value)}
-                onChange={(checked) =>
-                  setSelectedMakes((current) => toggleValue(current, value, checked))
-                }
+                key={option.name}
+                value={option.name}
+                count={option.count}
+                checked={makeList.includes(option.name)}
+                onChange={() => toggleListValue("make", makeList, option.name)}
               />
             ))}
           </FilterGroup>
 
           <FilterGroup title="Body type">
-            {bodyTypes.map(({ value, count }) => (
+            {filters.bodyTypes.map((option) => (
               <CheckboxRow
-                key={value}
-                value={value}
-                count={count}
-                checked={selectedBodyTypes.includes(value)}
-                onChange={(checked) =>
-                  setSelectedBodyTypes((current) => toggleValue(current, value, checked))
-                }
+                key={option.name}
+                value={option.name}
+                count={option.count}
+                checked={bodyTypeList.includes(option.name)}
+                onChange={() => toggleListValue("body_type", bodyTypeList, option.name)}
               />
             ))}
           </FilterGroup>
 
           <FilterGroup title="Fuel">
-            {fuels.map(({ value, count }) => (
+            {filters.fuels.map((option) => (
               <CheckboxRow
-                key={value}
-                value={value}
-                count={count}
-                checked={selectedFuels.includes(value)}
-                onChange={(checked) =>
-                  setSelectedFuels((current) => toggleValue(current, value, checked))
-                }
+                key={option.name}
+                value={option.name}
+                count={option.count}
+                checked={fuelList.includes(option.name)}
+                onChange={() => toggleListValue("fuel", fuelList, option.name)}
               />
             ))}
           </FilterGroup>
@@ -304,20 +416,26 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
                 <span>From</span>
                 <input
                   type="number"
-                  min={lowestYear}
-                  max={maxYear}
-                  value={minYear}
-                  onChange={(event) => setMinYear(Number(event.target.value) || lowestYear)}
+                  min={filters.years.min ?? undefined}
+                  max={filters.years.max ?? undefined}
+                  placeholder={filters.years.min != null ? String(filters.years.min) : "Any"}
+                  value={drafts.yearFrom}
+                  onChange={(event) =>
+                    setDrafts((current) => ({ ...current, yearFrom: event.target.value }))
+                  }
                 />
               </label>
               <label>
                 <span>To</span>
                 <input
                   type="number"
-                  min={minYear}
-                  max={highestYear}
-                  value={maxYear}
-                  onChange={(event) => setMaxYear(Number(event.target.value) || highestYear)}
+                  min={filters.years.min ?? undefined}
+                  max={filters.years.max ?? undefined}
+                  placeholder={filters.years.max != null ? String(filters.years.max) : "Any"}
+                  value={drafts.yearTo}
+                  onChange={(event) =>
+                    setDrafts((current) => ({ ...current, yearTo: event.target.value }))
+                  }
                 />
               </label>
             </div>
@@ -330,21 +448,25 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
                 <input
                   type="number"
                   min={0}
-                  max={maxPrice}
                   step={500}
-                  value={minPrice}
-                  onChange={(event) => setMinPrice(Number(event.target.value) || 0)}
+                  placeholder="No min"
+                  value={drafts.priceMin}
+                  onChange={(event) =>
+                    setDrafts((current) => ({ ...current, priceMin: event.target.value }))
+                  }
                 />
               </label>
               <label>
                 <span>Max</span>
                 <input
                   type="number"
-                  min={minPrice}
-                  max={highestPrice}
+                  min={0}
                   step={500}
-                  value={maxPrice}
-                  onChange={(event) => setMaxPrice(Number(event.target.value) || highestPrice)}
+                  placeholder="No max"
+                  value={drafts.priceMax}
+                  onChange={(event) =>
+                    setDrafts((current) => ({ ...current, priceMax: event.target.value }))
+                  }
                 />
               </label>
             </div>
@@ -354,13 +476,13 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
             <label className={styles.gradeSelect}>
               <span>Minimum grade</span>
               <select
-                value={minimumGrade}
-                onChange={(event) => setMinimumGrade(Number(event.target.value))}
+                value={gradeMin}
+                onChange={(event) => setGradeMin(Number(event.target.value))}
               >
                 <option value={0}>Any grade</option>
-                <option value={4}>Grade 4.0+</option>
                 <option value={4.5}>Grade 4.5+</option>
-                <option value={4.8}>Grade 4.8+</option>
+                <option value={4}>Grade 4.0+</option>
+                <option value={3.5}>Grade 3.5+</option>
               </select>
             </label>
           </FilterGroup>
@@ -370,14 +492,22 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
             className={styles.applyFiltersButton}
             onClick={() => setFiltersOpen(false)}
           >
-            Show {filteredVehicles.length} vehicles
+            Show {total} vehicles
           </button>
         </aside>
 
-        <div className={styles.resultsArea}>
+        <div className={styles.resultsArea} data-pending={isPending ? "true" : undefined}>
           <div className={styles.resultsSummary}>
-            <p>
-              <strong>{filteredVehicles.length}</strong> vehicles match your search
+            <p aria-live="polite">
+              {total > 0 ? (
+                <>
+                  <strong>{rangeStart}</strong>&ndash;<strong>{rangeEnd}</strong> of{" "}
+                  <strong>{total}</strong> vehicle{total === 1 ? "" : "s"}
+                </>
+              ) : (
+                <strong>0 vehicles</strong>
+              )}
+              {destinationPort ? ` · landed prices to ${destinationPort}` : ""}
             </p>
             {activeFilterCount > 0 && (
               <button type="button" onClick={clearFilters}>
@@ -386,9 +516,9 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
             )}
           </div>
 
-          {visibleVehicles.length > 0 ? (
+          {vehicles.length > 0 ? (
             <div className={`${styles.vehicleGrid} ${viewMode === "list" ? styles.vehicleList : ""}`}>
-              {visibleVehicles.map((vehicle) => (
+              {vehicles.map((vehicle) => (
                 <VehicleCard key={vehicle.id} vehicle={vehicle} viewMode={viewMode} />
               ))}
             </div>
@@ -396,19 +526,19 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
             <div className={styles.emptyState}>
               <Search aria-hidden="true" />
               <h2>No matching vehicles</h2>
-              <p>Try removing a filter or searching with a broader model name.</p>
+              <p>Try removing a filter or searching with a broader term.</p>
               <button type="button" onClick={clearFilters}>Clear all filters</button>
             </div>
           )}
 
-          {pageCount > 1 && (
-            <Pagination
-              pageCount={pageCount}
-              currentPage={currentPage}
-              onPageChange={({ selected }) =>
-                setPagination({ key: filterKey, page: selected })
-              }
-            />
+          {lastPage > 1 && (
+            <nav aria-label="Vehicle results pages">
+              <Pagination
+                pageCount={lastPage}
+                currentPage={page - 1}
+                onPageChange={({ selected }) => setPage(selected + 1)}
+              />
+            </nav>
           )}
         </div>
       </div>
@@ -417,6 +547,10 @@ export function VehicleBrowser({ vehicles, initialFilters = {} }: VehicleBrowser
 }
 
 function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMode }) {
+  const newArrival = isNewArrival(vehicle.listedAt);
+  const reserved = vehicle.availability === "Reserved";
+  const whatsapp = whatsappUrl(vehicle);
+
   return (
     <article className={styles.vehicleCard} data-view={viewMode}>
       <Link
@@ -430,59 +564,129 @@ function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMo
           fill
           sizes={
             viewMode === "list"
-              ? "(max-width: 760px) 100vw, 360px"
-              : "(max-width: 760px) 100vw, (max-width: 1120px) 50vw, 33vw"
+              ? "(max-width: 760px) 100vw, 240px"
+              : "(max-width: 700px) 100vw, (max-width: 900px) 50vw, (max-width: 1180px) 33vw, 25vw"
           }
           className={styles.vehicleImage}
           unoptimized={isRemoteVehicleMedia(vehicle.image)}
         />
-        <span className={styles.conditionBadge}>
-          <BadgeCheck aria-hidden="true" /> {vehicle.condition}
-        </span>
-        <span className={styles.gradeBadge}>Grade {vehicle.auctionGrade}</span>
+        <div className={styles.badgeStackLeft}>
+          {newArrival && <span className={styles.newBadge}>New arrival</span>}
+          {vehicle.auctionGrade != null && (
+            <span className={styles.gradeBadge}>Grade {vehicle.auctionGrade}</span>
+          )}
+        </div>
+        {reserved && <span className={styles.reservedBadge}>Reserved</span>}
       </Link>
 
       <div className={styles.vehicleCardBody}>
         <div className={styles.vehicleMeta}>
           <span>{vehicle.brand}</span>
-          <span>{vehicle.year}</span>
+          <span className={styles.stockCode}>Stock {vehicle.stock}</span>
         </div>
         <h2>
           <Link href={`/vehicles/${vehicle.slug}`}>{vehicle.title}</Link>
         </h2>
         <div className={styles.stockMeta}>
-          <span>Stock {vehicle.stock}</span>
           <span><MapPin aria-hidden="true" /> {vehicle.location}</span>
         </div>
 
         <div className={styles.vehicleSpecs}>
+          <span><CalendarDays aria-hidden="true" /> {vehicle.year}</span>
           <span><Gauge aria-hidden="true" /> {vehicle.mileage}</span>
-          <span><Fuel aria-hidden="true" /> {vehicle.engine}</span>
-          <span><Check aria-hidden="true" /> {vehicle.transmission}</span>
+          <span><CircleGauge aria-hidden="true" /> {vehicle.engine}</span>
+          <span><Settings2 aria-hidden="true" /> {vehicle.transmission}</span>
+          <span><Disc aria-hidden="true" /> {vehicle.steering}</span>
         </div>
 
         <p className={styles.cardDescription}>{vehicle.description}</p>
 
         <div className={styles.vehicleFooter}>
-          <div>
-            <small>FOB price</small>
-            <strong>{formatVehiclePrice(vehicle)}</strong>
+          <PriceDisplay vehicle={vehicle} />
+          <div className={styles.footerActions}>
+            {viewMode === "list" && whatsapp && (
+              <a
+                href={whatsapp}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.whatsappButton}
+                aria-label={`WhatsApp us about stock ${vehicle.stock}`}
+              >
+                <MessageCircle aria-hidden="true" /> WhatsApp
+              </a>
+            )}
+            <Link href={`/vehicles/${vehicle.slug}`}>
+              View vehicle <ArrowUpRight aria-hidden="true" />
+            </Link>
           </div>
-          <Link href={`/vehicles/${vehicle.slug}`}>
-            View vehicle <ArrowUpRight aria-hidden="true" />
-          </Link>
         </div>
       </div>
     </article>
   );
 }
 
-function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
+/**
+ * The headline figure changes meaning depending on what JC can quote:
+ * a landed total when the route is priced, FOB with an explicit "ask us"
+ * when it is not, and plain FOB when no destination was chosen at all.
+ * Whichever figure leads, it is always labelled -- a number on a used-car
+ * listing with no label reads as a price, and this one might only be a part
+ * of one.
+ */
+function PriceDisplay({ vehicle }: { vehicle: Vehicle }) {
+  const landed = vehicle.landed;
+
+  if (landed && landed.priced && landed.total != null) {
+    return (
+      <div>
+        <small>Est. landed &middot; {landed.port}</small>
+        <strong>{formatCurrency(landed.total, landed.currency)}</strong>
+        <span className={styles.fobSecondary}>FOB {formatVehiclePrice(vehicle)}</span>
+      </div>
+    );
+  }
+
+  if (landed && !landed.priced) {
+    return (
+      <div>
+        <small>FOB price</small>
+        <strong>{formatVehiclePrice(vehicle)}</strong>
+        <span className={styles.freightNote}>Ask us for a freight quote to {landed.port}</span>
+      </div>
+    );
+  }
+
+  if (!hasPublicPrice(vehicle)) {
+    // Not every unit carries a published asking price. Showing "$0" or an
+    // empty slot would both read as a mistake, so the card says plainly that
+    // the number comes from a person.
+    return (
+      <div>
+        <small>FOB price</small>
+        <strong className={styles.poaPrice}>{PRICE_ON_APPLICATION}</strong>
+      </div>
+    );
+  }
+
   return (
-    <fieldset className={styles.filterGroup}>
-      <legend>{title}</legend>
+    <div>
+      <small>FOB price</small>
+      <strong>{formatVehiclePrice(vehicle)}</strong>
+    </div>
+  );
+}
+
+function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
+  // A div with role="group", not a fieldset. A <legend> is laid out inside the
+  // fieldset's border rather than as a normal block, so its margin is ignored
+  // and browsers reserve their own space above the first control -- which is
+  // the gap that made every filter heading float away from its options.
+  // role + aria-label keeps the grouping for screen readers without it.
+  return (
+    <div className={styles.filterGroup} role="group" aria-label={title}>
+      <p className={styles.filterGroupTitle}>{title}</p>
       {children}
-    </fieldset>
+    </div>
   );
 }
 
@@ -510,19 +714,4 @@ function CheckboxRow({
       <small>{count}</small>
     </label>
   );
-}
-
-function toggleValue(current: string[], value: string, checked: boolean) {
-  return checked ? Array.from(new Set([...current, value])) : current.filter((item) => item !== value);
-}
-
-function countValues(values: string[]) {
-  const counts = values.reduce<Record<string, number>>((result, value) => {
-    result[value] = (result[value] ?? 0) + 1;
-    return result;
-  }, {});
-
-  return Object.entries(counts)
-    .map(([value, count]) => ({ value, count }))
-    .sort((a, b) => a.value.localeCompare(b.value));
 }

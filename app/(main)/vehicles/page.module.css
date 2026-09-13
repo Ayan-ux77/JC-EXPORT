@@ -5,9 +5,13 @@
   --soft: #f4f6f7;
   --navy: #0a1722;
   --navy-2: #14334a;
-  --blue: #287ec9;
-  --blue-dark: #1764a6;
-  --red: #c30010;
+  /* The listing kept the old blue/red palette after the rebrand, so a buyer
+     moving from the home page to the stock list watched the site change
+     company. These now point at the same brand tokens the rest of the site
+     uses: teal for action, charcoal for emphasis. */
+  --blue: var(--brand-teal-strong);
+  --blue-dark: var(--brand-charcoal);
+  --red: var(--brand-charcoal);
   min-height: 100vh;
   background: var(--soft);
   color: var(--ink);
@@ -27,7 +31,7 @@
 }
 
 .page em {
-  color: #82c4fb;
+  color: var(--brand-teal);
   font-weight: 500;
 }
 
@@ -354,9 +358,9 @@
   border-bottom: 1px solid #e6eaec;
 }
 
-.filterGroup legend {
+.filterGroupTitle {
   width: 100%;
-  margin-bottom: 14px;
+  margin: 0 0 10px;
   color: #303b44;
   font-size: 11px;
   font-weight: 900;
@@ -446,6 +450,15 @@
 
 .resultsArea {
   min-width: 0;
+  transition: opacity 150ms ease;
+}
+
+/* A filter change is now a server round trip. This dims the results that
+   are still on screen while the new page loads rather than disabling
+   anything -- disabled controls are how a pending state traps keyboard
+   focus on a button that can't be activated. */
+.resultsArea[data-pending="true"] {
+  opacity: 0.55;
 }
 
 .resultsSummary {
@@ -479,8 +492,8 @@
 
 .vehicleGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
   margin-top: 14px;
 }
 
@@ -502,7 +515,7 @@
 .vehicleImageLink {
   position: relative;
   display: block;
-  aspect-ratio: 414 / 266;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: #e1e6e8;
 }
@@ -516,62 +529,84 @@
   transform: scale(1.025);
 }
 
-.conditionBadge,
-.gradeBadge {
+.badgeStackLeft {
   position: absolute;
-  top: 12px;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.newBadge,
+.gradeBadge,
+.reservedBadge {
   display: inline-flex;
   align-items: center;
   border-radius: 3px;
+  padding: 6px 8px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   font-size: 9px;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.conditionBadge {
-  left: 12px;
-  gap: 5px;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.95);
-  color: #256042;
+/* Recently listed -- teal, the brand accent, since it is good news rather
+   than a warning. */
+.newBadge {
+  background: var(--brand-teal, #5cc6d0);
+  color: #08313a;
 }
 
-.conditionBadge svg {
-  width: 13px;
-  height: 13px;
-}
-
+/* The trust currency of used-car export: an inspector's own grade, not a
+   claim JC makes about itself. */
 .gradeBadge {
-  right: 12px;
-  padding: 7px 8px;
   background: rgba(9, 28, 42, 0.9);
   color: #ffffff;
 }
 
+/* A reserved car stays listed because deals fall through, but the badge has
+   to say so before a buyer spends a WhatsApp message on a car that is
+   probably already sold -- amber, not the teal used for good news. */
+.reservedBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  background: #c9840b;
+  color: #ffffff;
+}
+
 .vehicleCardBody {
-  padding: 18px;
+  padding: 12px 14px;
 }
 
 .vehicleMeta {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px;
+  gap: 6px 12px;
   color: var(--blue-dark);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.vehicleMeta span:last-child {
-  color: #74808a;
+/* Buyers quote this in WhatsApp ("do you still have JC-0042?"), so it needs
+   to read like a code, not like prose. */
+.stockCode {
+  color: var(--brand-charcoal, #373435);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0;
 }
 
 .vehicleCard h2 {
-  min-height: 44px;
-  margin: 11px 0 0;
-  font-size: 17px;
+  min-height: 38px;
+  margin: 8px 0 0;
+  font-size: 15px;
   line-height: 1.28;
 }
 
@@ -584,7 +619,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px 13px;
-  margin-top: 12px;
+  margin-top: 8px;
   color: #87929a;
   font-size: 9px;
   text-transform: uppercase;
@@ -602,11 +637,11 @@
 }
 
 .vehicleSpecs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 17px;
-  padding: 13px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 10px;
+  padding: 10px 0;
   border-top: 1px solid #e6eaed;
   border-bottom: 1px solid #e6eaed;
 }
@@ -615,9 +650,9 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   color: #59666f;
-  font-size: 10px;
+  font-size: 9px;
   white-space: nowrap;
 }
 
@@ -657,10 +692,46 @@
   margin-top: 3px;
   color: var(--red);
   font-family: var(--font-display), Georgia, serif;
-  font-size: 22px;
+  font-size: 20px;
 }
 
-.vehicleFooter > a {
+/* The secondary line under a headline price: the FOB figure when a landed
+   total leads, or the "ask us" note when JC has no rate for the route. It
+   must never look like a second price. */
+.fobSecondary,
+.freightNote {
+  display: block;
+  margin-top: 4px;
+  color: #849099;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.freightNote {
+  color: var(--blue-dark);
+}
+
+/* "Price on application" sits in the slot a price would occupy, so it takes
+   the label's weight rather than the price's -- at 20px display serif the
+   phrase wrapped and pushed the card's action row out of line. */
+.poaPrice {
+  font-family: var(--font-body), Arial, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 800;
+  color: var(--muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.footerActions > a {
   min-height: 38px;
   display: inline-flex;
   align-items: center;
@@ -675,59 +746,96 @@
   white-space: nowrap;
 }
 
-.vehicleFooter > a:hover {
+.footerActions > a:hover {
   border-color: var(--blue);
   background: var(--blue);
   color: #ffffff;
 }
 
-.vehicleFooter svg {
+.footerActions svg {
   width: 14px;
   height: 14px;
+}
+
+/* WhatsApp's own green rather than a brand accent: it needs to read as "this
+   opens WhatsApp" at a glance, which matters more here than palette purity.
+   Hidden entirely by the component when no number is configured. The extra
+   .footerActions > a in the selector out-specifies the base link colour
+   above without resorting to !important. */
+.footerActions > a.whatsappButton {
+  background: #25d366;
+  color: #ffffff;
+  border-color: #25d366;
+}
+
+.footerActions > a.whatsappButton:hover {
+  background: #1ebd5a;
+  border-color: #1ebd5a;
 }
 
 .vehicleList {
   grid-template-columns: 1fr;
 }
 
+/* List mode is a compact row, not a smaller version of the grid card:
+   thumbnail, title, specs, price and action inline on one line wherever the
+   row is wide enough. Buyers comparing forty cars scan rows like this; a
+   brochure-style stacked card is the two-per-row problem all over again. */
 .vehicleList .vehicleCard {
   display: grid;
-  grid-template-columns: minmax(280px, 34%) minmax(0, 1fr);
+  grid-template-columns: 148px minmax(0, 1fr);
 }
 
 .vehicleList .vehicleImageLink {
-  min-height: 260px;
-  aspect-ratio: auto;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
 }
 
 .vehicleList .vehicleCardBody {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 20px;
+  padding: 10px 16px;
+}
+
+.vehicleList .vehicleMeta {
+  flex: 0 0 auto;
   flex-direction: column;
-  padding: 24px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2px;
 }
 
 .vehicleList .vehicleCard h2 {
-  min-height: auto;
-  font-size: 23px;
+  flex: 1 1 200px;
+  min-height: 0;
+  margin: 0;
+  font-size: 15px;
+}
+
+.vehicleList .stockMeta {
+  flex: 0 0 auto;
+  margin-top: 0;
 }
 
 .vehicleList .vehicleSpecs {
-  display: flex;
-  gap: 25px;
+  flex: 1 1 260px;
+  margin-top: 0;
+  padding: 0;
+  border: 0;
 }
 
+/* A compact row has no room for prose -- the description stays on the
+   detail page, one click away. */
 .vehicleList .cardDescription {
-  display: block;
-  max-width: 670px;
-  margin: 17px 0 0;
-  color: #68757e;
-  font-size: 13px;
-  line-height: 1.55;
+  display: none;
 }
 
 .vehicleList .vehicleFooter {
-  margin-top: auto;
-  padding-top: 18px;
+  flex: 0 0 auto;
+  margin: 0;
+  gap: 14px;
 }
 
 .emptyState {
@@ -781,11 +889,15 @@
 
 @media (max-width: 1180px) {
   .vehicleGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 900px) {
+  .vehicleGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .assuranceStrip > div {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -934,11 +1046,13 @@
 
   .vehicleList .vehicleImageLink {
     min-height: 0;
-    aspect-ratio: 414 / 266;
+    aspect-ratio: 4 / 3;
   }
 
   .vehicleList .vehicleCardBody {
-    padding: 18px;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 16px;
   }
 }
 

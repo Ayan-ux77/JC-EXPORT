@@ -28,7 +28,7 @@ const displayFont = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Frequently Asked Questions | JC Export",
+  title: "Frequently Asked Questions | Japan Car Export",
   description:
     "Answers about Japanese used vehicles, auction grades, export pricing, payment, shipping, and documents.",
 };
@@ -40,9 +40,9 @@ const faqGroups = [
     icon: CircleHelp,
     questions: [
       {
-        question: "Are JC Export vehicles new or used?",
+        question: "Are Japan Car Export vehicles new or used?",
         answer:
-          "JC Export specializes in used vehicles from Japan. Age, mileage, repair history, auction information, and visible condition differ from vehicle to vehicle, so each purchase should be judged from its own listing and supporting evidence.",
+          "Japan Car Export specializes in used vehicles from Japan. Age, mileage, repair history, auction information, and visible condition differ from vehicle to vehicle, so each purchase should be judged from its own listing and supporting evidence.",
       },
       {
         question: "What does an auction grade mean?",
@@ -55,7 +55,7 @@ const faqGroups = [
           "Yes, when the vehicle and yard access allow it. Tell us what you need checked before payment. Additional third-party inspection services may carry a separate fee and can affect the shipment timeline.",
       },
       {
-        question: "Can JC Export source a vehicle that is not listed?",
+        question: "Can Japan Car Export source a vehicle that is not listed?",
         answer:
           "Yes. Share the make, model, year range, transmission, fuel type, budget, and destination. We can use those requirements to look through available stock and Japanese auction channels.",
       },
@@ -79,7 +79,7 @@ const faqGroups = [
       {
         question: "How do I pay?",
         answer:
-          "Payment instructions are issued with the invoice and should be verified directly with JC Export before transfer. Do not send funds to an account introduced only through a forwarded message or an unexpected change of banking details.",
+          "Payment instructions are issued with the invoice and should be verified directly with Japan Car Export before transfer. Do not send funds to an account introduced only through a forwarded message or an unexpected change of banking details.",
       },
       {
         question: "Can a vehicle be reserved without payment?",
@@ -126,7 +126,7 @@ const faqGroups = [
           "The document set depends on the sale and destination. It may include the commercial invoice, export certificate and translation, bill of lading or release details, inspection certificate when ordered, and other documents stated in the quote.",
       },
       {
-        question: "Does JC Export pay my import duty or clear the vehicle?",
+        question: "Does Japan Car Export pay my import duty or clear the vehicle?",
         answer:
           "Not unless that service is specifically included in writing. Import duty, local tax, port clearance, registration, and destination compliance are normally the buyer's responsibility or handled by the buyer's local clearing agent.",
       },
@@ -207,7 +207,7 @@ export default function FaqPage() {
             <h2>Ask about your exact vehicle and destination.</h2>
             <span>We can clarify the stock, quote basis, route, and documents before you proceed.</span>
             <Link href="/contact" className={styles.blueButton}>
-              Contact JC Export <ArrowRight aria-hidden="true" />
+              Contact Japan Car Export <ArrowRight aria-hidden="true" />
             </Link>
           </aside>
         </div>

@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "../components/legal-document";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | JC Export",
-  description: "How JC Export collects, uses, shares, protects, and retains personal information.",
+  title: "Privacy Policy | Japan Car Export",
+  description: "How Japan Car Export collects, uses, shares, protects, and retains personal information.",
 };
 
 const sections: LegalSection[] = [
@@ -69,7 +69,7 @@ const sections: LegalSection[] = [
     title: "Security",
     paragraphs: [
       "We use reasonable organizational and technical measures designed to protect information. No internet transmission, messaging platform, or storage system can be guaranteed completely secure.",
-      "Do not send payment solely because of an unexpected message. Verify bank-detail changes through a trusted JC Export contact before transferring funds.",
+      "Do not send payment solely because of an unexpected message. Verify bank-detail changes through a trusted Japan Car Export contact before transferring funds.",
     ],
   },
   {
@@ -92,7 +92,7 @@ const sections: LegalSection[] = [
     title: "Policy changes and contact",
     paragraphs: [
       "We may update this policy when services, providers, or legal requirements change. The current version and update date will be published on this page.",
-      "Questions or privacy requests can be submitted through the JC Export contact page.",
+      "Questions or privacy requests can be submitted through the Japan Car Export contact page.",
     ],
   },
 ];
@@ -102,7 +102,7 @@ export default function PrivacyPage() {
     <LegalDocument
       eyebrow="Privacy"
       title="Privacy Policy"
-      introduction="How JC Export handles the information needed to answer inquiries, arrange used-vehicle exports, coordinate shipping, and protect transactions."
+      introduction="How Japan Car Export handles the information needed to answer inquiries, arrange used-vehicle exports, coordinate shipping, and protect transactions."
       updated="July 2026"
       sections={sections}
     />

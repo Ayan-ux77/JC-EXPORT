@@ -1,0 +1,102 @@
+.wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  margin-bottom: 14px;
+  padding: 10px 16px;
+  border: 1px solid var(--brand-teal, #5cc6d0);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--brand-teal, #5cc6d0) 10%, #ffffff);
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  color: var(--brand-teal, #5cc6d0);
+}
+
+.field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.field > span {
+  color: var(--brand-charcoal, #373435);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.field select {
+  min-width: 0;
+  flex: 1;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #cbd4da;
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--brand-charcoal, #373435);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.field select:focus {
+  outline: 2px solid var(--brand-teal, #5cc6d0);
+  outline-offset: 1px;
+}
+
+.shipmentToggle {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid #cbd4da;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.shipmentToggle button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 3px;
+  padding: 0 12px;
+  background: transparent;
+  color: #4c5963;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.shipmentToggle button[aria-pressed="true"] {
+  background: var(--brand-charcoal, #373435);
+  color: #ffffff;
+}
+
+@media (max-width: 560px) {
+  .wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .icon {
+    display: none;
+  }
+
+  .shipmentToggle {
+    justify-content: stretch;
+  }
+
+  .shipmentToggle button {
+    flex: 1;
+  }
+}

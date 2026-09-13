@@ -44,7 +44,7 @@ const footerColumns = [
   {
     title: "Company",
     links: [
-      { label: "About JC Export", href: "/about" },
+      { label: "About Japan Car Export", href: "/about" },
       { label: "Contact", href: "/contact" },
       { label: "Buyer FAQ", href: "/faq" },
       { label: "Terms", href: "/terms" },
@@ -80,7 +80,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         </div>
 
         <div className={styles.mainNav}>
-          <Link href="/" className={styles.logoLink} aria-label="JC Export home">
+          <Link href="/" className={styles.logoLink} aria-label="Japan Car Export home">
             <BrandLogo />
           </Link>
 
@@ -130,7 +130,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
       <footer className={styles.footer}>
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
-            <Link href="/" aria-label="JC Export home">
+            <Link href="/" aria-label="Japan Car Export home">
               <BrandLogo tone="on-dark" size="footer" />
             </Link>
             <p>
@@ -138,16 +138,16 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
               documentation, and worldwide shipping support.
             </p>
             <div className={styles.socialLinks}>
-              <a href="#" aria-label="JC Export on Facebook" title="Facebook">
+              <a href="#" aria-label="Japan Car Export on Facebook" title="Facebook">
                 <FaFacebookF aria-hidden="true" />
               </a>
-              <a href="#" aria-label="JC Export on Instagram" title="Instagram">
+              <a href="#" aria-label="Japan Car Export on Instagram" title="Instagram">
                 <FaInstagram aria-hidden="true" />
               </a>
-              <a href="#" aria-label="JC Export on YouTube" title="YouTube">
+              <a href="#" aria-label="Japan Car Export on YouTube" title="YouTube">
                 <FaYoutube aria-hidden="true" />
               </a>
-              <a href="#" aria-label="JC Export on LinkedIn" title="LinkedIn">
+              <a href="#" aria-label="Japan Car Export on LinkedIn" title="LinkedIn">
                 <FaLinkedinIn aria-hidden="true" />
               </a>
             </div>
@@ -166,7 +166,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         </div>
 
         <div className={styles.footerBottom}>
-          <p>© 2026 JC Export. All rights reserved.</p>
+          <p>© 2026 Japan Car Export. All rights reserved.</p>
           <p>Japan-sourced vehicles. Worldwide support.</p>
         </div>
       </footer>

@@ -14,7 +14,7 @@ export default function AuthLayout({
     <>
       <header className={styles.box}>
         <nav className={styles.nav}>
-          <Link href="/" className={styles.logoLink} aria-label="JC Export home">
+          <Link href="/" className={styles.logoLink} aria-label="Japan Car Export home">
             <BrandLogo tone="on-dark" size="compact" />
           </Link>
 

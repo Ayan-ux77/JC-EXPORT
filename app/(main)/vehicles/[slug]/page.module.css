@@ -4,9 +4,13 @@
   --line: #d8e0e4;
   --soft: #f4f6f7;
   --navy: #0a1722;
-  --blue: #287ec9;
-  --blue-dark: #1764a6;
-  --red: #c30010;
+  /* The listing kept the old blue/red palette after the rebrand, so a buyer
+     moving from the home page to the stock list watched the site change
+     company. These now point at the same brand tokens the rest of the site
+     uses: teal for action, charcoal for emphasis. */
+  --blue: var(--brand-teal-strong);
+  --blue-dark: var(--brand-charcoal);
+  --red: var(--brand-charcoal);
   min-height: 100vh;
   padding: 34px 0 112px;
   background: var(--soft);
@@ -78,6 +82,10 @@
 .backLink svg {
   width: 15px;
   height: 15px;
+}
+
+.destinationRow {
+  margin-top: 22px;
 }
 
 .productLayout {
@@ -244,6 +252,14 @@
   color: #276640;
 }
 
+.statusRow > .reservedBadge {
+  /* Reserved is a caution, not success -- amber rather than the green used
+     for Available, so the two states read differently at a glance, not just
+     by text. */
+  background: #fbe9d7;
+  color: #a15b06;
+}
+
 .vehicleEyebrow {
   margin: 24px 0 0;
   color: var(--blue-dark);
@@ -380,6 +396,12 @@
   grid-template-columns: 1.3fr 0.7fr;
   gap: 9px;
   margin-top: 12px;
+}
+
+.primaryActionsSingle {
+  /* No WhatsApp number configured -- the quote button takes the full row
+     rather than leaving a dead column where a second button would be. */
+  grid-template-columns: 1fr;
 }
 
 .primaryAction,

@@ -34,6 +34,8 @@ type CallOptions = {
   request?: Request;
   /** Extra headers to forward, such as the browser's Idempotency-Key. */
   headers?: Record<string, string>;
+  /** Return the whole envelope rather than just `data` -- see callApiPage. */
+  keepEnvelope?: boolean;
   /** Seconds to cache. Omit for no caching, which is right for anything personal. */
   revalidate?: number;
   timeoutMs?: number;
@@ -46,6 +48,7 @@ export async function callApi<T>(path: string, options: CallOptions = {}): Promi
     token,
     request,
     headers: extraHeaders,
+    keepEnvelope,
     revalidate,
     timeoutMs = 10_000,
   } = options;
@@ -94,9 +97,54 @@ export async function callApi<T>(path: string, options: CallOptions = {}): Promi
     );
   }
 
+  if (keepEnvelope) {
+    return payload as T;
+  }
+
   // Laravel resources wrap in `data`; a few endpoints answer with a bare
   // object. Both are accepted so callers do not have to know which.
   return (payload && "data" in payload ? payload.data : payload) as T;
+}
+
+/** The whole response envelope, for callers that need more than `data`. */
+async function callApiRaw<T>(path: string, options: CallOptions = {}): Promise<T> {
+  return callApi<T>(path, { ...options, keepEnvelope: true }) as Promise<T>;
+}
+
+export type Paginated<T> = {
+  data: T[];
+  total: number;
+  page: number;
+  lastPage: number;
+  perPage: number;
+};
+
+/**
+ * A page of results WITH its pagination meta.
+ *
+ * callApi() unwraps `data` and discards the rest, which is right for a single
+ * record and wrong for a listing: without the total, a catalogue can only show
+ * the rows it happens to have fetched and has to filter them in the browser.
+ * That caps the site at one page of stock however much is actually for sale.
+ */
+export async function callApiPage<T>(path: string, options: CallOptions = {}): Promise<Paginated<T>> {
+  const payload = await callApiRaw<{
+    data: T[];
+    meta?: { total?: number; current_page?: number; last_page?: number; per_page?: number };
+  }>(path, options);
+
+  const rows = payload?.data ?? [];
+  const meta = payload?.meta;
+
+  return {
+    data: rows,
+    // An endpoint that is not paginated still answers honestly: one page
+    // containing everything it returned.
+    total: meta?.total ?? rows.length,
+    page: meta?.current_page ?? 1,
+    lastPage: meta?.last_page ?? 1,
+    perPage: meta?.per_page ?? rows.length,
+  };
 }
 
 /** Laravel returns 422 with a field map; the first message is the useful one. */
