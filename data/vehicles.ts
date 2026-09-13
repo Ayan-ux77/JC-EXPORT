@@ -1,3 +1,5 @@
+import { whatsapp } from "./site";
+
 export type LandedCost = {
   port: string;
   fob: number;
@@ -132,8 +134,28 @@ export function formatCurrency(value: number | null | undefined, currency?: stri
   }).format(value);
 }
 
-export function isRemoteVehicleMedia(value: string) {
-  return /^https?:\/\//i.test(value);
+/**
+ * Turn an ERP photo URL into a path on this site.
+ *
+ * jc-portal hands out absolute URLs on its own origin. Served that way the
+ * browser makes a cross-origin request to a second port, and Next's image
+ * optimiser refuses the host outright whenever it resolves to a private
+ * address. `/media/...` is rewritten back to the ERP server-side (see
+ * next.config.ts), so the photo arrives as a local image on this origin.
+ *
+ * Anything that is not an ERP media path is handed back untouched.
+ */
+export function mediaSrc(url: string): string {
+  if (!url) {
+    return url;
+  }
+  try {
+    const { pathname } = new URL(url);
+    return pathname.startsWith("/storage/") ? `/media${pathname.slice("/storage".length)}` : url;
+  } catch {
+    // Already a relative path -- a local placeholder, say.
+    return url;
+  }
 }
 
 const NEW_ARRIVAL_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
@@ -158,14 +180,7 @@ export function isNewArrival(listedAt: string | undefined): boolean {
  * can hide the button entirely rather than render a link that goes nowhere.
  */
 export function whatsappUrl(vehicle: Pick<Vehicle, "stock" | "title">): string | null {
-  const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
-  if (!number) return null;
-
-  const text = encodeURIComponent(
-    `Hello, I am interested in ${vehicle.stock} (${vehicle.title}).`,
-  );
-
-  return `https://wa.me/${number}?text=${text}`;
+  return whatsapp(`Hello, I am interested in ${vehicle.stock} (${vehicle.title}).`);
 }
 
 /*

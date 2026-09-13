@@ -1,25 +1,12 @@
 import type { Metadata } from "next";
+import { bodyFont, displayFont } from "@/app/fonts";
 import Link from "next/link";
-import { Fraunces, Lato } from "next/font/google";
 import { BadgeCheck, Check, Clock3, FileCheck2, ShieldCheck, Ship } from "lucide-react";
 
 import { getVehicle } from "@/data/vehicle-service";
 import { PublicPageHero } from "../components/public-page-hero";
 import { QuoteRequestForm } from "../components/quote-request-form";
 import styles from "../components/public-pages.module.css";
-
-const bodyFont = Lato({
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
-  variable: "--font-body",
-});
-
-const displayFont = Fraunces({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
 
 export const metadata: Metadata = {
   title: "Request a Japanese Vehicle Export Quote | Japan Car Export",

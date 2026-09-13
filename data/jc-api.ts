@@ -8,6 +8,8 @@ import "server-only";
  * reason it cannot be stolen by a script on the page.
  */
 
+import { site } from "./site";
+
 export class JcApiError extends Error {
   constructor(
     public readonly status: number,
@@ -251,7 +253,7 @@ export function assertSameOrigin(request: Request) {
   const allowed = new Set(
     [
       new URL(request.url).origin,
-      process.env.NEXT_PUBLIC_SITE_URL,
+      site.url,
       ...(process.env.WEBSITE_ALLOWED_ORIGINS || "").split(","),
     ]
       .filter(Boolean)

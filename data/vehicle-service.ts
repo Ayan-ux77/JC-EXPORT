@@ -176,3 +176,28 @@ function toParams(query: VehicleQuery) {
 
   return params.toString();
 }
+
+/**
+ * What a customer said about a car they bought.
+ *
+ * Only reviews a human at JC has approved come back from this endpoint --
+ * jc-portal moderates them, and a pending review (including an unhappy one)
+ * must never reach the website by accident.
+ */
+export type CustomerReview = {
+  id: number;
+  name: string;
+  country: string | null;
+  vehicle: string | null;
+  rating: number;
+  review: string;
+  date: string | null;
+  /** Attached to a real customer record -- somebody who actually bought a car. */
+  verified: boolean;
+};
+
+export async function getReviews(limit = 6): Promise<CustomerReview[]> {
+  // An unreachable ERP means "no reviews to show", not a broken home page:
+  // the section hides itself and everything around it still renders.
+  return callApi<CustomerReview[]>(`reviews?limit=${limit}`, { revalidate: 300 }).catch(() => []);
+}

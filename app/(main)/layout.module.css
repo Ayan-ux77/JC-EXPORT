@@ -127,6 +127,16 @@
   transform: scaleX(1);
 }
 
+/* The current page keeps the underline the others only borrow on hover, so a
+   reader can tell where they are without having to read the address bar. */
+.desktopNav a.navActive {
+  color: var(--brand-charcoal);
+}
+
+.desktopNav a.navActive::after {
+  transform: scaleX(1);
+}
+
 .headerActions {
   display: flex;
   align-items: center;
@@ -187,7 +197,9 @@
   padding: 64px max(24px, calc((100vw - 1296px) / 2)) 28px;
   background: #081722;
   color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
+  /* The footer used to opt out of the brand type entirely and set Arial, so
+     the last thing on every page was in a different typeface from the rest. */
+  font-family: var(--font-body), Helvetica, Arial, sans-serif;
 }
 
 .footerTop {
@@ -208,10 +220,40 @@
   line-height: 1.65;
 }
 
+/* How to reach a person, in the place people look for it. The footer named
+   no phone number or address at all -- for a trade that runs on WhatsApp,
+   that is the one thing it could not afford to leave out. */
+.footerContact {
+  display: grid;
+  gap: 11px;
+  margin-top: 26px;
+}
+
+.footerContact a {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.footerContact a:hover {
+  color: var(--brand-teal);
+}
+
+.footerContact svg {
+  width: 15px;
+  height: 15px;
+  color: var(--brand-teal);
+}
+
 .socialLinks {
   display: flex;
   gap: 9px;
-  margin-top: 28px;
+  margin-top: 24px;
 }
 
 .socialLinks a {
@@ -263,7 +305,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-top: 52px;
+  flex-wrap: wrap;
+  margin-top: 34px;
   padding-top: 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
   color: rgba(255, 255, 255, 0.5);
@@ -272,6 +315,43 @@
 
 .footerBottom p {
   margin: 0;
+  display: flex;
+  gap: 20px;
+}
+
+.footerBottom a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+}
+
+.footerBottom a:hover {
+  color: #ffffff;
+}
+
+/* Three link columns stacked into one very long list on anything narrow. Two
+   across keeps the footer a footer rather than another page of its own. */
+@media (max-width: 1080px) {
+  .footerTop {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px;
+  }
+
+  .footerBrand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .footerTop {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
+  .footerBottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 }
 
 @media (max-width: 1180px) {
@@ -346,6 +426,12 @@
     font-size: 13px;
     font-weight: 700;
     text-decoration: none;
+  }
+
+  .mobileMenu nav a.mobileNavActive {
+    color: var(--brand-charcoal);
+    background: #f1f7f8;
+    box-shadow: inset 3px 0 0 var(--brand-teal-strong);
   }
 
   .mobileMenu nav a:last-child {

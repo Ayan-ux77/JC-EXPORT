@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Mail, Menu, Phone } from "lucide-react";
+import { ArrowRight, Mail, Menu, MessageCircle, Phone } from "lucide-react";
 import {
   FaFacebookF,
   FaInstagram,
@@ -9,7 +9,9 @@ import {
 } from "react-icons/fa";
 
 import { BrandLogo } from "@/app/components/brand-logo";
+import { NavLink } from "@/app/components/nav-link";
 import { getCustomerSession } from "@/data/customer-session";
+import { mailto, site, whatsapp } from "@/data/site";
 
 import "../globals.css";
 import styles from "./layout.module.css";
@@ -21,6 +23,22 @@ const navigation = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
+
+/**
+ * Social links render only when a URL is configured for them.
+ *
+ * They were four buttons pointing at "#": a row of controls that look
+ * clickable, do nothing, and tell a buyer the company is a template. An
+ * unconfigured account simply has no icon.
+ */
+const socialLinks = [
+  { label: "Facebook", Icon: FaFacebookF, href: process.env.NEXT_PUBLIC_FACEBOOK_URL },
+  { label: "Instagram", Icon: FaInstagram, href: process.env.NEXT_PUBLIC_INSTAGRAM_URL },
+  { label: "YouTube", Icon: FaYoutube, href: process.env.NEXT_PUBLIC_YOUTUBE_URL },
+  { label: "LinkedIn", Icon: FaLinkedinIn, href: process.env.NEXT_PUBLIC_LINKEDIN_URL },
+].filter((link): link is { label: string; Icon: typeof FaFacebookF; href: string } =>
+  Boolean(link.href),
+);
 
 const footerColumns = [
   {
@@ -47,8 +65,10 @@ const footerColumns = [
       { label: "About Japan Car Export", href: "/about" },
       { label: "Contact", href: "/contact" },
       { label: "Buyer FAQ", href: "/faq" },
-      { label: "Terms", href: "/terms" },
-      { label: "Privacy", href: "/privacy" },
+      // Terms and Privacy live in the bottom bar, where legal links are
+      // conventionally looked for -- listing them here as well put the same
+      // two links in the footer twice.
+      { label: "Shipping & payment", href: "/shipping-and-payment" },
     ],
   },
 ];
@@ -58,17 +78,21 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
   const accountHref = session ? "/account" : "/sign-in";
   const accountLabel = session ? "My account" : "Sign in";
 
+  const whatsappHref = whatsapp();
+
   return (
     <>
       <header className={styles.header}>
         <div className={styles.utilityBar}>
           <div className={styles.utilityInner}>
             <div className={styles.utilityContacts}>
-              <a href="tel:+923001234567">
-                <Phone aria-hidden="true" /> +92 300 123 4567
-              </a>
-              <a href="mailto:info@jcexport.com">
-                <Mail aria-hidden="true" /> info@jcexport.com
+              {site.phoneHref && (
+                <a href={site.phoneHref}>
+                  <Phone aria-hidden="true" /> {site.phone}
+                </a>
+              )}
+              <a href={mailto()}>
+                <Mail aria-hidden="true" /> {site.salesEmail}
               </a>
             </div>
             <div className={styles.languages} aria-label="Available languages">
@@ -88,7 +112,13 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             <ul>
               {navigation.map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href}>{item.label}</Link>
+                  <NavLink
+                    href={item.href}
+                    activeClassName={styles.navActive}
+                    exact={item.href === "/"}
+                  >
+                    {item.label}
+                  </NavLink>
                 </li>
               ))}
             </ul>
@@ -112,9 +142,14 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             </summary>
             <nav aria-label="Mobile navigation">
               {navigation.map((item) => (
-                <Link key={item.label} href={item.href}>
+                <NavLink
+                  key={item.label}
+                  href={item.href}
+                  activeClassName={styles.mobileNavActive}
+                  exact={item.href === "/"}
+                >
                   {item.label}
-                </Link>
+                </NavLink>
               ))}
               <Link href={accountHref}>{accountLabel}</Link>
               <Link href="/quote" className={styles.mobileQuoteLink}>
@@ -137,20 +172,38 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
               Japan-sourced used vehicle export with clear condition evidence,
               documentation, and worldwide shipping support.
             </p>
-            <div className={styles.socialLinks}>
-              <a href="#" aria-label="Japan Car Export on Facebook" title="Facebook">
-                <FaFacebookF aria-hidden="true" />
+            <div className={styles.footerContact}>
+              {site.phoneHref && (
+                <a href={site.phoneHref}>
+                  <Phone aria-hidden="true" /> {site.phone}
+                </a>
+              )}
+              <a href={mailto()}>
+                <Mail aria-hidden="true" /> {site.salesEmail}
               </a>
-              <a href="#" aria-label="Japan Car Export on Instagram" title="Instagram">
-                <FaInstagram aria-hidden="true" />
-              </a>
-              <a href="#" aria-label="Japan Car Export on YouTube" title="YouTube">
-                <FaYoutube aria-hidden="true" />
-              </a>
-              <a href="#" aria-label="Japan Car Export on LinkedIn" title="LinkedIn">
-                <FaLinkedinIn aria-hidden="true" />
-              </a>
+              {whatsappHref && (
+                <a href={whatsappHref} target="_blank" rel="noreferrer">
+                  <MessageCircle aria-hidden="true" /> Message us on WhatsApp
+                </a>
+              )}
             </div>
+
+            {socialLinks.length > 0 && (
+              <div className={styles.socialLinks}>
+                {socialLinks.map(({ label, Icon, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Japan Car Export on ${label}`}
+                    title={label}
+                  >
+                    <Icon aria-hidden="true" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {footerColumns.map((column) => (
@@ -166,8 +219,13 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         </div>
 
         <div className={styles.footerBottom}>
-          <p>© 2026 Japan Car Export. All rights reserved.</p>
-          <p>Japan-sourced vehicles. Worldwide support.</p>
+          <p>
+            © {new Date().getFullYear()} {site.name}. All rights reserved.
+          </p>
+          <p>
+            <Link href="/terms">Terms</Link>
+            <Link href="/privacy">Privacy</Link>
+          </p>
         </div>
       </footer>
     </>

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { bodyFont, displayFont } from "@/app/fonts";
 import Image from "next/image";
 import Link from "next/link";
-import { Fraunces, Lato } from "next/font/google";
+
+import { SelectField } from "@/app/components/select-field";
+import { mediaSrc } from "@/data/vehicles";
+import { mailto, site, whatsapp } from "@/data/site";
 import {
   ArrowRight,
   BadgeCheck,
@@ -20,23 +24,15 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { getModelsForMake, getVehiclePage, getVehicles } from "@/data/vehicle-service";
+import {
+  getModelsForMake,
+  getReviews,
+  getVehiclePage,
+  getVehicles,
+} from "@/data/vehicle-service";
 import { FeaturedVehicles } from "./components/featured-vehicles";
 import { HomeInquiryForm } from "./components/home-inquiry-form";
 import styles from "./page.module.css";
-
-const bodyFont = Lato({
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
-  variable: "--font-body",
-});
-
-const displayFont = Fraunces({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
 
 export const metadata: Metadata = {
   title: "Japanese Used Cars for Export | Japan Car Export",
@@ -68,6 +64,19 @@ const brands = [
   { name: "Subaru", logo: "/Home/subaru-alt-svgrepo-com 2.svg" },
   { name: "Daihatsu", logo: "/Home/Vector.svg" },
   { name: "Suzuki", logo: "/Home/Vector (1).svg" },
+];
+
+/* The fixed choices the search band offers. Kept as data so the markup below
+   reads as four identical fields rather than four hand-written option lists. */
+const BODY_TYPES = ["Sedan", "SUV", "Hatchback", "Van", "Truck"];
+
+const YEAR_OPTIONS = ["2021", "2019", "2017", "2015"];
+
+const PRICE_CEILINGS = [
+  { value: "5000", label: "Up to $5,000" },
+  { value: "10000", label: "Up to $10,000" },
+  { value: "20000", label: "Up to $20,000" },
+  { value: "30000", label: "Up to $30,000" },
 ];
 
 const processSteps = [
@@ -133,55 +142,48 @@ const trustBadges = [
   },
 ];
 
-const testimonials = [
-  {
-    quote:
-      "The inspection photos matched the vehicle that arrived. Documentation was ready before the vessel reached port, which made our clearance much easier.",
-    name: "Joseph Mwangi",
-    role: "Auto dealer, Nairobi",
-    initials: "JM",
-  },
-  {
-    quote:
-      "I received a full walkaround before purchase and regular WhatsApp updates after booking. The process felt clear from the first quote to delivery.",
-    name: "Fatima Al-Hashimi",
-    role: "Private buyer, Dubai",
-    initials: "FA",
-  },
-  {
-    quote:
-      "We imported multiple vans for our business. The team kept the vehicle list, shipping documents, and arrival schedule organized throughout.",
-    name: "Daniel Chirwa",
-    role: "Fleet buyer, Lilongwe",
-    initials: "DC",
-  },
-];
-
+/* Whatever is actually configured. An unset number drops out of the list
+   rather than printing a placeholder somebody might dial. */
 const contactInfo = [
-  {
+  site.whatsappNumber && {
     icon: MessageCircle,
     label: "WhatsApp",
-    value: "+92 300 123 4567",
-    href: "https://wa.me/923001234567",
+    value: site.whatsappNumber,
+    href: whatsapp(),
   },
-  {
+  site.phone && {
     icon: Phone,
     label: "Direct phone",
-    value: "+92 300 123 4567",
-    href: "tel:+923001234567",
+    value: site.phone,
+    href: site.phoneHref,
   },
   {
     icon: Mail,
     label: "Email",
-    value: "sales@jcexport.com",
-    href: "mailto:sales@jcexport.com",
+    value: site.salesEmail,
+    href: mailto(),
   },
   {
     icon: MapPin,
     label: "Export support",
     value: "Japan-sourced vehicles, worldwide delivery",
   },
-];
+].filter(Boolean) as Array<{
+  icon: typeof Mail;
+  label: string;
+  value: string;
+  href?: string | null;
+}>;
+
+/** "James Mwangi" -> "JM". One letter when there is only one word. */
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
 export default async function HomePage() {
   // The hero's quick search (make + model) and its stock count both read
@@ -190,12 +192,34 @@ export default async function HomePage() {
   // Models are unfiltered (getModelsForMake("")) because the hero form is
   // a plain GET <form>, not a client component: there is no make-selected
   // event to chain a model list off without JavaScript.
-  const [vehicles, stock, models] = await Promise.all([
+  const [vehicles, stock, models, reviews] = await Promise.all([
     getVehicles({ featuredOnly: true, limit: 6 }),
     getVehiclePage({ limit: 1 }),
     getModelsForMake(""),
+    getReviews(3),
   ]);
   const stockCount = stock.total;
+
+  /**
+   * The three cars the "see the actual vehicle" collage shows.
+   *
+   * That section's whole claim is that the photography is of real stock, so
+   * filling it with stock photography would quietly contradict it. These are
+   * live units, each one clickable through to its own page -- the claim and
+   * the proof are the same object. The bundled photographs stay as a fallback
+   * for a catalogue too small to fill the frame.
+   */
+  const showcase = vehicles
+    .filter((vehicle) => Boolean(vehicle.image))
+    // Distinct photographs, not distinct cars: two units can share a picture
+    // (a dealer photographing a row of the same model, or demo data reusing a
+    // stub), and a collage that shows the same car twice quietly argues
+    // against the very line printed across it.
+    .filter(
+      (vehicle, index, all) =>
+        all.findIndex((other) => other.image === vehicle.image) === index,
+    )
+    .slice(0, 3);
 
   return (
     <main
@@ -242,28 +266,26 @@ export default async function HomePage() {
               action="/vehicles"
               aria-label="Quick vehicle search"
             >
-              <label>
+              <div className={styles.heroSearchField}>
                 <span>Make</span>
-                <select name="make" defaultValue="">
-                  <option value="">Any make</option>
-                  {brands.map((brand) => (
-                    <option key={brand.name} value={brand.name}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
+                <SelectField
+                  name="make"
+                  tone="dark"
+                  ariaLabel="Make"
+                  placeholder="Any make"
+                  options={brands.map((brand) => ({ value: brand.name, label: brand.name }))}
+                />
+              </div>
+              <div className={styles.heroSearchField}>
                 <span>Model</span>
-                <select name="model" defaultValue="">
-                  <option value="">Any model</option>
-                  {models.map((model) => (
-                    <option key={model} value={model}>
-                      {model}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <SelectField
+                  name="model"
+                  tone="dark"
+                  ariaLabel="Model"
+                  placeholder="Any model"
+                  options={models.map((model) => ({ value: model, label: model }))}
+                />
+              </div>
               <button type="submit" className={styles.heroSearchButton}>
                 <Search aria-hidden="true" /> Find vehicles
               </button>
@@ -300,48 +322,42 @@ export default async function HomePage() {
             ad hoc ones this form used to submit, which the listing quietly
             ignored. */}
         <form className={styles.searchForm} action="/vehicles">
-          <label>
+          <div className={styles.searchField}>
             <span>Make</span>
-            <select name="make" defaultValue="">
-              <option value="">All makes</option>
-              {brands.map((brand) => (
-                <option key={brand.name} value={brand.name}>
-                  {brand.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
+            <SelectField
+              name="make"
+              ariaLabel="Make"
+              placeholder="All makes"
+              options={brands.map((brand) => ({ value: brand.name, label: brand.name }))}
+            />
+          </div>
+          <div className={styles.searchField}>
             <span>Body type</span>
-            <select name="body_type" defaultValue="">
-              <option value="">All body types</option>
-              <option value="Sedan">Sedan</option>
-              <option value="SUV">SUV</option>
-              <option value="Hatchback">Hatchback</option>
-              <option value="Van">Van</option>
-              <option value="Truck">Truck</option>
-            </select>
-          </label>
-          <label>
+            <SelectField
+              name="body_type"
+              ariaLabel="Body type"
+              placeholder="All body types"
+              options={BODY_TYPES.map((type) => ({ value: type, label: type }))}
+            />
+          </div>
+          <div className={styles.searchField}>
             <span>Year from</span>
-            <select name="year_from" defaultValue="">
-              <option value="">Any year</option>
-              <option value="2021">2021</option>
-              <option value="2019">2019</option>
-              <option value="2017">2017</option>
-              <option value="2015">2015</option>
-            </select>
-          </label>
-          <label>
+            <SelectField
+              name="year_from"
+              ariaLabel="Year from"
+              placeholder="Any year"
+              options={YEAR_OPTIONS.map((year) => ({ value: year, label: year }))}
+            />
+          </div>
+          <div className={styles.searchField}>
             <span>Max FOB price</span>
-            <select name="price_max" defaultValue="">
-              <option value="">No limit</option>
-              <option value="5000">Up to $5,000</option>
-              <option value="10000">Up to $10,000</option>
-              <option value="20000">Up to $20,000</option>
-              <option value="30000">Up to $30,000</option>
-            </select>
-          </label>
+            <SelectField
+              name="price_max"
+              ariaLabel="Max FOB price"
+              placeholder="No limit"
+              options={PRICE_CEILINGS}
+            />
+          </div>
           <button type="submit" className={styles.searchButton}>
             <Search aria-hidden="true" /> Search vehicles
           </button>
@@ -456,36 +472,66 @@ export default async function HomePage() {
         aria-labelledby="about-title"
       >
         <div className={styles.aboutImageWrap}>
-          <div className={styles.aboutImageMain}>
-            <Image
-              src="/cards/4.png"
-              alt="Used vehicle photographed in Japan before export"
-              fill
-              sizes="(max-width: 900px) 100vw, 48vw"
-              className={styles.aboutImage}
-            />
-          </div>
-          <div className={styles.aboutImageSmall}>
-            <Image
-              src="/cards/1.png"
-              alt="White used hatchback in a Japanese vehicle yard"
-              fill
-              sizes="(max-width: 900px) 50vw, 24vw"
-              className={styles.aboutImage}
-            />
-          </div>
-          <div className={styles.aboutImageSmall}>
-            <Image
-              src="/cards/5.png"
-              alt="Black used sedan photographed before export"
-              fill
-              sizes="(max-width: 900px) 50vw, 24vw"
-              className={styles.aboutImage}
-            />
-          </div>
+          {showcase.length === 3 ? (
+            showcase.map((vehicle, index) => (
+              <Link
+                key={vehicle.slug}
+                href={`/vehicles/${vehicle.slug}`}
+                className={index === 0 ? styles.aboutImageMain : styles.aboutImageSmall}
+                aria-label={`View ${vehicle.title}`}
+              >
+                <Image
+                  src={mediaSrc(vehicle.image)}
+                  alt={`${vehicle.title}, photographed in Japan before export`}
+                  fill
+                  sizes={
+                    index === 0
+                      ? "(max-width: 900px) 100vw, 48vw"
+                      : "(max-width: 900px) 50vw, 24vw"
+                  }
+                  className={styles.aboutImage}
+                />
+                <span className={styles.aboutImageTag}>
+                  {vehicle.title}
+                  <small>Stock {vehicle.stock}</small>
+                </span>
+              </Link>
+            ))
+          ) : (
+            <>
+              <div className={styles.aboutImageMain}>
+                <Image
+                  src="/cards/4.png"
+                  alt="Used vehicle photographed in Japan before export"
+                  fill
+                  sizes="(max-width: 900px) 100vw, 48vw"
+                  className={styles.aboutImage}
+                />
+              </div>
+              <div className={styles.aboutImageSmall}>
+                <Image
+                  src="/cards/1.png"
+                  alt="White used hatchback in a Japanese vehicle yard"
+                  fill
+                  sizes="(max-width: 900px) 50vw, 24vw"
+                  className={styles.aboutImage}
+                />
+              </div>
+              <div className={styles.aboutImageSmall}>
+                <Image
+                  src="/cards/5.png"
+                  alt="Black used sedan photographed before export"
+                  fill
+                  sizes="(max-width: 900px) 50vw, 24vw"
+                  className={styles.aboutImage}
+                />
+              </div>
+            </>
+          )}
           <div className={styles.aboutImageCaption}>
             <span>Before you buy</span>
             <strong>See the actual vehicle, not a stock photo.</strong>
+            {showcase.length === 3 && <em>Every photo here is a car in stock today.</em>}
           </div>
         </div>
 
@@ -535,44 +581,56 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section
-        className={styles.testimonialsSection}
-        aria-labelledby="stories-title"
-      >
-        <div className={styles.sectionIntroRow}>
-          <div>
-            <p className={styles.kicker}>Buyer stories</p>
-            <h2 id="stories-title">
-              Clear communication, <em>long after payment.</em>
-            </h2>
+      {reviews.length > 0 && (
+        <section
+          id="stories"
+          className={styles.testimonialsSection}
+          aria-labelledby="stories-title"
+        >
+          <div className={styles.sectionIntroRow}>
+            <div>
+              <p className={styles.kicker}>Buyer stories</p>
+              <h2 id="stories-title">
+                Clear communication, <em>long after payment.</em>
+              </h2>
+            </div>
+            <p>
+              The strongest export relationship is built by keeping the buyer
+              informed before purchase, during shipping, and at arrival.
+            </p>
           </div>
-          <p>
-            The strongest export relationship is built by keeping the buyer
-            informed before purchase, during shipping, and at arrival.
-          </p>
-        </div>
 
-        <div className={styles.testimonialsGrid}>
-          {testimonials.map((testimonial, index) => (
-            <article key={testimonial.name} className={styles.testimonialCard}>
-              <div className={styles.rating} aria-label="5 out of 5 stars">
-                <span aria-hidden="true">★★★★★</span>
-                <small>Verified buyer</small>
-              </div>
-              <blockquote>&ldquo;{testimonial.quote}&rdquo;</blockquote>
-              <div className={styles.testimonialAuthor}>
-                <span className={index === 1 ? styles.avatarRed : ""}>
-                  {testimonial.initials}
-                </span>
-                <div>
-                  <strong>{testimonial.name}</strong>
-                  <small>{testimonial.role}</small>
+          <div className={styles.testimonialsGrid}>
+            {reviews.map((review) => (
+              <article key={review.id} className={styles.testimonialCard}>
+                <div
+                  className={styles.rating}
+                  aria-label={`${review.rating} out of 5 stars`}
+                >
+                  {/* The rating a buyer actually gave, not five stars every
+                      time. A wall of identical five-star cards is the first
+                      thing that makes a reviews section look invented. */}
+                  <span aria-hidden="true">
+                    {"\u2605".repeat(review.rating)}
+                    <i>{"\u2605".repeat(5 - review.rating)}</i>
+                  </span>
+                  {review.verified && <small>Verified buyer</small>}
                 </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+                <blockquote>&ldquo;{review.review}&rdquo;</blockquote>
+                <div className={styles.testimonialAuthor}>
+                  <span>{initialsOf(review.name)}</span>
+                  <div>
+                    <strong>{review.name}</strong>
+                    <small>
+                      {[review.vehicle, review.country].filter(Boolean).join(" \u00b7 ")}
+                    </small>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section
         id="contact"

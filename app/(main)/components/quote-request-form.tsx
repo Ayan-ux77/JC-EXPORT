@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 
 import { submitWebsiteInquiry } from "@/data/website-inquiries";
+import { SelectField } from "@/app/components/select-field";
+import { site, whatsapp } from "@/data/site";
 import styles from "./public-pages.module.css";
 
 type QuoteRequestFormProps = {
@@ -113,14 +115,14 @@ export function QuoteRequestForm({
   }
 
   const whatsappUrl = submittedReference
-    ? `https://wa.me/923001234567?text=${encodeURIComponent(
+    ? whatsapp(
         [
-          "Hello Japan Car Export, I submitted an export quote request.",
+          `Hello ${site.name}, I submitted an export quote request.`,
           `Inquiry reference: ${submittedReference}`,
           `Vehicle/stock: ${values.vehicle || "Sourcing request"}`,
         ].join("\n"),
-      )}`
-    : "";
+      )
+    : null;
 
   return (
     <div className={styles.quoteFormShell}>
@@ -184,15 +186,21 @@ export function QuoteRequestForm({
             <span>Preferred port</span>
             <input value={values.port} onChange={(event) => update("port", event.target.value)} placeholder="Mombasa" />
           </label>
-          <label className={styles.fullField}>
+          <div className={styles.fullField}>
             <span>Shipping preference</span>
-            <select value={values.shipping} onChange={(event) => update("shipping", event.target.value)}>
-              <option>Not sure</option>
-              <option>RoRo</option>
-              <option>Container</option>
-              <option>Shared container</option>
-            </select>
-          </label>
+            <SelectField
+              ariaLabel="Shipping preference"
+              value={values.shipping}
+              onChange={(next) => update("shipping", next)}
+              placeholder="Not sure"
+              options={[
+                { value: "RoRo", label: "RoRo" },
+                { value: "Container", label: "Container" },
+                { value: "Shared container", label: "Shared container" },
+              ]}
+              searchable={false}
+            />
+          </div>
         </div>
         <div className={styles.formNotice}>
           <Ship aria-hidden="true" />
@@ -253,10 +261,14 @@ export function QuoteRequestForm({
             <Check aria-hidden="true" />
             <div>
               Request received. Your reference is <strong>{submittedReference}</strong>.
-              {" "}
-              <a href={whatsappUrl} target="_blank" rel="noreferrer">
-                Continue in WhatsApp
-              </a>
+              {whatsappUrl && (
+                <>
+                  {" "}
+                  <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                    Continue in WhatsApp
+                  </a>
+                </>
+              )}
             </div>
           </div>
         )}

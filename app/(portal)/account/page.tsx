@@ -82,12 +82,12 @@ export default async function AccountPage() {
               <tbody>
                 {recentInvoices.map((invoice) => (
                   <tr key={invoice.invoice_number}>
-                    <td>{invoice.invoice_number}<small>{formatDate(invoice.invoice_date)}</small></td>
-                    <td>{invoiceVehicleSummary(invoice) || "—"}</td>
-                    <td>{formatMoney(invoice.grand_total, invoice.currency)}</td>
-                    <td>{formatMoney(invoice.balance_due, invoice.currency)}</td>
-                    <td><StatusBadge value={invoice.status} /></td>
-                    <td><InvoiceDownloadLink invoice={invoice} /></td>
+                    <td data-label="Invoice">{invoice.invoice_number}<small>{formatDate(invoice.invoice_date)}</small></td>
+                    <td data-label="Vehicle">{invoiceVehicleSummary(invoice) || "—"}</td>
+                    <td data-label="Total">{formatMoney(invoice.grand_total, invoice.currency)}</td>
+                    <td data-label="Balance">{formatMoney(invoice.balance_due, invoice.currency)}</td>
+                    <td data-label="Status"><StatusBadge value={invoice.status} /></td>
+                    <td data-label="Download"><InvoiceDownloadLink invoice={invoice} /></td>
                   </tr>
                 ))}
               </tbody>

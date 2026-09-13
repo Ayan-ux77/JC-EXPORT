@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Ship } from "lucide-react";
 
 import type { Destination, ShipmentType } from "@/data/vehicle-service";
+import { SelectField } from "@/app/components/select-field";
 import styles from "./destination-selector.module.css";
 
 type DestinationSelectorProps = {
@@ -62,21 +63,21 @@ export function DestinationSelector({ destinations }: DestinationSelectorProps) 
   return (
     <div className={styles.wrap}>
       <Ship aria-hidden="true" className={styles.icon} />
-      <label className={styles.field}>
+      <div className={styles.field}>
         <span>Ship to</span>
-        <select
+        <SelectField
+          ariaLabel="Destination port"
           value={destinationPort}
-          onChange={(event) => update({ destination: event.target.value })}
-        >
-          <option value="">Show prices landed at your port</option>
-          {destinations.map((destination) => (
-            <option key={destination.name} value={destination.name}>
-              {destination.name}
-              {destination.country ? `, ${destination.country}` : ""}
-            </option>
-          ))}
-        </select>
-      </label>
+          onChange={(next) => update({ destination: next })}
+          placeholder="Show prices landed at your port"
+          options={destinations.map((destination) => ({
+            value: destination.name,
+            label: destination.country
+              ? `${destination.name}, ${destination.country}`
+              : destination.name,
+          }))}
+        />
+      </div>
 
       {destinationPort && (
         <div className={styles.shipmentToggle} role="group" aria-label="Shipment type">

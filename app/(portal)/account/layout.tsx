@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { BrandLogo } from "@/app/components/brand-logo";
+import { NavLink } from "@/app/components/nav-link";
 import { getCustomerSession } from "@/data/customer-session";
 
 import "../../globals.css";
@@ -46,10 +47,18 @@ export default async function AccountLayout({
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
-              <Link key={item.href} href={item.href}>
+              <NavLink
+                key={item.href}
+                href={item.href}
+                activeClassName={styles.navActive}
+                revealWhenActive
+                // Overview is the section index: without an exact match it
+                // would stay lit on every page beneath /account.
+                exact={item.href === "/account"}
+              >
                 <Icon aria-hidden="true" />
                 {item.label}
-              </Link>
+              </NavLink>
             );
           })}
         </nav>

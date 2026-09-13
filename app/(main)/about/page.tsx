@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { bodyFont, displayFont } from "@/app/fonts";
 import Image from "next/image";
 import Link from "next/link";
-import { Fraunces, Lato } from "next/font/google";
 import {
   ArrowRight,
   BadgeCheck,
@@ -16,19 +16,6 @@ import {
 
 import { PublicPageHero } from "../components/public-page-hero";
 import styles from "../components/public-pages.module.css";
-
-const bodyFont = Lato({
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
-  variable: "--font-body",
-});
-
-const displayFont = Fraunces({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
 
 export const metadata: Metadata = {
   title: "About Japan Car Export | Japanese Used Vehicle Export",

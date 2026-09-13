@@ -4,6 +4,8 @@ import { useState, type FormEvent } from "react";
 import { Check, Send } from "lucide-react";
 
 import { submitWebsiteInquiry } from "@/data/website-inquiries";
+import { SelectField } from "@/app/components/select-field";
+import { site, whatsapp } from "@/data/site";
 import styles from "./public-pages.module.css";
 
 export function ContactInquiryForm() {
@@ -41,10 +43,8 @@ export function ContactInquiryForm() {
   }
 
   const whatsappUrl = submittedReference
-    ? `https://wa.me/923001234567?text=${encodeURIComponent(
-        `Hello Japan Car Export, I submitted inquiry ${submittedReference}.`,
-      )}`
-    : "";
+    ? whatsapp(`Hello ${site.name}, I submitted inquiry ${submittedReference}.`)
+    : null;
 
   return (
     <form className={styles.contactForm} onSubmit={submit}>
@@ -60,16 +60,22 @@ export function ContactInquiryForm() {
           <span>Full name</span>
           <input name="name" required placeholder="Your name" autoComplete="name" />
         </label>
-        <label>
+        <div className={styles.field}>
           <span>Subject</span>
-          <select name="subject" defaultValue="Vehicle question">
-            <option>Vehicle question</option>
-            <option>Shipping update</option>
-            <option>Documentation</option>
-            <option>Payment question</option>
-            <option>Partnership</option>
-          </select>
-        </label>
+          <SelectField
+            name="subject"
+            ariaLabel="Subject"
+            defaultValue="Vehicle question"
+            placeholder="Vehicle question"
+            options={[
+              { value: "Shipping update", label: "Shipping update" },
+              { value: "Documentation", label: "Documentation" },
+              { value: "Payment question", label: "Payment question" },
+              { value: "Partnership", label: "Partnership" },
+            ]}
+            searchable={false}
+          />
+        </div>
         <label>
           <span>Email</span>
           <input name="email" type="email" required placeholder="you@example.com" autoComplete="email" />
@@ -101,10 +107,16 @@ export function ContactInquiryForm() {
       {submittedReference && (
         <p className={styles.formOpenedMessage}>
           <Check aria-hidden="true" /> Inquiry received as {submittedReference}.
-          {" "}
-          <a href={whatsappUrl} target="_blank" rel="noreferrer">
-            Continue in WhatsApp
-          </a>
+          {/* Only when a number is configured -- otherwise the sentence ends
+              at the reference rather than offering a link that goes nowhere. */}
+          {whatsappUrl && (
+            <>
+              {" "}
+              <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                Continue in WhatsApp
+              </a>
+            </>
+          )}
         </p>
       )}
       {error && <p className={styles.errorNotice}>{error}</p>}

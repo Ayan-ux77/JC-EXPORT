@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { bodyFont, displayFont } from "@/app/fonts";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Fraunces, Lato } from "next/font/google";
 import { BadgeCheck, ChevronRight, Globe2, Ship, WalletCards } from "lucide-react";
 
 import {
@@ -13,19 +13,6 @@ import {
 } from "@/data/vehicle-service";
 import { VehicleBrowser } from "../components/vehicle-browser";
 import styles from "./page.module.css";
-
-const bodyFont = Lato({
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
-  variable: "--font-body",
-});
-
-const displayFont = Fraunces({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
 
 export const metadata: Metadata = {
   title: "Japanese Used Vehicles for Export | Japan Car Export",

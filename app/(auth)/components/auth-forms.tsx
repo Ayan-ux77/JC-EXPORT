@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { ArrowRight, Check, Eye, EyeOff } from "lucide-react";
 
+import { SelectField } from "@/app/components/select-field";
 import styles from "../auth.module.css";
 
 type ErrorPayload = {
@@ -173,14 +174,20 @@ export function RegisterForm() {
           <input name="phone" type="tel" autoComplete="tel" placeholder="+00 000 000 000" />
         </label>
       </div>
-      <label>
-        Preferred transaction currency
-        <select name="currency" defaultValue="USD">
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-          <option value="GBP">GBP</option>
-        </select>
-      </label>
+      <div className={styles.field}>
+        <span>Preferred transaction currency</span>
+        <SelectField
+          name="currency"
+          ariaLabel="Preferred transaction currency"
+          defaultValue="USD"
+          placeholder="USD"
+          options={[
+            { value: "EUR", label: "EUR" },
+            { value: "GBP", label: "GBP" },
+          ]}
+          searchable={false}
+        />
+      </div>
       <div className={styles.fieldRow}>
         <label className={styles.passwordField}>
           Password

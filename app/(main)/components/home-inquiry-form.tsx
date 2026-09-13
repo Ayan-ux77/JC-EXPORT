@@ -5,6 +5,7 @@ import { ArrowRight, Check, Fuel } from "lucide-react";
 
 import { submitWebsiteInquiry } from "@/data/website-inquiries";
 
+import { SelectField } from "@/app/components/select-field";
 import styles from "../page.module.css";
 
 export function HomeInquiryForm() {
@@ -65,17 +66,19 @@ export function HomeInquiryForm() {
           <input name="phone" type="tel" placeholder="+00 000 000 000" autoComplete="tel" />
         </label>
       </div>
-      <label>
+      <div className={styles.field}>
         <span>Vehicle interest</span>
-        <select name="vehicle" defaultValue="">
-          <option value="">Select a body type</option>
-          <option value="Sedan">Sedan</option>
-          <option value="SUV">SUV</option>
-          <option value="Hatchback">Hatchback</option>
-          <option value="Van">Van</option>
-          <option value="Truck">Truck</option>
-        </select>
-      </label>
+        <SelectField
+          name="vehicle"
+          ariaLabel="Vehicle interest"
+          placeholder="Select a body type"
+          options={["Sedan", "SUV", "Hatchback", "Van", "Truck"].map((type) => ({
+            value: type,
+            label: type,
+          }))}
+          searchable={false}
+        />
+      </div>
       <label>
         <span>What should we source?</span>
         <textarea

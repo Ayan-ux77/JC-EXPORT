@@ -14,7 +14,7 @@ export default async function ProfilePage() {
         <div>
           <p>Customer record</p>
           <h1>Profile</h1>
-          <span>Your website account is linked directly to this ERP customer.</span>
+          <span>Your website account is linked directly to your Japan Car Export customer record.</span>
         </div>
       </header>
       <section className={styles.profilePanel}>

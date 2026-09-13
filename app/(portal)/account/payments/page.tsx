@@ -8,12 +8,24 @@ import {
   formatMoney,
   invoiceVehicleSummary,
   InvoiceDownloadLink,
+  pageParam,
   StatusBadge,
 } from "../portal-ui";
+import { PortalPagination } from "../portal-pagination";
 import styles from "../portal.module.css";
 
-export default async function PaymentsPage() {
-  const [invoices, payments] = await Promise.all([getPortalInvoices(), getPortalPayments()]);
+// Two paginated lists share this URL, so each owns its own parameter --
+// otherwise paging the invoices would silently reset the remittances below.
+type PageProps = {
+  searchParams: Promise<{ invoices?: string | string[]; payments?: string | string[] }>;
+};
+
+export default async function PaymentsPage({ searchParams }: PageProps) {
+  const query = await searchParams;
+  const [invoices, payments] = await Promise.all([
+    getPortalInvoices(pageParam(query.invoices)),
+    getPortalPayments(pageParam(query.payments)),
+  ]);
 
   return (
     <>
@@ -25,7 +37,7 @@ export default async function PaymentsPage() {
         </div>
       </header>
 
-      {invoices.length ? (
+      {invoices.data.length ? (
         <section className={styles.pageSection}>
           <div className={styles.sectionHeading}>
             <div><p>Receivables</p><h2>Sales invoices</h2></div>
@@ -39,20 +51,25 @@ export default async function PaymentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {invoices.map((invoice) => (
+                {invoices.data.map((invoice) => (
                   <tr key={invoice.invoice_number}>
-                    <td>{invoice.invoice_number}<small>{formatDate(invoice.invoice_date)}</small></td>
-                    <td>{invoiceVehicleSummary(invoice) || "—"}</td>
-                    <td>{formatMoney(invoice.grand_total, invoice.currency)}</td>
-                    <td>{formatMoney(invoice.paid_amount, invoice.currency)}</td>
-                    <td>{formatMoney(invoice.balance_due, invoice.currency)}</td>
-                    <td><StatusBadge value={invoice.status} /></td>
-                    <td><InvoiceDownloadLink invoice={invoice} /></td>
+                    <td data-label="Invoice">{invoice.invoice_number}<small>{formatDate(invoice.invoice_date)}</small></td>
+                    <td data-label="Vehicle">{invoiceVehicleSummary(invoice) || "—"}</td>
+                    <td data-label="Total">{formatMoney(invoice.grand_total, invoice.currency)}</td>
+                    <td data-label="Paid">{formatMoney(invoice.paid_amount, invoice.currency)}</td>
+                    <td data-label="Balance">{formatMoney(invoice.balance_due, invoice.currency)}</td>
+                    <td data-label="Status"><StatusBadge value={invoice.status} /></td>
+                    <td data-label="Download"><InvoiceDownloadLink invoice={invoice} /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <PortalPagination
+            pageCount={invoices.lastPage}
+            currentPage={invoices.page}
+            param="invoices"
+          />
         </section>
       ) : (
         <EmptySection
@@ -61,7 +78,7 @@ export default async function PaymentsPage() {
         />
       )}
 
-      {payments.length > 0 && (
+      {payments.data.length > 0 && (
         <section className={styles.pageSection}>
           <div className={styles.sectionHeading}>
             <div><p>Remittances</p><h2>Payment history</h2></div>
@@ -73,17 +90,22 @@ export default async function PaymentsPage() {
                   invoices it settled is the useful fact in place of those. */}
               <thead><tr><th>Reference</th><th>Received</th><th>Amount</th><th>Applied to</th></tr></thead>
               <tbody>
-                {payments.map((payment) => (
+                {payments.data.map((payment) => (
                   <tr key={payment.reference_code}>
-                    <td>{payment.reference_code}</td>
-                    <td>{formatDate(payment.received_date)}</td>
-                    <td>{formatMoney(payment.amount, payment.currency)}</td>
-                    <td>{payment.applied_to.map((line) => line.invoice_number).join(", ") || "Unallocated"}</td>
+                    <td data-label="Reference">{payment.reference_code}</td>
+                    <td data-label="Received">{formatDate(payment.received_date)}</td>
+                    <td data-label="Amount">{formatMoney(payment.amount, payment.currency)}</td>
+                    <td data-label="Applied to">{payment.applied_to.map((line) => line.invoice_number).join(", ") || "Unallocated"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <PortalPagination
+            pageCount={payments.lastPage}
+            currentPage={payments.page}
+            param="payments"
+          />
         </section>
       )}
     </>

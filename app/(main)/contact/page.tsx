@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
+import { bodyFont, displayFont } from "@/app/fonts";
 import Link from "next/link";
-import { Fraunces, Lato } from "next/font/google";
 import { ArrowRight, Clock3, Mail, MapPin, MessageCircle, Phone, Ship } from "lucide-react";
 
 import { ContactInquiryForm } from "../components/contact-inquiry-form";
 import { PublicPageHero } from "../components/public-page-hero";
+import { mailto, site, whatsapp } from "@/data/site";
 import styles from "../components/public-pages.module.css";
-
-const bodyFont = Lato({ subsets: ["latin"], weight: ["400", "700", "900"], variable: "--font-body" });
-const displayFont = Fraunces({ subsets: ["latin"], style: ["normal", "italic"], weight: ["500", "600", "700"], variable: "--font-display" });
 
 export const metadata: Metadata = {
   title: "Contact Japan Car Export | Japanese Vehicle Export Support",
@@ -16,11 +14,41 @@ export const metadata: Metadata = {
 };
 
 const channels = [
-  { icon: MessageCircle, label: "Fastest response", title: "WhatsApp", value: "+92 300 123 4567", href: "https://wa.me/923001234567" },
-  { icon: Phone, label: "Speak with sales", title: "Direct phone", value: "+92 300 123 4567", href: "tel:+923001234567" },
-  { icon: Mail, label: "Quotes and documents", title: "Email", value: "sales@jcexport.com", href: "mailto:sales@jcexport.com" },
-  { icon: MapPin, label: "Client support", title: "Peshawar office", value: "Pakistan", href: undefined },
-];
+  site.whatsappNumber && {
+    icon: MessageCircle,
+    label: "Fastest response",
+    title: "WhatsApp",
+    value: site.whatsappNumber,
+    href: whatsapp(),
+  },
+  site.phone && {
+    icon: Phone,
+    label: "Speak with sales",
+    title: "Direct phone",
+    value: site.phone,
+    href: site.phoneHref,
+  },
+  {
+    icon: Mail,
+    label: "Quotes and documents",
+    title: "Email",
+    value: site.salesEmail,
+    href: mailto(),
+  },
+  {
+    icon: MapPin,
+    label: "Client support",
+    title: site.officeLabel,
+    value: site.officeLocation,
+    href: undefined,
+  },
+].filter(Boolean) as Array<{
+  icon: typeof Mail;
+  label: string;
+  title: string;
+  value: string;
+  href?: string | null;
+}>;
 
 export default function ContactPage() {
   return (

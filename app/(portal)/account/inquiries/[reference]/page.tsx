@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ArrowLeft, CarFront, Check, MessageSquareText } from "lucide-react";
+import { ArrowLeft, Check, MessageSquareText } from "lucide-react";
 
 import { getPortalInquiry } from "@/data/customer-session";
 
-import { formatDate, InvoiceDownloadLink, StatusBadge } from "../../portal-ui";
+import { formatDate, InvoiceDownloadLink, StatusBadge, VehicleThumb } from "../../portal-ui";
 import styles from "../../portal.module.css";
 
 type InquiryPageProps = {
@@ -31,9 +31,12 @@ export default async function InquiryPage({ params }: InquiryPageProps) {
       </Link>
       <header className={styles.detailHeader}>
         <div className={styles.detailVehicle}>
-          <div className={styles.detailImage}>
-            <CarFront aria-hidden="true" />
-          </div>
+          <VehicleThumb
+            src={car?.image}
+            alt={car?.title || "Vehicle"}
+            className={styles.detailImage}
+            sizes="(max-width: 760px) 100vw, 320px"
+          />
           <div>
             <p>{inquiry.reference}</p>
             <h1>{car?.title || "Vehicle sourcing inquiry"}</h1>

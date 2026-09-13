@@ -2,7 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
-import { callApi, JcApiError } from "./jc-api";
+import { callApi, callApiPage, JcApiError } from "./jc-api";
 
 export const CUSTOMER_SESSION_COOKIE = "jcexport_customer_session";
 
@@ -167,6 +167,8 @@ export type PortalInquiry = {
     stock: string | null;
     slug: string | null;
     title: string;
+    /** Null when the car has no photo on file -- the UI falls back to an icon. */
+    image: string | null;
   } | null;
   // Named so the detail page can link an enquiry straight to what its car
   // turned into, instead of pointing vaguely at the Payments and Shipments
@@ -246,27 +248,32 @@ export async function getPortalInquiry(reference: string) {
  * The full history, not the dashboard's five-item preview -- these back the
  * standalone list pages, which is exactly what a customer opens this account
  * for when the dashboard's "View all" is what they clicked.
+ *
+ * callApiPage, not callApi: the portal paginates at 20 a page, and callApi
+ * unwraps `data` and drops the meta with it. Without the meta these pages had
+ * no way to know a page 2 existed, so a customer past their twentieth invoice
+ * simply could not reach the rest of their own history.
  */
 export async function getPortalInquiries(page = 1) {
-  return callApi<PortalInquiry[]>(`portal/inquiries?page=${page}`, {
+  return callApiPage<PortalInquiry>(`portal/inquiries?page=${page}`, {
     token: await requireCustomerToken(),
   });
 }
 
 export async function getPortalInvoices(page = 1) {
-  return callApi<PortalInvoice[]>(`portal/invoices?page=${page}`, {
+  return callApiPage<PortalInvoice>(`portal/invoices?page=${page}`, {
     token: await requireCustomerToken(),
   });
 }
 
 export async function getPortalPayments(page = 1) {
-  return callApi<PortalPayment[]>(`portal/payments?page=${page}`, {
+  return callApiPage<PortalPayment>(`portal/payments?page=${page}`, {
     token: await requireCustomerToken(),
   });
 }
 
 export async function getPortalShipments(page = 1) {
-  return callApi<PortalShipment[]>(`portal/shipments?page=${page}`, {
+  return callApiPage<PortalShipment>(`portal/shipments?page=${page}`, {
     token: await requireCustomerToken(),
   });
 }

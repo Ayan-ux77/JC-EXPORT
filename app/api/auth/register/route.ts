@@ -63,7 +63,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { token, message: _message, ...session } = result;
+    // token goes into the httpOnly cookie below and message is not the
+    // browser's business, so neither is spread into the JSON body.
+    const { token, message, ...session } = result;
+    void message;
     const response = NextResponse.json({ data: session }, { status: 201 });
     response.cookies.set({
       name: CUSTOMER_SESSION_COOKIE,

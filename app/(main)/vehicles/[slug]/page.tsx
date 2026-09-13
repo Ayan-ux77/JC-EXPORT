@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import { bodyFont, displayFont } from "@/app/fonts";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Fraunces, Lato } from "next/font/google";
 import {
   ArrowLeft,
   ArrowRight,
@@ -25,23 +25,10 @@ import {
 } from "lucide-react";
 
 import { getDestinations, getVehicle, getVehicles, type ShipmentType } from "@/data/vehicle-service";
-import { formatCurrency, isRemoteVehicleMedia, whatsappUrl } from "@/data/vehicles";
+import { formatCurrency, mediaSrc, whatsappUrl } from "@/data/vehicles";
 import { DestinationSelector } from "../../components/destination-selector";
 import { VehicleGallery } from "../../components/vehicle-gallery";
 import styles from "./page.module.css";
-
-const bodyFont = Lato({
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
-  variable: "--font-body",
-});
-
-const displayFont = Fraunces({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
 
 type SearchValue = string | string[] | undefined;
 
@@ -351,11 +338,10 @@ export default async function VehicleDetailsPage({ params, searchParams }: Vehic
                 <article key={relatedVehicle.id} className={styles.relatedCard}>
                   <Link href={`/vehicles/${relatedVehicle.slug}`} className={styles.relatedImage}>
                     <Image
-                      src={relatedVehicle.image}
+                      src={mediaSrc(relatedVehicle.image)}
                       alt={relatedVehicle.title}
                       fill
                       sizes="(max-width: 700px) 100vw, 33vw"
-                      unoptimized={isRemoteVehicleMedia(relatedVehicle.image)}
                     />
                   </Link>
                   <div>

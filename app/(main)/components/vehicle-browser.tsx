@@ -23,15 +23,16 @@ import {
 } from "lucide-react";
 
 import {
+  PRICE_ON_APPLICATION,
   formatCurrency,
   formatVehiclePrice,
   hasPublicPrice,
-  PRICE_ON_APPLICATION,
   isNewArrival,
-  isRemoteVehicleMedia,
-  whatsappUrl,
+  mediaSrc,
   type Vehicle,
+  whatsappUrl,
 } from "@/data/vehicles";
+import { SelectField } from "@/app/components/select-field";
 import type { Destination, VehicleFilters } from "@/data/vehicle-service";
 import { DestinationSelector } from "./destination-selector";
 import { Pagination } from "./pagination";
@@ -305,18 +306,17 @@ export function VehicleBrowser({ vehicles, filters, destinations, pagination }: 
         </button>
 
         <div className={styles.toolbarEnd}>
-          <label className={styles.sortField}>
+          <div className={styles.sortField}>
             <span>Sort</span>
-            <select value={sort} onChange={(event) => setSort(event.target.value as SortOption)}>
-              <option value="newest">Recently listed</option>
-              <option value="oldest">Oldest listed</option>
-              <option value="price_low">Price: low to high</option>
-              <option value="price_high">Price: high to low</option>
-              <option value="year_new">Year: newest first</option>
-              <option value="year_old">Year: oldest first</option>
-              <option value="mileage_low">Lowest mileage</option>
-            </select>
-          </label>
+            <SelectField
+              ariaLabel="Sort"
+              value={sort}
+              onChange={(next) => setSort(next as SortOption)}
+              placeholder="Recently listed"
+              options={SORT_OPTIONS}
+              searchable={false}
+            />
+          </div>
           <div className={styles.viewControl} aria-label="Vehicle view">
             <button
               type="button"
@@ -473,18 +473,17 @@ export function VehicleBrowser({ vehicles, filters, destinations, pagination }: 
           </FilterGroup>
 
           <FilterGroup title="Auction grade">
-            <label className={styles.gradeSelect}>
+            <div className={styles.gradeSelect}>
               <span>Minimum grade</span>
-              <select
-                value={gradeMin}
-                onChange={(event) => setGradeMin(Number(event.target.value))}
-              >
-                <option value={0}>Any grade</option>
-                <option value={4.5}>Grade 4.5+</option>
-                <option value={4}>Grade 4.0+</option>
-                <option value={3.5}>Grade 3.5+</option>
-              </select>
-            </label>
+              <SelectField
+                ariaLabel="Minimum auction grade"
+                value={String(gradeMin)}
+                onChange={(next) => setGradeMin(Number(next))}
+                placeholder="Any grade"
+                options={GRADE_FLOORS}
+                searchable={false}
+              />
+            </div>
           </FilterGroup>
 
           <button
@@ -559,7 +558,7 @@ function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMo
         aria-label={`View ${vehicle.title}`}
       >
         <Image
-          src={vehicle.image}
+          src={mediaSrc(vehicle.image)}
           alt={vehicle.title}
           fill
           sizes={
@@ -568,7 +567,6 @@ function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMo
               : "(max-width: 700px) 100vw, (max-width: 900px) 50vw, (max-width: 1180px) 33vw, 25vw"
           }
           className={styles.vehicleImage}
-          unoptimized={isRemoteVehicleMedia(vehicle.image)}
         />
         <div className={styles.badgeStackLeft}>
           {newArrival && <span className={styles.newBadge}>New arrival</span>}
@@ -633,6 +631,23 @@ function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMo
  * listing with no label reads as a price, and this one might only be a part
  * of one.
  */
+/* The sort menu's own options. "newest" is the placeholder rather than an
+   entry, so the list never offers the reader what they already have. */
+const SORT_OPTIONS = [
+  { value: "oldest", label: "Oldest listed" },
+  { value: "price_low", label: "Price: low to high" },
+  { value: "price_high", label: "Price: high to low" },
+  { value: "year_new", label: "Year: newest first" },
+  { value: "year_old", label: "Year: oldest first" },
+  { value: "mileage_low", label: "Lowest mileage" },
+];
+
+const GRADE_FLOORS = [
+  { value: "4.5", label: "Grade 4.5+" },
+  { value: "4", label: "Grade 4.0+" },
+  { value: "3.5", label: "Grade 3.5+" },
+];
+
 function PriceDisplay({ vehicle }: { vehicle: Vehicle }) {
   const landed = vehicle.landed;
 

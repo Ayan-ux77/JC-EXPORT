@@ -25,7 +25,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           </p>
         </div>
         <ul className={styles.trustList}>
-          <li><ShieldCheck aria-hidden="true" /> Secure ERP-backed account</li>
+          <li><ShieldCheck aria-hidden="true" /> Secure account, tied to your records</li>
           <li><Ship aria-hidden="true" /> Live shipment milestones</li>
           <li><FileCheck2 aria-hidden="true" /> Invoices and export documents</li>
         </ul>

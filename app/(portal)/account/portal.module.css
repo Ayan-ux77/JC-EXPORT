@@ -1,4 +1,14 @@
+/* The portal was still wearing the palette the site had before the rebrand --
+   a buyer signing in watched Japan Car Export hand them over to some other
+   company. These map the old names onto the brand tokens in globals.css so
+   the accent, the primary action and the tinted panels all agree with the
+   rest of the site. */
 .shell {
+  --accent: var(--brand-teal-strong);
+  --accent-ink: var(--brand-charcoal);
+  --accent-tint: #e8f6f8;
+  --action: var(--brand-charcoal);
+
   min-height: 100svh;
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
@@ -47,6 +57,18 @@
 .sidebar nav a:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* The current page, marked plainly. Hover and current used to look identical
+   -- which is to say the sidebar never told anyone which page they were on. */
+.sidebar nav a.navActive {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 3px 0 0 var(--brand-teal);
+}
+
+.sidebar nav a.navActive svg {
+  color: var(--brand-teal);
 }
 
 .sidebar nav svg,
@@ -137,7 +159,7 @@
 }
 
 .topbarActions a {
-  color: #1f6eaf;
+  color: var(--accent-ink);
   font-size: 13px;
   font-weight: 800;
   text-decoration: none;
@@ -165,7 +187,7 @@
 .sectionHeading p,
 .detailHeader p {
   margin: 0 0 8px;
-  color: #287ec9;
+  color: var(--accent);
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
@@ -193,14 +215,23 @@
   justify-content: center;
   gap: 10px;
   color: #ffffff;
-  background: #c52325;
+  background: var(--action);
   border-radius: 4px;
   text-decoration: none;
   font-weight: 900;
 }
 
+/* These two lost their own declaration block at some point and fell into the
+   .metrics selector below, so every arrow icon in a button was being styled
+   as a three-column grid with a grey panel background -- which is what put a
+   grey box around the arrow and shoved it to the top of the button. */
 .primaryAction svg,
-.sectionHeading a svg,
+.sectionHeading a svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -223,7 +254,7 @@
 .metrics svg {
   width: 21px;
   height: 21px;
-  color: #287ec9;
+  color: var(--accent);
 }
 
 .metrics span {
@@ -267,7 +298,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #1f6eaf;
+  color: var(--accent-ink);
   font-size: 13px;
   font-weight: 850;
   text-decoration: none;
@@ -288,7 +319,7 @@
   gap: 20px;
   background: #ffffff;
   border: 1px solid #dce3e7;
-  border-left: 4px solid #287ec9;
+  border-left: 4px solid var(--accent);
   border-radius: 4px;
 }
 
@@ -303,7 +334,10 @@
   background: #e8edef;
 }
 
-.vehicleThumb img {
+.vehicleThumb img,
+.detailImage img {
+  /* next/image fill positions absolutely against the nearest positioned
+     ancestor, which both of these already are. */
   object-fit: cover;
 }
 
@@ -320,7 +354,7 @@
 
 .inquiryIdentity > div > span:first-child,
 .shipmentRow > div > span {
-  color: #287ec9;
+  color: var(--accent);
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
@@ -363,7 +397,7 @@
   background: #d8dfe3;
 }
 
-.inquiryProgress span:last-child::before {
+.inquiryProgress span:last-of-type::before {
   display: none;
 }
 
@@ -391,12 +425,17 @@
   box-shadow: 0 0 0 1px #1c8a60;
 }
 
+/* The wording only appears below, where the full strip cannot fit. */
+.progressSummary {
+  display: none;
+}
+
 .rowAction {
   width: 40px;
   height: 40px;
   display: grid;
   place-items: center;
-  color: #287ec9;
+  color: var(--accent);
   border: 1px solid #cdd8de;
   text-decoration: none;
 }
@@ -453,7 +492,7 @@
 .emptyState svg {
   width: 32px;
   height: 32px;
-  color: #287ec9;
+  color: var(--accent);
 }
 
 .emptySection h2,
@@ -479,7 +518,7 @@
   align-items: center;
   gap: 8px;
   color: #ffffff;
-  background: #287ec9;
+  background: var(--accent);
   border: 0;
   border-radius: 3px;
   text-decoration: none;
@@ -542,7 +581,7 @@
   gap: 24px;
   background: #ffffff;
   border: 1px solid #dae2e6;
-  border-top: 5px solid #287ec9;
+  border-top: 5px solid var(--accent);
 }
 
 .detailVehicle {
@@ -584,15 +623,19 @@
 .journey {
   margin: 24px 0;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  /* minmax(0, 1fr), not 1fr: a plain 1fr track refuses to shrink below its
+     content, so seven stage names and dates pushed the strip wider than the
+     page and put a horizontal scrollbar under the whole portal. */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   background: #ffffff;
   border: 1px solid #dce3e7;
 }
 
 .journey > div {
   position: relative;
+  min-width: 0;
   min-height: 104px;
-  padding: 18px;
+  padding: 18px 14px;
   display: grid;
   grid-template-columns: 24px 1fr;
   grid-template-rows: auto auto;
@@ -628,6 +671,14 @@
 .journey span {
   color: #849097;
   font-size: 11px;
+}
+
+.journey strong,
+.journey span {
+  min-width: 0;
+  /* break-word, not anywhere: "anywhere" happily split "Enquiry" across two
+     lines as "Enquir / y". This only breaks a word that genuinely cannot fit. */
+  overflow-wrap: break-word;
 }
 
 .journey .journeyComplete i {
@@ -682,7 +733,7 @@
 
 .definitionGrid .definitionTotal {
   grid-column: 1 / -1;
-  background: #edf5fb;
+  background: var(--accent-tint);
 }
 
 .definitionTotal dd {
@@ -697,7 +748,7 @@
   padding: 18px;
   color: #5e6d75;
   background: #f2f5f6;
-  border-left: 4px solid #287ec9;
+  border-left: 4px solid var(--accent);
   line-height: 1.6;
 }
 
@@ -712,7 +763,7 @@
   align-items: center;
   gap: 9px;
   color: #ffffff;
-  background: #c52325;
+  background: var(--action);
   border: 0;
   border-radius: 3px;
   font: inherit;
@@ -774,6 +825,102 @@
   font-weight: 500;
 }
 
+/* Everything in this table is a figure, a date or a status, and none of those
+   should break -- except the vehicle, which is free text and was the column
+   forcing the table wider than its container. Letting that one wrap keeps the
+   whole row on screen at tablet widths instead of clipping the download
+   button off the right edge by a few pixels, with nothing to say it is there. */
+.tableWrap td[data-label="Vehicle"] {
+  white-space: normal;
+  min-width: 130px;
+}
+
+@media (max-width: 1100px) {
+  .tableWrap th,
+  .tableWrap td {
+    padding: 13px 12px;
+  }
+}
+
+/* Below this width the invoice and remittance tables stop being tables. Six
+   columns of money will not fit on a phone, and a sideways-scrolling table
+   hides the balance -- the one figure the customer opened this page for --
+   off the right edge with nothing on screen to say it is there. Each row
+   becomes a card of label/value pairs instead, which is the same information
+   in the shape a phone can actually show. The header row goes away because
+   every cell now carries its own label. */
+@media (max-width: 760px) {
+  .tableWrap {
+    border: 0;
+    background: none;
+  }
+
+  .tableWrap table,
+  .tableWrap tbody,
+  .tableWrap tr,
+  .tableWrap td {
+    display: block;
+    width: 100%;
+  }
+
+  .tableWrap table {
+    white-space: normal;
+  }
+
+  .tableWrap thead {
+    /* Hidden from sight, not from screen readers' reach -- the labels below
+       carry the same headings in the visible order. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .tableWrap tr {
+    margin-bottom: 12px;
+    background: #ffffff;
+    border: 1px solid #dce3e7;
+  }
+
+  .tableWrap tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .tableWrap td {
+    display: flex;
+    align-items: baseline;
+    /* The label is pushed left by its own auto margin rather than by
+       space-between, which would have spread a value and its date note to
+       opposite ends of the row as though they were unrelated. */
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 11px 14px;
+    text-align: right;
+  }
+
+  .tableWrap td:last-child {
+    border-bottom: 0;
+  }
+
+  .tableWrap td::before {
+    content: attr(data-label);
+    flex: none;
+    margin-right: auto;
+    color: #6a7880;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  .tableWrap td small {
+    display: inline;
+    margin: 0 0 0 8px;
+  }
+}
+
 .shipmentFacts {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -796,7 +943,7 @@
   grid-row: 1 / 3;
   width: 19px;
   height: 19px;
-  color: #287ec9;
+  color: var(--accent);
 }
 
 .shipmentFacts small {
@@ -880,7 +1027,7 @@
 .documentList article > svg {
   width: 23px;
   height: 23px;
-  color: #287ec9;
+  color: var(--accent);
 }
 
 .documentList article div {
@@ -899,7 +1046,7 @@
   height: 40px;
   display: grid;
   place-items: center;
-  color: #287ec9;
+  color: var(--accent);
   border: 1px solid #ccd7dd;
   text-decoration: none;
 }
@@ -928,7 +1075,7 @@
   height: 32px;
   display: inline-grid;
   place-items: center;
-  color: #287ec9;
+  color: var(--accent);
   border: 1px solid #ccd7dd;
   text-decoration: none;
 }
@@ -946,7 +1093,7 @@
   gap: 22px;
   background: #ffffff;
   border: 1px solid #dce3e7;
-  border-top: 5px solid #287ec9;
+  border-top: 5px solid var(--accent);
 }
 
 .profileAvatar {
@@ -954,8 +1101,8 @@
   height: 76px;
   display: grid;
   place-items: center;
-  color: #287ec9;
-  background: #e9f3fb;
+  color: var(--accent);
+  background: var(--accent-tint);
 }
 
 .profileAvatar svg {
@@ -964,7 +1111,7 @@
 }
 
 .profileIdentity span {
-  color: #287ec9;
+  color: var(--accent);
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
@@ -1025,8 +1172,8 @@
   margin: 0;
   padding: 16px;
   color: #5d6c74;
-  background: #edf5fb;
-  border-left: 4px solid #287ec9;
+  background: var(--accent-tint);
+  border-left: 4px solid var(--accent);
   line-height: 1.6;
 }
 
@@ -1047,6 +1194,20 @@
 @keyframes loading {
   to {
     background-position: -200% 0;
+  }
+}
+
+/* Seven stages across is a desktop shape. Below this the cells are narrower
+   than the words in them, so the strip folds to two rows of four rather than
+   hyphenating every label. */
+@media (max-width: 1180px) {
+  .journey {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .journey > div {
+    min-height: 88px;
+    border-bottom: 1px solid #dce3e7;
   }
 }
 
@@ -1115,6 +1276,12 @@
     padding: 0 10px;
   }
 
+  /* The nav turns horizontal here, so the current-page marker turns with it:
+     a bar under the tab rather than down its left edge. */
+  .sidebar nav a.navActive {
+    box-shadow: inset 0 -3px 0 var(--brand-teal);
+  }
+
   .sidebarFooter {
     display: none;
   }
@@ -1125,7 +1292,7 @@
 
   .mobileSignOut .signOut {
     margin: 0;
-    color: #1f6eaf;
+    color: var(--accent-ink);
   }
 
   .topbar {
@@ -1139,6 +1306,14 @@
 
   .metrics {
     grid-template-columns: 1fr 1fr;
+  }
+
+  /* The grid paints its gaps by letting its own grey show through, so a row
+     with an empty cell reads as a card that failed to load rather than as
+     spacing. Three metrics in two columns always leave one; the odd card out
+     takes the full row instead. */
+  .metrics article:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .journey {
@@ -1174,6 +1349,14 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  /* The grid paints its gaps by letting its own grey show through, so a row
+     with an empty cell reads as a card that failed to load rather than as
+     spacing. Three metrics in two columns always leave one; the odd card out
+     takes the full row instead. */
+  .metrics article:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .metrics article {
     min-height: 104px;
     padding: 16px;
@@ -1195,8 +1378,36 @@
     font-size: 15px;
   }
 
+  /* Seven stage names will not fit across a phone, but hiding the strip took
+     "where is my car" off the page entirely -- the one thing a customer opens
+     this for. The dots stay, the labels go, and a line of text names the
+     stage the car has actually reached. */
   .inquiryProgress {
-    display: none;
+    grid-template-columns: repeat(7, 1fr);
+    align-items: center;
+    row-gap: 8px;
+    margin-top: 4px;
+  }
+
+  .inquiryProgress .progressLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .inquiryProgress span::before {
+    top: 5px;
+  }
+
+  .progressSummary {
+    grid-column: 1 / -1;
+    display: block;
+    margin: 0;
+    color: #5f6d75;
+    font-size: 11px;
+    font-weight: 800;
   }
 
   .rowAction {

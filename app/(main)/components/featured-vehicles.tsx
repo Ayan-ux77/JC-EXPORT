@@ -7,7 +7,7 @@ import { ArrowUpRight, BadgeCheck, Fuel, Gauge } from "lucide-react";
 
 import {
   formatVehiclePrice,
-  isRemoteVehicleMedia,
+  mediaSrc,
   type Vehicle,
 } from "@/data/vehicles";
 import styles from "../page.module.css";
@@ -26,7 +26,12 @@ const filters = [
     label: "Hatchbacks",
     match: (vehicle: Vehicle) => vehicle.bodyType === "Hatchback",
   },
-  { label: "Hybrids", match: (vehicle: Vehicle) => vehicle.fuel === "Hybrid" },
+  {
+    // The ERP records a hybrid's fuel as "Hybrid (Petrol)", so an equality
+    // test against "Hybrid" matched nothing and this tab was always empty.
+    label: "Hybrids",
+    match: (vehicle: Vehicle) => vehicle.fuel.includes("Hybrid"),
+  },
   {
     label: "Under 80,000 km",
     match: (vehicle: Vehicle) => vehicle.mileageKm < 80000,
@@ -36,17 +41,24 @@ const filters = [
 export function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
   const [activeFilter, setActiveFilter] = useState(filters[0].label);
 
+  // A tab that leads to an empty shelf is worse than no tab: the buyer reads
+  // it as "no hybrids anywhere", when it only means none in this short row.
+  const availableFilters = useMemo(
+    () => filters.filter((filter) => vehicles.some(filter.match)),
+    [vehicles],
+  );
+
   const visibleVehicles = useMemo(() => {
-    const selectedFilter = filters.find(
+    const selectedFilter = availableFilters.find(
       (filter) => filter.label === activeFilter,
     );
     return selectedFilter ? vehicles.filter(selectedFilter.match) : vehicles;
-  }, [activeFilter, vehicles]);
+  }, [activeFilter, availableFilters, vehicles]);
 
   return (
     <div className={styles.vehiclesBrowser}>
       <div className={styles.filterBar} aria-label="Filter featured vehicles">
-        {filters.map((filter) => (
+        {availableFilters.map((filter) => (
           <button
             key={filter.label}
             type="button"
@@ -68,12 +80,11 @@ export function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
               aria-label={`View ${vehicle.title}`}
             >
               <Image
-                src={vehicle.image}
+                src={mediaSrc(vehicle.image)}
                 alt={vehicle.title}
                 fill
                 sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw"
                 className={styles.vehicleImage}
-                unoptimized={isRemoteVehicleMedia(vehicle.image)}
               />
               <span className={styles.usedBadge}>
                 <BadgeCheck aria-hidden="true" /> Verified used
