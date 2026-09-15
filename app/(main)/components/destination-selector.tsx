@@ -26,19 +26,34 @@ export function DestinationSelector({ destinations }: DestinationSelectorProps) 
   const searchParams = useSearchParams();
 
   const destinationPort = searchParams.get("destination_port") ?? "";
+  // Container is the default because it is how most of JC's freight is
+  // booked, so RoRo is the choice that has to be said out loud.
   const shipmentType: ShipmentType =
-    searchParams.get("shipment_type") === "CONTAINER" ? "CONTAINER" : "RORO";
+    searchParams.get("shipment_type") === "RORO" ? "RORO" : "CONTAINER";
 
   function update(next: { destination?: string; shipment?: ShipmentType }) {
     const params = new URLSearchParams(searchParams.toString());
     const nextDestination = next.destination ?? destinationPort;
     const nextShipment = next.shipment ?? shipmentType;
 
+    // Remembered for the next page and the next visit. The URL stays the
+    // source of truth -- a shared link must quote the port it names, not the
+    // reader's own -- but a buyer who has told us where they are should not
+    // have to say it again on every page. A year, because the port someone
+    // ships to does not change between visits.
+    try {
+      document.cookie = nextDestination
+        ? `jc_destination=${encodeURIComponent(nextDestination)}|${nextShipment}; path=/; max-age=31536000; samesite=lax`
+        : "jc_destination=; path=/; max-age=0; samesite=lax";
+    } catch {
+      // A browser refusing cookies loses the memory, not the feature.
+    }
+
     if (nextDestination) {
       params.set("destination_port", nextDestination);
-      // RoRo is the default the API assumes, so leaving it out of the URL
-      // keeps a shared link short in the common case.
-      if (nextShipment === "CONTAINER") {
+      // Container is the default the API assumes, so leaving it out of the
+      // URL keeps a shared link short in the common case.
+      if (nextShipment === "RORO") {
         params.set("shipment_type", nextShipment);
       } else {
         params.delete("shipment_type");

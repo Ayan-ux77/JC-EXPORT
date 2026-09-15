@@ -79,7 +79,19 @@ export type Vehicle = {
   conditionSummary?: string;
   damageNotes?: string;
   inspectionResult?: string;
-  availability?: "Available" | "Reserved";
+  // "In stock" is a car JC owns and can ship. "Available to order" is one it
+  // lists from the auction catalogue and will buy in for a buyer who wants
+  // it -- the same words the ERP sends, so the two cannot drift apart.
+  availability?: "In stock" | "Reserved" | "Available to order";
+
+  // Which of the two the car is, without the site having to parse a stock
+  // code prefix to work it out.
+  stockKind?: "stock" | "order";
+
+  // True when the auction, not JC, decides the final price. The site shows
+  // those as "from", because a guide price printed like a firm one is a
+  // number the buyer will hold JC to.
+  priceIsEstimate?: boolean;
   publicationStatus?: string;
   operationalStatus?: string;
   isFeatured?: boolean;

@@ -82,6 +82,22 @@
   color: #ffffff;
 }
 
+/* The default ring drew itself inside the pill, on top of the dark fill, so
+   the selected button looked like it had a blue box inside it. Offset it
+   outward and it reads as a focus ring instead of a mistake. */
+.shipmentToggle button:focus-visible {
+  outline: 2px solid var(--brand-teal, #5cc6d0);
+  outline-offset: 2px;
+}
+
+.shipmentToggle button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.shipmentToggle button:hover:not([aria-pressed="true"]) {
+  background: #f1f4f6;
+}
+
 @media (max-width: 560px) {
   .wrap {
     flex-direction: column;
