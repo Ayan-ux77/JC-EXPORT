@@ -1,0 +1,49 @@
+/* A circle over the photograph, so it works on a card whose whole image is a
+   link without stealing the click. */
+.save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 4px rgba(15, 30, 45, 0.18);
+  color: #5b6873;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+
+.save svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.save:hover {
+  background: #ffffff;
+  color: #d3364a;
+}
+
+.save:active {
+  transform: scale(0.92);
+}
+
+.save[data-saved="true"] {
+  color: #d3364a;
+}
+
+/* Filled, not merely tinted: at card size a red outline and a grey outline
+   are hard to tell apart at a glance, which defeats the point of a shortlist
+   you are meant to scan. */
+.save[data-saved="true"] svg {
+  fill: currentColor;
+}
+
+.save:focus-visible {
+  outline: 2px solid var(--brand-teal, #5cc6d0);
+  outline-offset: 2px;
+}

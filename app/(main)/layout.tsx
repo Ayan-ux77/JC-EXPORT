@@ -1,3 +1,4 @@
+import { SavedLink } from "@/app/components/saved-link";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, Mail, MessageCircle, Phone } from "lucide-react";
@@ -96,11 +97,6 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
                 <Mail aria-hidden="true" /> {site.salesEmail}
               </a>
             </div>
-            <div className={styles.languages} aria-label="Available languages">
-              <span>EN</span>
-              <span>اردو</span>
-              <span>日本語</span>
-            </div>
           </div>
         </div>
 
@@ -126,6 +122,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
           </nav>
 
           <div className={styles.headerActions}>
+            <SavedLink />
             <Link href={accountHref} className={styles.signInLink}>
               {accountLabel}
             </Link>

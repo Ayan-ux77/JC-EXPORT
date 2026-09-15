@@ -48,23 +48,6 @@
   color: var(--brand-teal);
 }
 
-.languages {
-  display: flex;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 11px;
-}
-
-.languages span {
-  padding: 0 10px;
-  border-right: 1px solid rgba(255, 255, 255, 0.32);
-}
-
-.languages span:last-child {
-  padding-right: 0;
-  border-right: 0;
-}
-
 .mainNav {
   width: min(100% - 40px, 1360px);
   min-height: 84px;
@@ -480,10 +463,6 @@
   }
 
   .utilityContacts a:nth-child(2),
-  .languages span:not(:first-child) {
-    display: none;
-  }
-
   .mainNav {
     width: min(100% - 28px, 1360px);
   }
