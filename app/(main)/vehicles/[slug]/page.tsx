@@ -24,7 +24,16 @@ import {
   Users,
 } from "lucide-react";
 
-import { getDestinations, getVehicle, getVehicles, type ShipmentType } from "@/data/vehicle-service";
+import {
+  getCurrencyRates,
+  getDestinations,
+  getVehicle,
+  getVehicles,
+  type ShipmentType,
+} from "@/data/vehicle-service";
+import { chosenCurrency, rememberedDestination } from "@/data/buyer-preferences";
+import { formatLocal, resolveLocalPrice } from "@/data/currency";
+import { site } from "@/data/site";
 import { formatCurrency, mediaSrc, whatsappUrl } from "@/data/vehicles";
 import { DestinationSelector } from "../../components/destination-selector";
 import { VehicleGallery } from "../../components/vehicle-gallery";
@@ -54,24 +63,59 @@ export async function generateMetadata({ params }: VehicleDetailsPageProps): Pro
     return { title: "Vehicle not found | Japan Car Export" };
   }
 
+  const title = `${vehicle.year} ${vehicle.brand} ${vehicle.model} | Japan Car Export`;
+  const description = `${vehicle.condition} ${vehicle.year} ${vehicle.brand} ${vehicle.model}, ${vehicle.mileage}, ${vehicle.engine}, FOB ${formatCurrency(vehicle.price, vehicle.currency)}.`;
+  const image = vehicle.image ? mediaSrc(vehicle.image) : undefined;
+
   return {
-    title: `${vehicle.year} ${vehicle.brand} ${vehicle.model} | Japan Car Export`,
-    description: `${vehicle.condition} ${vehicle.year} ${vehicle.brand} ${vehicle.model}, ${vehicle.mileage}, ${vehicle.engine}, FOB ${formatCurrency(vehicle.price, vehicle.currency)}.`,
+    title,
+    description,
+    alternates: { canonical: `/vehicles/${vehicle.slug}` },
+    // A car page shared into a WhatsApp group with no picture is a grey box
+    // with a link in it. In these markets that is how most of this stock
+    // gets passed around, so the photo matters more than the meta text.
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: `${site.url}/vehicles/${vehicle.slug}`,
+      images: image ? [{ url: image, alt: vehicle.title }] : undefined,
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: image ? [image] : undefined,
+    },
   };
 }
 
 export default async function VehicleDetailsPage({ params, searchParams }: VehicleDetailsPageProps) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const destinationPort = firstValue(query.destination_port) || undefined;
+
+  // The URL wins, because a shared link must quote the port it names. Failing
+  // that, what this buyer chose on the listing -- this page used to read the
+  // URL alone, so choosing Durban and clicking a car dropped the port and
+  // quoted plain FOB on the one page where somebody decides to buy.
+  const remembered = await rememberedDestination();
+  const destinationPort =
+    firstValue(query.destination_port) || remembered.port || undefined;
   const shipmentType =
-    firstValue(query.shipment_type) === "CONTAINER" ? ("CONTAINER" as ShipmentType) : undefined;
+    firstValue(query.shipment_type) === "RORO"
+      ? ("RORO" as ShipmentType)
+      : firstValue(query.shipment_type) === "CONTAINER"
+        ? ("CONTAINER" as ShipmentType)
+        : remembered.shipment;
+
+  const chosen = await chosenCurrency();
 
   // As on the listing page: the vehicle itself must fetch cleanly or the
   // page 404s/errors honestly, but a destinations outage should only cost
   // the selector, not the whole product page.
-  const [vehicle, destinations] = await Promise.all([
+  const [vehicle, destinations, currencyRates] = await Promise.all([
     getVehicle(slug, { destinationPort, shipmentType }),
     getDestinations().catch(() => []),
+    getCurrencyRates(destinationPort),
   ]);
 
   if (!vehicle) {
@@ -79,6 +123,21 @@ export default async function VehicleDetailsPage({ params, searchParams }: Vehic
   }
 
   const landed = vehicle.landed;
+
+  // The headline stays USD -- that is what JC invoices in. The local figure
+  // is a rough translation for budgeting, and it follows the buyer here from
+  // the listing rather than disappearing at the click.
+  const localPrice = resolveLocalPrice(
+    currencyRates,
+    chosen,
+    currencyRates?.local ?? undefined,
+  );
+
+  const localFigure = formatLocal(
+    landed?.priced && landed.total != null ? landed.total : vehicle.price,
+    localPrice,
+  );
+
   const vehicles = await getVehicles();
   const relatedVehicles = vehicles
     .filter(
@@ -88,6 +147,65 @@ export default async function VehicleDetailsPage({ params, searchParams }: Vehic
     )
     .slice(0, 3);
   const whatsapp = whatsappUrl(vehicle);
+
+  /**
+   * What Google needs to show this as a product rather than a page.
+   *
+   * Without it a car page is just text to a crawler: no price, no
+   * availability, no photo in the result. With it the listing can carry the
+   * figure and the picture straight into the search result, which for a
+   * catalogue business is most of the battle.
+   *
+   * availability follows ownership honestly -- a catalogue car JC has not
+   * bought is PreOrder, not InStock. Claiming otherwise in structured data
+   * is the kind of thing Google penalises and buyers notice.
+   */
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Car",
+    name: vehicle.title,
+    sku: vehicle.stock,
+    vehicleIdentificationNumber: vehicle.chassis ?? undefined,
+    brand: { "@type": "Brand", name: vehicle.brand },
+    model: vehicle.model,
+    vehicleModelDate: String(vehicle.year),
+    color: vehicle.color || undefined,
+    fuelType: vehicle.fuel || undefined,
+    vehicleTransmission: vehicle.transmission || undefined,
+    steeringPosition: vehicle.steering || undefined,
+    numberOfDoors: vehicle.doors || undefined,
+    seatingCapacity: vehicle.seats || undefined,
+    mileageFromOdometer: vehicle.mileageKm
+      ? { "@type": "QuantitativeValue", value: vehicle.mileageKm, unitCode: "KMT" }
+      : undefined,
+    vehicleEngine: vehicle.engine
+      ? { "@type": "EngineSpecification", name: vehicle.engine }
+      : undefined,
+    image: vehicle.images?.length
+      ? vehicle.images.map((url) => mediaSrc(url))
+      : vehicle.image
+        ? [mediaSrc(vehicle.image)]
+        : undefined,
+    description: vehicle.description || undefined,
+    url: `${site.url}/vehicles/${vehicle.slug}`,
+    offers:
+      vehicle.price != null
+        ? {
+            "@type": "Offer",
+            price: vehicle.price,
+            priceCurrency: vehicle.currency ?? "USD",
+            url: `${site.url}/vehicles/${vehicle.slug}`,
+            availability:
+              vehicle.stockKind === "order"
+                ? "https://schema.org/PreOrder"
+                : vehicle.availability === "Reserved"
+                  ? "https://schema.org/SoldOut"
+                  : "https://schema.org/InStock",
+            itemCondition: "https://schema.org/UsedCondition",
+            seller: { "@type": "Organization", name: "Japan Car Export" },
+          }
+        : undefined,
+  };
 
   const specifications = [
     { label: "Year", value: vehicle.year, icon: CalendarDays },
@@ -105,6 +223,14 @@ export default async function VehicleDetailsPage({ params, searchParams }: Vehic
   ];
 
   return (
+    <>
+      {/* Serialised rather than interpolated: a model name carrying a quote
+          would otherwise break out of the tag. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
+
     <main className={`${styles.page} ${bodyFont.variable} ${displayFont.variable}`}>
       <div className={styles.container}>
         <nav className={styles.breadcrumb} aria-label="Breadcrumb">
@@ -178,6 +304,9 @@ export default async function VehicleDetailsPage({ params, searchParams }: Vehic
                     : formatCurrency(vehicle.price, vehicle.currency)}
                 </strong>
               </div>
+              {localFigure && (
+                <span className={styles.localPrice}>&asymp; {localFigure}</span>
+              )}
               <small>
                 {landed?.priced && landed.total != null
                   ? `FOB ${formatCurrency(vehicle.price, vehicle.currency)} · estimate, confirmed at booking`
@@ -360,5 +489,6 @@ export default async function VehicleDetailsPage({ params, searchParams }: Vehic
         )}
       </div>
     </main>
+    </>
   );
 }

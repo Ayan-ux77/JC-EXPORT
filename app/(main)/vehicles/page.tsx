@@ -1,3 +1,4 @@
+import { resolveLocalPrice } from "@/data/currency";
 import type { Metadata } from "next";
 import { bodyFont, displayFont } from "@/app/fonts";
 import Link from "next/link";
@@ -5,12 +6,14 @@ import { Suspense } from "react";
 import { BadgeCheck, ChevronRight, Globe2, Ship, WalletCards } from "lucide-react";
 
 import {
+  getCurrencyRates,
   getDestinations,
   getVehicleFilters,
   getVehiclePage,
   type ShipmentType,
   type VehicleQuery,
 } from "@/data/vehicle-service";
+import { chosenCurrency, rememberedDestination } from "@/data/buyer-preferences";
 import { VehicleBrowser } from "../components/vehicle-browser";
 import styles from "./page.module.css";
 
@@ -86,9 +89,19 @@ const PAGE_SIZE = 24;
 export default async function VehiclesPage({ searchParams }: VehiclesPageProps) {
   const query = await searchParams;
 
-  const destinationPort = firstValue(query.destination_port) || undefined;
+  // The URL wins, because a shared link must quote the port it names. When
+  // it says nothing, fall back to what this buyer chose earlier -- being
+  // asked for your port again on the next page is the whole reason people
+  // stop using a calculator.
+  const remembered = await rememberedDestination();
+  const destinationPort =
+    firstValue(query.destination_port) || remembered.port || undefined;
   const shipmentType =
-    firstValue(query.shipment_type) === "CONTAINER" ? ("CONTAINER" as ShipmentType) : undefined;
+    firstValue(query.shipment_type) === "RORO"
+      ? ("RORO" as ShipmentType)
+      : firstValue(query.shipment_type) === "CONTAINER"
+        ? ("CONTAINER" as ShipmentType)
+        : remembered.shipment;
 
   // The homepage's brand tiles and hero search still link in as a single
   // `?brand=Toyota` (see app/(main)/page.tsx); every multi-select this page
@@ -101,9 +114,10 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
   // sidebar's option counts (which must reflect all matching stock, not just
   // this page of it) and to resolve each requested make to its canonical
   // casing before it goes to the API.
-  const [filters, destinations] = await Promise.all([
+  const [filters, destinations, currencyRates] = await Promise.all([
     getVehicleFilters(),
     getDestinations().catch(() => []),
+    getCurrencyRates(destinationPort),
   ]);
 
   const make = requestedMakes
@@ -126,6 +140,14 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
     search: firstValue(query.search) || undefined,
     sort: toSort(query.sort),
     page: toPage(query.page),
+    // Set by the home page's "In stock" / "Available to order" tabs. Anything
+    // else is ignored rather than passed through to the API to reject.
+    stockKind:
+      firstValue(query.stock_kind) === "order"
+        ? ("order" as const)
+        : firstValue(query.stock_kind) === "stock"
+          ? ("stock" as const)
+          : undefined,
     limit: PAGE_SIZE,
     destinationPort,
     shipmentType,
@@ -133,6 +155,8 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
 
   // The listing is the page's job and fails loudly if the ERP is unreachable
   // (see getVehicles' own comment on why there is no fallback stock here).
+  const chosen = await chosenCurrency();
+
   const listing = await getVehiclePage(vehicleQuery);
 
   return (
@@ -176,6 +200,13 @@ export default async function VehiclesPage({ searchParams }: VehiclesPageProps) 
           vehicles={listing.data}
           filters={filters}
           destinations={destinations}
+          currencyRates={currencyRates}
+          localPrice={resolveLocalPrice(
+            currencyRates,
+            chosen,
+            currencyRates?.local ?? undefined,
+          )}
+          currencyFromDestination={!chosen}
           pagination={{
             page: listing.page,
             lastPage: listing.lastPage,

@@ -39,6 +39,13 @@ import { SelectField } from "@/app/components/select-field";
 import type { Destination, VehicleFilters } from "@/data/vehicle-service";
 import { DestinationSelector } from "./destination-selector";
 import { Pagination } from "./pagination";
+import { CurrencySwitcher } from "@/app/components/currency-switcher";
+import { SaveButton } from "@/app/components/save-button";
+import {
+  formatLocal,
+  type CurrencyRates,
+  type LocalPrice,
+} from "@/data/currency";
 import styles from "../vehicles/page.module.css";
 
 type PaginationMeta = {
@@ -55,6 +62,10 @@ type VehicleBrowserProps = {
   filters: VehicleFilters;
   destinations: Destination[];
   pagination: PaginationMeta;
+  currencyRates?: CurrencyRates | null;
+  /** Null when the buyer is looking at USD, which is most of the time. */
+  localPrice?: LocalPrice | null;
+  currencyFromDestination?: boolean;
 };
 
 // These match the API's `sort` vocabulary (see VehicleCatalogController)
@@ -103,7 +114,15 @@ function parseList(raw: string | null): string[] {
   return Array.from(new Set(raw.split(",").map((part) => part.trim()).filter(Boolean)));
 }
 
-export function VehicleBrowser({ vehicles, filters, destinations, pagination }: VehicleBrowserProps) {
+export function VehicleBrowser({
+  vehicles,
+  filters,
+  destinations,
+  pagination,
+  currencyRates,
+  localPrice,
+  currencyFromDestination,
+}: VehicleBrowserProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -285,6 +304,16 @@ export function VehicleBrowser({ vehicles, filters, destinations, pagination }: 
   return (
     <section className={styles.browserSection} aria-label="Browse used vehicles">
       <DestinationSelector destinations={destinations} />
+
+      {currencyRates && currencyRates.rates.length > 0 && (
+        <div className={styles.currencyRow}>
+          <CurrencySwitcher
+            rates={currencyRates}
+            active={localPrice?.code}
+            fromDestination={currencyFromDestination && Boolean(localPrice)}
+          />
+        </div>
+      )}
 
       <div className={styles.browserToolbar}>
         <label className={styles.searchField}>
@@ -521,7 +550,12 @@ export function VehicleBrowser({ vehicles, filters, destinations, pagination }: 
           {vehicles.length > 0 ? (
             <div className={`${styles.vehicleGrid} ${viewMode === "list" ? styles.vehicleList : ""}`}>
               {vehicles.map((vehicle) => (
-                <VehicleCard key={vehicle.id} vehicle={vehicle} viewMode={viewMode} />
+                <VehicleCard
+                  key={vehicle.id}
+                  vehicle={vehicle}
+                  viewMode={viewMode}
+                  localPrice={localPrice}
+                />
               ))}
             </div>
           ) : (
@@ -548,7 +582,15 @@ export function VehicleBrowser({ vehicles, filters, destinations, pagination }: 
   );
 }
 
-function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMode }) {
+function VehicleCard({
+  vehicle,
+  viewMode,
+  localPrice,
+}: {
+  vehicle: Vehicle;
+  viewMode: ViewMode;
+  localPrice?: LocalPrice | null;
+}) {
   const newArrival = isNewArrival(vehicle.listedAt);
   const reserved = vehicle.availability === "Reserved";
   const whatsapp = whatsappUrl(vehicle);
@@ -579,6 +621,10 @@ function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMo
         </div>
         {reserved && <span className={styles.reservedBadge}>Reserved</span>}
       </Link>
+
+      <div className={styles.saveCorner}>
+        <SaveButton slug={vehicle.slug} title={vehicle.title} />
+      </div>
 
       <div className={styles.vehicleCardBody}>
         <div className={styles.vehicleMeta}>
@@ -622,7 +668,7 @@ function VehicleCard({ vehicle, viewMode }: { vehicle: Vehicle; viewMode: ViewMo
         <p className={styles.cardDescription}>{vehicle.description}</p>
 
         <div className={styles.vehicleFooter}>
-          <PriceDisplay vehicle={vehicle} />
+          <PriceDisplay vehicle={vehicle} localPrice={localPrice} />
           <div className={styles.footerActions}>
             {viewMode === "list" && whatsapp && (
               <a
@@ -670,14 +716,28 @@ const GRADE_FLOORS = [
   { value: "3.5", label: "Grade 3.5+" },
 ];
 
-function PriceDisplay({ vehicle }: { vehicle: Vehicle }) {
+function PriceDisplay({
+  vehicle,
+  localPrice,
+}: {
+  vehicle: Vehicle;
+  localPrice?: LocalPrice | null;
+}) {
   const landed = vehicle.landed;
+
+  // The headline stays USD -- that is what JC invoices in. The local figure
+  // is a rough translation for budgeting, never a quote.
+  const local = formatLocal(
+    landed?.priced && landed.total != null ? landed.total : vehicle.price,
+    localPrice ?? null,
+  );
 
   if (landed && landed.priced && landed.total != null) {
     return (
       <div>
         <small>Est. landed &middot; {landed.port}</small>
         <strong>{formatCurrency(landed.total, landed.currency)}</strong>
+        {local && <span className={styles.localPrice}>&asymp; {local}</span>}
         <span className={styles.fobSecondary}>FOB {formatVehiclePrice(vehicle)}</span>
       </div>
     );
@@ -688,6 +748,7 @@ function PriceDisplay({ vehicle }: { vehicle: Vehicle }) {
       <div>
         <small>FOB price</small>
         <strong>{formatVehiclePrice(vehicle)}</strong>
+        {local && <span className={styles.localPrice}>&asymp; {local}</span>}
         <span className={styles.freightNote}>Ask us for a freight quote to {landed.port}</span>
       </div>
     );
@@ -709,6 +770,7 @@ function PriceDisplay({ vehicle }: { vehicle: Vehicle }) {
     <div>
       <small>FOB price</small>
       <strong>{formatVehiclePrice(vehicle)}</strong>
+      {local && <span className={styles.localPrice}>&asymp; {local}</span>}
     </div>
   );
 }

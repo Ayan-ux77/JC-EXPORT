@@ -483,6 +483,18 @@
   line-height: 1;
 }
 
+/* Sentence case and readable, not the 10px uppercase every other span in
+   this box wears -- it is a figure the buyer reads, not a label. */
+.priceBox .localPrice {
+  display: block;
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .priceBox > small {
   display: block;
   margin-top: 12px;

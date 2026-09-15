@@ -498,6 +498,7 @@
 }
 
 .vehicleCard {
+  position: relative;
   min-width: 0;
   overflow: hidden;
   border: 1px solid #d8e0e4;
@@ -512,16 +513,23 @@
   transform: translateY(-2px);
 }
 
+/* 4:3, because that is what the photographs are (404x303 out of the auction
+   sheets, every one of them). A 16:9 box with object-fit: cover threw away a
+   quarter of the height of every picture -- on a phone, where the card is the
+   full width, that read as a car zoomed in until its roof and sill were gone.
+   contain rather than cover so a photo that is not 4:3 is letterboxed on the
+   grey rather than cropped: on a used-car listing the picture is the product,
+   and half a bumper is not a second opinion a buyer can ask for. */
 .vehicleImageLink {
   position: relative;
   display: block;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   background: #e1e6e8;
 }
 
 .vehicleImage {
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 300ms ease;
 }
 
@@ -570,10 +578,14 @@
 /* A reserved car stays listed because deals fall through, but the badge has
    to say so before a buyer spends a WhatsApp message on a car that is
    probably already sold -- amber, not the teal used for good news. */
+/* Bottom of the photo, not the top-right corner -- that corner belongs to
+   the save heart, and the two were sitting on top of each other on every
+   reserved car. Top-left is the grade and new-arrival stack, so this is the
+   one corner of a photograph that is nobody else's. */
 .reservedBadge {
   position: absolute;
-  top: 10px;
   right: 10px;
+  bottom: 10px;
   z-index: 1;
   background: #c9840b;
   color: #ffffff;
@@ -696,6 +708,22 @@
   margin-top: 16px;
 }
 
+/* Only when there is a local figure to show. "$12,750 / KSh 1,650,000" and a
+   "View vehicle" button will not share one line on a grid card -- the button
+   was being squeezed into whatever the number left of it, which on a 2.8m
+   shilling price was nothing. Given its own line it becomes a proper CTA,
+   and cards without a local price keep the compact row they had. */
+.vehicleFooter:has(.localPrice) {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.vehicleFooter:has(.localPrice) .footerActions > a {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
 .vehicleFooter small,
 .vehicleFooter strong {
   display: block;
@@ -714,6 +742,24 @@
   color: var(--red);
   font-family: var(--font-display), Georgia, serif;
   font-size: 20px;
+}
+
+/* The buyer's own money, on a line of its own directly under the headline.
+   It used to be tacked onto the FOB line after a middle dot -- so the one
+   number a Nairobi dealer actually budgets against read as a footnote to a
+   figure he does not bank in, and on a phone the two ran together and wrapped.
+   Heavier and darker than the FOB line, lighter and smaller than the
+   headline: a real figure, clearly not the one on the invoice. */
+.localPrice {
+  display: block;
+  margin-top: 5px;
+  color: #46535e;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 /* The secondary line under a headline price: the FOB figure when a landed
@@ -794,7 +840,12 @@
   border-color: #1ebd5a;
 }
 
-.vehicleList {
+/* Both classes on purpose, not for emphasis. .vehicleGrid narrows itself to
+   three and then two columns further down this file, and a single class here
+   loses to those on source order alone -- so below 1180px "list view" was
+   quietly laying rows out three across, each one squeezed to 240px with its
+   title and every spec clipped. Two classes outrank one at any width. */
+.vehicleGrid.vehicleList {
   grid-template-columns: 1fr;
 }
 
@@ -807,22 +858,41 @@
    footer that was meant to fill the third sits inside the body -- so the
    third column was simply 216px of empty white down the right of every row. */
 .vehicleList .vehicleCard {
+  /* One number, three users: the photo column, the heart that sits over it,
+     and every breakpoint below. It was written out three times and the
+     heart's copy was simply missing, which is how it ended up on the price. */
+  --list-image: 260px;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: var(--list-image) minmax(0, 1fr);
   align-items: stretch;
 }
 
-/* The photographs are roughly 3:2. Stretching the box to the row's height
-   made it portrait and cropped most of the car away; matching the source
-   ratio shows the whole vehicle, which is the entire point of the picture. */
+/* No aspect-ratio here, and that is the fix rather than an omission.
+   A grid item stretched to the row's height AND given a ratio takes its
+   width from that height -- 226px tall x 3/2 came out 338px wide in a 260px
+   column, so every card's photo overhung the body and sliced the first 78px
+   off the title, the year and the transmission. The box now fills its
+   column, and object-fit: contain below shows the whole car inside it. */
 .vehicleList .vehicleImageLink {
+  /* Explicitly off, not merely unset: the grid card above declares 4/3, and
+     an inherited ratio here is the whole bug. */
+  aspect-ratio: auto;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
-  aspect-ratio: 3 / 2;
   background: #eef1f3;
 }
 
 .vehicleList .vehicleImage {
   object-fit: contain;
+}
+
+/* In grid view the photo is the whole card width, so the card's top-right
+   corner is the photo's. In a row it is the price rail's -- the heart was
+   landing on "Est. landed, Mombasa". It follows the photo column instead. */
+.vehicleList .saveCorner {
+  right: auto;
+  left: calc(var(--list-image) - 46px);
 }
 
 /* The body carries the price rail, so the split happens here rather than on
@@ -874,13 +944,18 @@
   overflow: hidden;
 }
 
+/* Label above value, not beside it. Side by side, a 125px cell had to hold
+   "MILEAGE" and "142,000 km" on one line and the mileage -- the number a
+   used-car buyer looks at second, after the price -- was the half that got
+   cut to "142,...". Stacked, the value has the full width of the cell. */
 .vehicleList .vehicleSpecs > div {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
   min-width: 0;
-  padding: 7px 10px;
+  padding: 6px 10px;
   background: #ffffff;
 }
 
@@ -905,12 +980,13 @@
 }
 
 .vehicleList .vehicleSpecs dd {
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
   color: var(--ink);
   font-size: 12px;
   font-weight: 800;
-  text-align: right;
+  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -961,7 +1037,7 @@
 
 @media (max-width: 1180px) {
   .vehicleList .vehicleCard {
-    grid-template-columns: 220px minmax(0, 1fr);
+    --list-image: 220px;
   }
 
   .vehicleList .vehicleCardBody {
@@ -977,7 +1053,7 @@
    and the row becomes a card again rather than three cramped columns. */
 @media (max-width: 900px) {
   .vehicleList .vehicleCard {
-    grid-template-columns: 180px minmax(0, 1fr);
+    --list-image: 180px;
   }
 
   .vehicleList .vehicleCardBody {
@@ -1008,7 +1084,7 @@
      "Right Han...". A value the reader cannot finish is worse than a row of
      uneven height, so it wraps here instead. */
   .vehicleList .vehicleSpecs > div {
-    align-items: center;
+    align-items: flex-start;
   }
 
   .vehicleList .vehicleSpecs dd {
@@ -1023,8 +1099,15 @@
     grid-template-columns: 1fr;
   }
 
+  /* Stacked, so the photo is the card's full width and has no row height to
+     be stretched by: a ratio is what keeps it from collapsing. */
   .vehicleList .vehicleImageLink {
     aspect-ratio: 16 / 10;
+  }
+
+  .vehicleList .saveCorner {
+    right: 12px;
+    left: auto;
   }
 
   .vehicleList .vehicleFooter {
@@ -1294,4 +1377,19 @@
   .page *::after {
     transition-duration: 0.01ms !important;
   }
+}
+
+/* See the note on the home page's copy of this: over the photo, anchored to
+   the card, and outside the image link so the click is not swallowed. */
+.saveCorner {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+/* Sits under the ship-to selector: the two answer the same question from a
+   buyer's side -- where am I, and what money do I count in. */
+.currencyRow {
+  margin: -6px 0 14px;
 }

@@ -25,12 +25,19 @@ import {
 } from "lucide-react";
 
 import {
+  getCurrencyRates,
+  getDestinations,
   getModelsForMake,
   getReviews,
+  getVehicleCount,
   getVehicleFilters,
   getVehiclePage,
   getVehicles,
 } from "@/data/vehicle-service";
+import { chosenCurrency, rememberedDestination } from "@/data/buyer-preferences";
+import { CurrencySwitcher } from "@/app/components/currency-switcher";
+import { resolveLocalPrice } from "@/data/currency";
+import { DestinationSelector } from "./components/destination-selector";
 import { FeaturedVehicles } from "./components/featured-vehicles";
 import { HomeInquiryForm } from "./components/home-inquiry-form";
 import { HeroCarousel } from "./components/hero-carousel";
@@ -42,12 +49,27 @@ export const metadata: Metadata = {
     "Browse inspected Japanese used vehicles with clear FOB pricing, export documentation, and worldwide shipping support.",
 };
 
-const stats = [
-  { value: "15+", label: "Years exporting" },
-  { value: "4,200+", label: "Vehicles shipped" },
-  { value: "32", label: "Countries served" },
-  { value: "98%", label: "Returning clients" },
-];
+/**
+ * What JC can actually stand behind on the day it opens.
+ *
+ * This strip used to read "15+ years exporting / 4,200+ vehicles shipped /
+ * 32 countries served / 98% returning clients". None of it was true, and a
+ * buyer in Mombasa deciding whether to wire eleven thousand dollars to a
+ * company they found online is weighing exactly these numbers. One of them
+ * being discovered as invented makes the rest of the page worthless.
+ *
+ * So: one live figure, and three promises about how JC works rather than
+ * claims about a history it does not have yet. Every one of them is
+ * something a first-week customer can hold JC to.
+ */
+function statsFor(stockCount: number) {
+  return [
+    { value: String(stockCount), label: "Vehicles listed today" },
+    { value: "Auction sheet", label: "Shared before you commit" },
+    { value: "FOB + freight", label: "Quoted separately, in writing" },
+    { value: "RoRo or container", label: "Both shipping routes" },
+  ];
+}
 
 const heroProof = [
   "Auction sheet reviewed",
@@ -134,13 +156,13 @@ const trustBadges = [
   },
   {
     icon: Clock3,
-    title: "15+ years",
-    subtitle: "Export experience",
+    title: "Japan-based",
+    subtitle: "Sourcing, inspection and export",
   },
   {
     icon: Globe2,
-    title: "Global support",
-    subtitle: "32 destination markets",
+    title: "Worldwide",
+    subtitle: "RoRo and container shipping",
   },
 ];
 
@@ -194,20 +216,61 @@ export default async function HomePage() {
   // Models are unfiltered (getModelsForMake("")) because the hero form is
   // a plain GET <form>, not a client component: there is no make-selected
   // event to chain a model list off without JavaScript.
-  const [vehicles, stock, models, reviews, filters] = await Promise.all([
-    getVehicles({ featuredOnly: true, limit: 6 }),
-    getVehiclePage({ limit: 1 }),
-    getModelsForMake(""),
-    getReviews(3),
-    // Stock counts per make, so the logo wall becomes something a buyer can
-    // navigate by rather than decoration.
-    getVehicleFilters().catch(() => null),
-  ]);
+  const { port: destinationPort, shipment: shipmentType } =
+    await rememberedDestination();
+  const chosen = await chosenCurrency();
+
+  const [
+    vehicles,
+    stock,
+    models,
+    reviews,
+    filters,
+    destinations,
+    currencyRates,
+    inStock,
+    toOrder,
+    stockRow,
+    orderRow,
+  ] = await Promise.all([
+      getVehicles({ featuredOnly: true, limit: 6, destinationPort, shipmentType }),
+      getVehiclePage({ limit: 1 }),
+      getModelsForMake(""),
+      getReviews(3),
+      // Stock counts per make, so the logo wall becomes something a buyer can
+      // navigate by rather than decoration.
+      getVehicleFilters().catch(() => null),
+      // Two counts, so the browse button under the tabs can say how many cars
+      // it leads to. In the same Promise.all as everything else -- they cost
+      // nothing on the clock, only two more sockets, and both are cached for
+      // five minutes server-side.
+      getDestinations().catch(() => []),
+      getCurrencyRates(destinationPort),
+      getVehicleCount({ stockKind: "stock" }).catch(() => 0),
+      getVehicleCount({ stockKind: "order" }).catch(() => 0),
+      // A row per tab rather than one row filtered three ways. Six of the
+      // newest of each kind, so "In stock" is never a shelf of one just
+      // because the newest six happened to be catalogue cars.
+      getVehicles({ stockKind: "stock", limit: 6, destinationPort, shipmentType }).catch(
+        () => [],
+      ),
+      getVehicles({ stockKind: "order", limit: 6, destinationPort, shipmentType }).catch(
+        () => [],
+      ),
+    ]);
 
   const stockByMake = new Map(
     (filters?.makes ?? []).map((make) => [make.name.toLowerCase(), make.count]),
   );
   const stockCount = stock.total;
+
+  // What the buyer chose, or failing that what the country they are shipping
+  // to uses. Never a guess from an IP address.
+  const localPrice = resolveLocalPrice(
+    currencyRates,
+    chosen,
+    currencyRates?.local ?? undefined,
+  );
 
   /**
    * The three cars the "see the actual vehicle" collage shows.
@@ -381,7 +444,7 @@ export default async function HomePage() {
         aria-label="Japan Car Export in numbers"
       >
         <div className={styles.statsGrid}>
-          {stats.map((stat) => (
+          {statsFor(stockCount).map((stat) => (
             <div key={stat.label} className={styles.statItem}>
               <strong>{stat.value}</strong>
               <span>{stat.label}</span>
@@ -457,19 +520,43 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <FeaturedVehicles vehicles={vehicles} />
-
-        {/* The link in the section header sits above the cars, which is where
-            nobody is looking once they have finished scanning them. After six
-            vehicles the question is "show me the rest", and the eye is at the
-            bottom of the grid. The count makes it a concrete offer rather
-            than a vague one. */}
-        <div className={styles.vehiclesFooter}>
-          <Link href="/vehicles" className={styles.browseAllButton}>
-            Browse all {stockCount} vehicles <ArrowRight aria-hidden="true" />
-          </Link>
-          <p>Full stock with filters, auction grades and landed-cost estimates.</p>
+        {/* Where the buyer says where they are. Everything below reprices
+            to their port, and the choice is remembered for the rest of the
+            site and their next visit. */}
+        <div className={styles.destinationRow}>
+          <DestinationSelector destinations={destinations} />
+          {currencyRates && currencyRates.rates.length > 0 && (
+            <CurrencySwitcher
+              rates={currencyRates}
+              active={localPrice?.code}
+              fromDestination={!chosen && Boolean(localPrice)}
+            />
+          )}
         </div>
+
+        <FeaturedVehicles
+          localPrice={localPrice}
+          tabs={[
+            {
+              label: "All stock",
+              vehicles,
+              href: "/vehicles",
+              total: stock.total,
+            },
+            {
+              label: "In stock",
+              vehicles: stockRow,
+              href: "/vehicles?stock_kind=stock",
+              total: inStock,
+            },
+            {
+              label: "Available to order",
+              vehicles: orderRow,
+              href: "/vehicles?stock_kind=order",
+              total: toOrder,
+            },
+          ]}
+        />
       </section>
 
       <section

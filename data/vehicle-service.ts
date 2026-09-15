@@ -1,6 +1,7 @@
 import "server-only";
 
 import { callApi, callApiPage, JcApiError, type Paginated } from "./jc-api";
+import type { CurrencyRates } from "./currency";
 import type { Vehicle } from "./vehicles";
 
 export type ShipmentType = "RORO" | "CONTAINER";
@@ -31,6 +32,8 @@ export type VehicleQuery = {
   /** Buyer's port. Every vehicle comes back with a `landed` breakdown to it. */
   destinationPort?: string;
   shipmentType?: ShipmentType;
+  /** "stock" is what JC owns and can ship; "order" the auction catalogue it buys in to order. */
+  stockKind?: "stock" | "order";
 };
 
 export type FilterOption = { name: string; count: number };
@@ -48,6 +51,8 @@ export type VehicleFilters = {
 export type Destination = {
   name: string;
   country: string | null;
+  /** ISO 4217 for the country this port is in, when staff have recorded one. */
+  currency?: string | null;
 };
 
 /**
@@ -59,8 +64,15 @@ export type Destination = {
  * enquires about a car that does not exist costs a real conversation.
  */
 export async function getVehicles(query: VehicleQuery = {}): Promise<Vehicle[]> {
+  // The featured path used to carry nothing but the limit, so a buyer who
+  // had chosen their port got landed prices everywhere except the row they
+  // meet first. Destination and shipment type travel with it now; the rest
+  // of the filters do not apply to a hand-picked row.
   const path = query.featuredOnly
-    ? `vehicles/featured?limit=${query.limit ?? 8}`
+    ? `vehicles/featured?limit=${query.limit ?? 8}&${toParams({
+        destinationPort: query.destinationPort,
+        shipmentType: query.shipmentType,
+      })}`
     : `vehicles?${toParams(query)}`;
 
   return callApi<Vehicle[]>(path, { revalidate: 60 });
@@ -75,6 +87,81 @@ export async function getVehicles(query: VehicleQuery = {}): Promise<Vehicle[]> 
  */
 export async function getVehiclePage(query: VehicleQuery = {}): Promise<Paginated<Vehicle>> {
   return callApiPage<Vehicle>(`vehicles?${toParams(query)}`, { revalidate: 60 });
+}
+
+/**
+ * Every listed car, a page at a time, for the sitemap.
+ *
+ * Deliberately not "fetch them all": the catalogue can run to tens of
+ * thousands of rows, and asking the ERP for all of them in one request to
+ * build an XML file is how a sitemap becomes the slowest page on the site.
+ * The caller walks it in chunks and Next caches each one.
+ */
+/**
+ * Every currency JC quotes in, in one call.
+ *
+ * Cached for an hour: a rate that moved four minutes ago does not change what
+ * a car costs, and re-fetching per page would put the ERP on the critical
+ * path of every render for no gain. Null on failure, so a rates outage costs
+ * the local figure and not the page.
+ */
+/**
+ * The short list of currencies to offer this buyer.
+ *
+ * The port goes with the request because the ERP holds thirty-odd market
+ * currencies and returns only the few JC transacts in plus the one spoken
+ * where this car is going. Without the port, a buyer shipping to Mombasa
+ * would be offered euros and pounds and no shillings.
+ */
+export async function getCurrencyRates(
+  destinationPort?: string,
+): Promise<CurrencyRates | null> {
+  const query = destinationPort
+    ? `?destination_port=${encodeURIComponent(destinationPort)}`
+    : "";
+
+  // Fifteen minutes, not an hour. The rates themselves only change once a
+  // day, so this is not about freshness of the numbers -- it is that adding a
+  // market in the panel should show up on the site while the person who added
+  // it is still looking at it. The call is to JC's own API, not the metered
+  // one, so a shorter window costs nothing.
+  return callApi<CurrencyRates>(`currency-rates${query}`, {
+    revalidate: 900,
+  }).catch(() => null);
+}
+
+export async function getVehicleSlugPage(
+  page: number,
+  perPage: number,
+): Promise<{ slugs: Array<{ slug: string; listedAt?: string }>; total: number }> {
+  const result = await callApiPage<Vehicle>(
+    `vehicles?page=${page}&per_page=${perPage}&sort=newest`,
+    { revalidate: 3600 },
+  );
+
+  return {
+    slugs: result.data
+      .filter((vehicle) => Boolean(vehicle.slug))
+      .map((vehicle) => ({ slug: vehicle.slug, listedAt: vehicle.listedAt })),
+    total: result.total ?? result.data.length,
+  };
+}
+
+/**
+ * How many cars match, without fetching any of them.
+ *
+ * per_page=1 so the ERP returns one row and a total rather than a page of
+ * twenty-four that nothing reads. Cached for five minutes: the home page asks
+ * this twice on every render, and a count that is a few minutes stale is
+ * worth more than two round trips on the critical path.
+ */
+export async function getVehicleCount(query: VehicleQuery = {}): Promise<number> {
+  const page = await callApiPage<Vehicle>(
+    `vehicles?${toParams({ ...query, page: 1 })}&per_page=1`,
+    { revalidate: 300 },
+  );
+
+  return page.total ?? 0;
 }
 
 export async function getVehicle(
@@ -152,6 +239,7 @@ function toParams(query: VehicleQuery) {
     ["page", "page"],
     ["destinationPort", "destination_port"],
     ["shipmentType", "shipment_type"],
+    ["stockKind", "stock_kind"],
   ];
 
   for (const [key, param] of mapping) {

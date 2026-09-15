@@ -679,7 +679,16 @@
   margin-top: 28px;
 }
 
+/* A column, so the price band can be pushed to the bottom with margin-top:
+   auto and every card in the row still lines up. The old card kept its rows
+   aligned with min-heights on the title and the spec strip instead, which
+   meant a one-line title reserved two lines and a single row of specs
+   reserved two rows -- about 50px of white per card, on the row of the site
+   that has to do the selling. */
 .vehicleCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   overflow: hidden;
   border: 1px solid #dbe2e6;
@@ -694,16 +703,19 @@
   transform: translateY(-3px);
 }
 
+/* Matches the listing page, and for the same reason: the photographs are
+   4:3, and a wider box with object-fit: cover cropped the top and bottom off
+   every car on the home page. */
 .vehicleImageLink {
   position: relative;
   display: block;
-  aspect-ratio: 414 / 266;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   background: #e5e8e9;
 }
 
 .vehicleImage {
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 300ms ease;
 }
 
@@ -733,8 +745,32 @@
   height: 14px;
 }
 
+/* Directly under the used badge, sharing its left edge -- the save heart owns
+   the opposite corner. */
+.gradeBadge {
+  position: absolute;
+  top: 48px;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 3px;
+  background: rgba(10, 23, 34, 0.9);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
 .vehicleCardBody {
-  padding: 20px;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  /* No bottom padding: the price band below supplies it, and bleeds to the
+     card's edges. */
+  padding: 16px 18px 0;
 }
 
 .vehicleMeta {
@@ -753,9 +789,8 @@
 }
 
 .vehicleCard h3 {
-  min-height: 48px;
-  margin: 12px 0 0;
-  font-size: 19px;
+  margin: 6px 0 0;
+  font-size: 18px;
   line-height: 1.25;
 }
 
@@ -764,38 +799,92 @@
   text-decoration: none;
 }
 
+/* Three across, two rows: the same labelled grid the listing row uses, so a
+   car reads the same wherever the buyer meets it. Label above value, because
+   side by side a 105px cell could not hold "MILEAGE" and "142,000 km" and it
+   was always the mileage that got cut. */
 .vehicleSpecs {
-  min-height: 52px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 9px 18px;
-  margin-top: 16px;
-  padding: 14px 0;
-  border-top: 1px solid #e7ebed;
-  border-bottom: 1px solid #e7ebed;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 14px 0 16px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e7ebed;
+  border-radius: 5px;
+  background: #e7ebed;
 }
 
-.vehicleSpecs span {
-  display: inline-flex;
+.vehicleSpecs > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 10px;
+  background: #ffffff;
+}
+
+.vehicleSpecs dt {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  color: #5d6972;
+  gap: 5px;
+  color: #7c8993;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.vehicleSpecs dd {
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
   font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .vehicleSpecs svg {
-  width: 15px;
-  height: 15px;
+  width: 12px;
+  height: 12px;
   color: var(--blue);
 }
 
+/* The price is what the card is for, so it gets a band of its own rather
+   than floating in the same white as everything above it. margin-top: auto
+   pins it to the bottom edge whatever the title's length, and the negative
+   side margins let it run the full width of the card. */
 .vehicleFooter {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 18px;
+  /* top auto pins the band to the bottom; the negative sides let it bleed to
+     the card's edges through the body's padding. The gap above it comes from
+     the spec grid's own margin, since auto collapses to nothing on a card
+     whose content already fills the height. */
+  margin: auto -18px 0;
+  padding: 14px 18px 16px;
+  border-top: 1px solid #e7ebed;
+  background: #f8fafb;
+}
+
+/* See the listing page's copy: with a local figure under the headline there
+   is no room left on that line for the WhatsApp and "View vehicle" buttons,
+   so they take a line of their own and become full-width CTAs. */
+.vehicleFooter:has(.localPrice) {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.vehicleFooter:has(.localPrice) .footerActions > a {
+  flex: 1 1 auto;
+  justify-content: center;
 }
 
 .vehicleFooter small,
@@ -1752,4 +1841,123 @@ a.contactItem:hover {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* The secondary line under a card's headline price -- the FOB figure when a
+   landed total leads, or the "ask us" note when JC has no rate for that
+   route. Copied from the listing's page.module.css on purpose: the same car
+   must not be typeset two different ways on two pages. It must never look
+   like a second price. */
+/* See the listing page's copy: the local figure gets its own line rather
+   than trailing the FOB price after a middle dot. */
+.localPrice {
+  display: block;
+  margin-top: 5px;
+  color: #46535e;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.fobSecondary,
+.freightNote {
+  display: block;
+  margin-top: 4px;
+  color: #849099;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.freightNote {
+  color: var(--blue-dark);
+}
+
+/* The destination selector sits between the section heading and the tabs, so
+   it needs air on both sides -- against the heading it read as part of the
+   title block rather than a control. */
+/* Two controls answering the same question -- where are you, and what money
+   do you count in -- so they sit together rather than in separate bands. */
+.destinationRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 22px 0 26px;
+}
+
+/* The card's action row. Mirrors the listing's .footerActions rather than
+   inventing a second look -- the same two buttons on two pages must not be
+   two different buttons. */
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.footerActions > a {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #c8d2d8;
+  border-radius: 3px;
+  padding: 0 10px;
+  color: var(--blue-dark);
+  font-size: 10px;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.footerActions > a:hover {
+  border-color: var(--blue-dark);
+  background: var(--blue-dark);
+  color: #ffffff;
+}
+
+.footerActions svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* WhatsApp's own green, because it needs to read as "this opens WhatsApp" at
+   a glance -- that matters more here than palette purity. */
+.footerActions > a.whatsappButton {
+  background: #25d366;
+  border-color: #25d366;
+  color: #ffffff;
+}
+
+.footerActions > a.whatsappButton:hover {
+  background: #1ebd5a;
+  border-color: #1ebd5a;
+}
+
+@media (max-width: 420px) {
+  .footerActions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .footerActions > a {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* The save control sits over the top-right of the photograph. The card is
+   position:relative already for its badges, so this anchors to the card
+   rather than the image link it must not be inside -- a button nested in an
+   anchor is invalid and swallows the click. */
+.saveCorner {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
 }
