@@ -1263,15 +1263,22 @@
     padding: 0 6px 12px;
   }
 
+  /* Wrapped, not scrolled. Measured at 390px the row ran to 676px, so half
+     the portal -- Shipments, Documents, Profile -- was off the side of the
+     screen behind a swipe nobody is told about. These are destinations, not
+     filters: a customer looking for an export document should not have to
+     discover that the nav slides. Two short rows shows all six. */
   .sidebar nav {
     margin-top: 12px;
     display: flex;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    gap: 2px 4px;
     padding-bottom: 5px;
   }
 
   .sidebar nav a {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    justify-content: center;
     min-height: 38px;
     padding: 0 10px;
   }

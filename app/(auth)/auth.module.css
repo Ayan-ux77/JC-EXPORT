@@ -272,7 +272,18 @@
     grid-template-columns: 1fr;
   }
 
+  /* The form first.
+     Side by side the dark panel is scene-setting the reader takes in at a
+     glance. Stacked, it becomes a full screen of marketing standing between
+     somebody who came here to sign in and the box they came to type in. The
+     sales pitch is for people who have not decided yet; this page is for
+     people who already have an account. */
+  .main {
+    order: 1;
+  }
+
   .aside {
+    order: 2;
     min-height: auto;
     padding: 52px clamp(24px, 7vw, 64px);
     gap: 38px;
@@ -292,20 +303,25 @@
 }
 
 @media (max-width: 640px) {
+  /* Below the form now, so it is a footer rather than a hero: sized like
+     one. At 44px the headline alone was most of a phone screen. */
   .aside {
-    padding: 40px 24px;
+    padding: 34px 24px 38px;
+    gap: 22px;
   }
 
   .aside h1 {
-    font-size: 44px;
+    font-size: 30px;
   }
 
   .aside > div > p:last-child {
-    font-size: 15px;
+    font-size: 14px;
   }
 
+  /* Three short lines of reassurance, not three stacked rows of one. */
   .trustList {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .main {
