@@ -1600,6 +1600,30 @@ a.contactItem:hover {
 }
 
 @media (max-width: 760px) {
+  /* Cars first.
+     Measured at 390px: the first vehicle card sat 2,996px down the page --
+     three and a half screens of hero, search panel, stat row and a logo wall
+     before a phone user saw a single car. None of that is wrong, it is just
+     in the wrong order for the smallest screen: the brand wall and the stats
+     are supporting material, and a buyer on a phone wants the product. The
+     order is explicit for every block rather than nudging two of them, so
+     nobody has to work out what the defaults do. */
+  .page {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero { order: 1; }
+  .searchPanel { order: 2; }
+  .vehiclesSection { order: 3; }
+  .statsSection { order: 4; }
+  .brandsSection { order: 5; }
+  .processSection { order: 6; }
+  .aboutSection { order: 7; }
+  .trustSection { order: 8; }
+  .testimonialsSection { order: 9; }
+  .contactSection { order: 10; }
+
   .hero {
     min-height: clamp(380px, 46vh, 480px);
   }
@@ -1702,8 +1726,18 @@ a.contactItem:hover {
     gap: 22px;
   }
 
+  /* Two across, not one. Four stacked selects put the Search button 374px
+     below the heading, which on a phone is most of a screen spent on a form
+     the buyer may not even use. Paired, the whole form fits in half that and
+     the button stays in view while the fields are being filled. */
   .searchForm {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+  }
+
+  .searchForm .searchButton {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .statsSection {
@@ -1735,16 +1769,25 @@ a.contactItem:hover {
   .processSection,
   .testimonialsSection,
   .contactSection {
-    padding-top: 76px;
-    padding-bottom: 82px;
+    padding-top: 46px;
+    padding-bottom: 52px;
   }
 
+  /* Three across at 84px rather than two at 112px: the wall was four rows
+     deep and 448px tall on a phone for eight logos. */
   .brandsGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 26px;
   }
 
   .brandItem {
-    min-height: 112px;
+    min-height: 84px;
+  }
+
+  /* The second column of the section heading is a sentence of throat-clearing
+     that costs a phone half a screen. The heading above it already says it. */
+  .sectionIntroRow > p {
+    display: none;
   }
 
   .vehicleGrid,
@@ -1825,8 +1868,26 @@ a.contactItem:hover {
     font-size: 36px;
   }
 
+  /* Wrapped, not scrolled. The bar is a horizontal scroller, and at 390px
+     the third tab ended 3px past the edge -- near enough to complete that it
+     reads as a clipped button rather than a row you can swipe, so "Available
+     to order" was a shelf nobody knew was there. Two lines is honest. */
   .filterBar {
     width: 100%;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .filterBar button {
+    flex: 1 1 auto;
+    padding: 0 12px;
+  }
+
+  /* Two columns, not three. A 105px cell cannot hold "Hybrid (Petrol)" and
+     was cutting it to "Hybrid (Petr...". Fuel type is one of the six facts
+     the card exists to show. */
+  .vehicleSpecs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .aboutImageWrap {
