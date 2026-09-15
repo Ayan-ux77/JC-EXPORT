@@ -59,10 +59,18 @@ export function mailto(subject?: string): string {
  * button at all.
  */
 export function whatsapp(message?: string): string | null {
-  if (!site.whatsappNumber) {
+  // wa.me wants digits and nothing else. The number in .env is written the
+  // way a person writes it -- "+81 345 20 8932" -- and pasting that straight
+  // into the URL produces a link that opens WhatsApp on a number it cannot
+  // parse. Strip it here rather than asking whoever edits .env to remember,
+  // because they will not, and the failure is silent.
+  const digits = site.whatsappNumber?.replace(/\D/g, "") ?? "";
+
+  if (!digits) {
     return null;
   }
+
   return message
-    ? `https://wa.me/${site.whatsappNumber}?text=${encodeURIComponent(message)}`
-    : `https://wa.me/${site.whatsappNumber}`;
+    ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
+    : `https://wa.me/${digits}`;
 }
